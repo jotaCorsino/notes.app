@@ -4,6 +4,11 @@ public sealed class StudyModule
 {
     private readonly List<Note> _notes = [];
 
+    private StudyModule()
+    {
+        Title = string.Empty;
+    }
+
     public StudyModule(Guid subjectId, string title, int orderIndex = 0, string? description = null)
     {
         if (subjectId == Guid.Empty)
@@ -25,9 +30,9 @@ public sealed class StudyModule
         UpdatedAt = CreatedAt;
     }
 
-    public Guid Id { get; }
+    public Guid Id { get; private set; }
 
-    public Guid SubjectId { get; }
+    public Guid SubjectId { get; private set; }
 
     public string Title { get; private set; }
 
@@ -35,7 +40,7 @@ public sealed class StudyModule
 
     public int OrderIndex { get; private set; }
 
-    public DateTimeOffset CreatedAt { get; }
+    public DateTimeOffset CreatedAt { get; private set; }
 
     public DateTimeOffset UpdatedAt { get; private set; }
 

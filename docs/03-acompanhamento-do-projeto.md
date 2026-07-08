@@ -40,7 +40,7 @@ Corrigir
 | 1 — Criação da solução backend em C# | Criar estrutura inicial da solução backend | Criada solução `CadernoApp.sln`, projetos em `src` e `tests`, referências entre camadas e validação local | Aprovado | `.gitignore`, `CadernoApp.sln`, `src/CadernoApp.Api/`, `src/CadernoApp.Application/`, `src/CadernoApp.Domain/`, `src/CadernoApp.Infrastructure/`, `tests/CadernoApp.Tests/`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build` e `dotnet test` executados com sucesso | Usado .NET SDK `10.0.301` com target framework `net10.0`; sem entidades, serviços, banco, endpoints de negócio ou PDF |
 | 2 — Entidades de domínio | Criar entidades principais do domínio | Criadas entidades principais em `CadernoApp.Domain` e testes unitários em `CadernoApp.Tests` | Aprovado | `src/CadernoApp.Domain/Entities/`, `tests/CadernoApp.Tests/Domain/`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build` e `dotnet test` executados com sucesso | Sem banco, EF, migrations, endpoints, controllers, serviços de aplicação, repositórios, DTOs ou PDF |
 | 3 — Regras de negócio | Implementar regras básicas do domínio | Implementadas operações controladas para módulos, anotações, páginas, tags, favoritos e atualização de conteúdo | Aprovado | `src/CadernoApp.Domain/Entities/`, `tests/CadernoApp.Tests/Domain/CoreDomainEntitiesTests.cs`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format` executados com sucesso | Sem banco, EF, migrations, endpoints, controllers, serviços de aplicação, repositórios, DTOs ou PDF |
-| 4 — Persistência | Configurar banco de dados e mapeamento das entidades | Pendente | Pendente | A definir | Banco configurado e entidades persistíveis | Persistência inicial recomendada: SQLite |
+| 4 — Persistência | Configurar banco de dados e mapeamento das entidades | Configurado EF Core com SQLite, `CadernoAppDbContext`, mapeamentos Fluent API e testes com SQLite em memória | Aprovado | `src/CadernoApp.Infrastructure/`, `src/CadernoApp.Domain/Entities/`, `tests/CadernoApp.Tests/Infrastructure/`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format` executados com sucesso | Sem migrations, endpoints, controllers, serviços de aplicação, repositórios, DTOs, autenticação ou PDF |
 | 5 — Serviços de aplicação | Criar casos de uso principais | Pendente | Pendente | A definir | Serviços criados e solução compilando | Camada de aplicação deve evitar dependência direta da API |
 | 6 — Camada de entrada/API | Expor endpoints para consumo futuro pelo frontend | Pendente | Pendente | A definir | Endpoints básicos funcionando | Incluir endpoints para matérias, módulos, anotações, páginas, tags e favoritos |
 | 7 — Testes | Criar testes do domínio e dos fluxos principais | Pendente | Pendente | A definir | Testes executando com sucesso | Priorizar regras de página, tags e favoritos |
@@ -155,20 +155,20 @@ Motivo:
 
 ### Tarefa atual
 
-Etapa 3 concluída: implementação das regras básicas de negócio do domínio.
+Etapa 4 concluída: configuração inicial de persistência com EF Core e SQLite.
 
 ### Próxima tarefa sugerida
 
-Configurar a persistência inicial do projeto.
+Criar serviços de aplicação e casos de uso iniciais.
 
 Itens previstos para a próxima etapa:
 
-- Escolher e configurar o pacote de persistência.
-- Definir o projeto responsável pela infraestrutura de dados.
-- Preparar o mapeamento das entidades sem misturar regras de domínio com persistência.
-- Definir a estratégia inicial de banco local, conforme planejamento.
+- Criar contratos e casos de uso na camada `CadernoApp.Application`.
+- Definir operações iniciais para matérias, módulos, anotações, páginas, tags e favoritos.
+- Manter a API sem endpoints de negócio até a etapa própria.
+- Manter persistência acessada pela aplicação por abstrações adequadas, sem acoplar o domínio ao EF Core.
 
-Não criar endpoints de API, controllers, serviços de aplicação, autenticação ou PDF nessa próxima etapa.
+Não criar endpoints de API, controllers, autenticação ou PDF nessa próxima etapa.
 
 ## Registro da Etapa 1
 
@@ -396,6 +396,91 @@ feat: add domain business rules
 - `dotnet test` e `dotnet format` precisaram ser executados fora do sandbox por acesso ao `NuGet.Config` do usuário.
 - Não foram criados banco de dados, Entity Framework, migrations, endpoints, controllers, serviços de aplicação, repositórios, DTOs, autenticação ou lógica de PDF.
 
+## Registro da Etapa 4
+
+### Objetivo realizado
+
+Configurada a persistência inicial no projeto `CadernoApp.Infrastructure` usando SQLite e Entity Framework Core, com mapeamento das entidades principais do domínio e testes de persistência com SQLite em memória.
+
+### Banco e ORM escolhidos
+
+```text
+Banco: SQLite
+ORM: Entity Framework Core
+```
+
+### Pacotes instalados
+
+```text
+Microsoft.EntityFrameworkCore 10.0.9
+Microsoft.EntityFrameworkCore.Sqlite 10.0.9
+Microsoft.EntityFrameworkCore.Design 10.0.9
+SQLitePCLRaw.lib.e_sqlite3 3.53.3
+```
+
+`SQLitePCLRaw.lib.e_sqlite3` foi fixado diretamente para substituir a dependência transitiva `2.1.11`, que gerava alerta `NU1903`.
+
+### Arquivos criados
+
+```text
+src/CadernoApp.Infrastructure/Persistence/CadernoAppDbContext.cs
+src/CadernoApp.Infrastructure/Persistence/Configurations/SubjectConfiguration.cs
+src/CadernoApp.Infrastructure/Persistence/Configurations/StudyModuleConfiguration.cs
+src/CadernoApp.Infrastructure/Persistence/Configurations/NoteConfiguration.cs
+src/CadernoApp.Infrastructure/Persistence/Configurations/NotePageConfiguration.cs
+src/CadernoApp.Infrastructure/Persistence/Configurations/TagConfiguration.cs
+tests/CadernoApp.Tests/Infrastructure/CadernoAppDbContextTests.cs
+```
+
+### Arquivos alterados
+
+```text
+src/CadernoApp.Infrastructure/CadernoApp.Infrastructure.csproj
+src/CadernoApp.Domain/Entities/Subject.cs
+src/CadernoApp.Domain/Entities/StudyModule.cs
+src/CadernoApp.Domain/Entities/Note.cs
+src/CadernoApp.Domain/Entities/NotePage.cs
+src/CadernoApp.Domain/Entities/Tag.cs
+docs/03-acompanhamento-do-projeto.md
+```
+
+### Testes criados ou ajustados
+
+```text
+CadernoAppDbContextTests.CanPersistSubject
+CadernoAppDbContextTests.CanPersistSubjectWithStudyModule
+CadernoAppDbContextTests.CanPersistStudyModuleWithNote
+CadernoAppDbContextTests.CanPersistNoteWithNotePage
+CadernoAppDbContextTests.CanPersistNoteWithTag
+```
+
+### Resultado de restore, build, test e format
+
+```text
+dotnet restore: sucesso
+dotnet build: sucesso, 0 avisos, 0 erros
+dotnet test: sucesso, 40 testes aprovados
+dotnet format: sucesso
+```
+
+### Commit gerado
+
+```text
+feat: add initial persistence layer
+```
+
+### Observações técnicas
+
+- O `CadernoAppDbContext` expõe `DbSet` para `Subject`, `StudyModule`, `Note`, `NotePage` e `Tag`.
+- Os mapeamentos foram criados por classe de configuração usando Fluent API.
+- A relação `Note`/`Tag` foi mapeada como many-to-many com tabela de junção `NoteTags`, sem criar entidade de domínio `NoteTag`.
+- As coleções encapsuladas do domínio foram mapeadas usando acesso por campo.
+- As entidades de domínio receberam apenas ajustes técnicos mínimos para EF Core: construtores privados sem parâmetros e setters privados em propriedades que precisam ser materializadas.
+- O projeto `CadernoApp.Domain` continua sem referência a Entity Framework.
+- Nenhuma migration foi criada.
+- `Program.cs` da API não foi alterado.
+- Não foram criados endpoints, controllers, serviços de aplicação, repositórios, DTOs, autenticação ou PDF.
+
 ## Histórico de Validações
 
 | Data | Etapa | Resultado | Resumo | Observações |
@@ -404,6 +489,7 @@ feat: add domain business rules
 | 2026-07-08 | Etapa 1 | Aprovado | Estrutura inicial backend em C# criada e validada com `dotnet restore`, `dotnet build` e `dotnet test` | Commit `chore: add initial backend solution structure`; `dotnet test` sem testes disponíveis |
 | 2026-07-08 | Etapa 2 | Aprovado | Entidades principais do domínio criadas e validadas com testes unitários | Commit `feat: add core domain entities`; `dotnet test` com 9 testes aprovados |
 | 2026-07-08 | Etapa 3 | Aprovado | Regras básicas de negócio do domínio implementadas e validadas com testes unitários | Commit `feat: add domain business rules`; `dotnet test` com 35 testes aprovados |
+| 2026-07-08 | Etapa 4 | Aprovado | Persistência inicial com EF Core e SQLite configurada e validada com testes de persistência | Commit `feat: add initial persistence layer`; `dotnet test` com 40 testes aprovados |
 
 ## Checklist de validação da Etapa 0
 

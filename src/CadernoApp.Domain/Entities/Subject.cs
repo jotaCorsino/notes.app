@@ -4,6 +4,11 @@ public sealed class Subject
 {
     private readonly List<StudyModule> _modules = [];
 
+    private Subject()
+    {
+        Name = string.Empty;
+    }
+
     public Subject(string name, string? description = null, string? color = null)
     {
         Id = Guid.NewGuid();
@@ -14,7 +19,7 @@ public sealed class Subject
         UpdatedAt = CreatedAt;
     }
 
-    public Guid Id { get; }
+    public Guid Id { get; private set; }
 
     public string Name { get; private set; }
 
@@ -22,7 +27,7 @@ public sealed class Subject
 
     public string? Color { get; private set; }
 
-    public DateTimeOffset CreatedAt { get; }
+    public DateTimeOffset CreatedAt { get; private set; }
 
     public DateTimeOffset UpdatedAt { get; private set; }
 

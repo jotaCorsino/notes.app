@@ -2,6 +2,11 @@ namespace CadernoApp.Domain.Entities;
 
 public sealed class Tag
 {
+    private Tag()
+    {
+        Name = string.Empty;
+    }
+
     public Tag(string name, string? color = null)
     {
         Id = Guid.NewGuid();
@@ -11,13 +16,13 @@ public sealed class Tag
         UpdatedAt = CreatedAt;
     }
 
-    public Guid Id { get; }
+    public Guid Id { get; private set; }
 
     public string Name { get; private set; }
 
     public string? Color { get; private set; }
 
-    public DateTimeOffset CreatedAt { get; }
+    public DateTimeOffset CreatedAt { get; private set; }
 
     public DateTimeOffset UpdatedAt { get; private set; }
 

@@ -5,6 +5,11 @@ public sealed class Note
     private readonly List<NotePage> _pages = [];
     private readonly List<Tag> _tags = [];
 
+    private Note()
+    {
+        Title = string.Empty;
+    }
+
     public Note(Guid studyModuleId, string title)
     {
         if (studyModuleId == Guid.Empty)
@@ -20,15 +25,15 @@ public sealed class Note
         UpdatedAt = CreatedAt;
     }
 
-    public Guid Id { get; }
+    public Guid Id { get; private set; }
 
-    public Guid StudyModuleId { get; }
+    public Guid StudyModuleId { get; private set; }
 
     public string Title { get; private set; }
 
     public bool IsFavorite { get; private set; }
 
-    public DateTimeOffset CreatedAt { get; }
+    public DateTimeOffset CreatedAt { get; private set; }
 
     public DateTimeOffset UpdatedAt { get; private set; }
 

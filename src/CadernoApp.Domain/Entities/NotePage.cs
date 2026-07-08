@@ -6,6 +6,12 @@ public sealed class NotePage
     public const decimal DefaultA4HeightMm = 297m;
     public const string DefaultContentFormat = "html";
 
+    private NotePage()
+    {
+        Content = string.Empty;
+        ContentFormat = DefaultContentFormat;
+    }
+
     public NotePage(
         Guid noteId,
         int pageNumber,
@@ -52,9 +58,9 @@ public sealed class NotePage
         UpdatedAt = CreatedAt;
     }
 
-    public Guid Id { get; }
+    public Guid Id { get; private set; }
 
-    public Guid NoteId { get; }
+    public Guid NoteId { get; private set; }
 
     public int PageNumber { get; private set; }
 
@@ -68,7 +74,7 @@ public sealed class NotePage
 
     public int OrderIndex { get; private set; }
 
-    public DateTimeOffset CreatedAt { get; }
+    public DateTimeOffset CreatedAt { get; private set; }
 
     public DateTimeOffset UpdatedAt { get; private set; }
 

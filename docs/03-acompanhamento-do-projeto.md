@@ -1,4 +1,4 @@
-# 03 — Acompanhamento do Projeto
+﻿# 03 — Acompanhamento do Projeto
 
 ## Objetivo
 
@@ -21,7 +21,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Etapa 9 — Especificação técnica do editor A4 — Aprovado — Commit da971ec
 - M2 — Normalização Markdown inicial — Parcialmente corrigida — Commit a6458d7
 - M2.1 — Correção de quebras Markdown — Parcialmente corrigida — Commit dce4e7b
-- M2.2 — Correção final do acompanhamento — Em validação — Commit a preencher após este commit
+- M2.2 — Correção final do acompanhamento — Reprovada na formatação — Commit fd12ed6
+- M2.3 — Correção forçada de quebras Markdown — Em validação
 
 ## Decisões técnicas aprovadas
 
@@ -80,13 +81,15 @@ A próxima tarefa deve incluir:
 - Etapa 8 aprovada.
 - M1 aprovada.
 - Etapa 9 aprovada no conteúdo.
-- M2 e M2.1 exigiram correções documentais.
-- M2.2 pendente de validação remota.
+- M2 exigiu correção documental.
+- M2.1 exigiu correção documental.
+- M2.2 acertou o conteúdo, mas falhou na formatação Markdown real.
+- M2.3 pendente de validação remota.
 
 ## Observações
 
 - Este documento substitui o acompanhamento anterior por uma versão limpa e objetiva.
 - Não há tabelas grandes neste arquivo.
-- Cada título, lista e seção usa quebras de linha reais.
+- Cada título, lista e seção deve usar quebras de linha reais.
 - O documento `docs/04-especificacao-editor-a4-e-pdf.md` permanece como fonte da especificação do editor A4 e da estratégia futura de PDF.
 - Nenhuma funcionalidade nova foi criada nesta manutenção documental.

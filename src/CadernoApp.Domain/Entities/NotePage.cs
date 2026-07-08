@@ -72,6 +72,19 @@ public sealed class NotePage
 
     public DateTimeOffset UpdatedAt { get; private set; }
 
+    public void UpdateContent(string? content, string contentFormat = DefaultContentFormat)
+    {
+        Content = content ?? string.Empty;
+        ContentFormat = EnsureRequired(contentFormat, nameof(contentFormat));
+        Touch();
+    }
+
+    private void Touch()
+    {
+        var now = DateTimeOffset.UtcNow;
+        UpdatedAt = now > UpdatedAt ? now : UpdatedAt.AddTicks(1);
+    }
+
     private static string EnsureRequired(string value, string parameterName)
     {
         if (string.IsNullOrWhiteSpace(value))

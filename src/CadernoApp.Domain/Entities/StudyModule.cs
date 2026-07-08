@@ -41,6 +41,29 @@ public sealed class StudyModule
 
     public IReadOnlyCollection<Note> Notes => _notes;
 
+    public Note AddNote(string title)
+    {
+        var normalizedTitle = EnsureRequired(title, nameof(title));
+
+        if (_notes.Any(note => string.Equals(note.Title, normalizedTitle, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException("A note with the same title already exists in this module.");
+        }
+
+        var note = new Note(Id, normalizedTitle);
+
+        _notes.Add(note);
+        Touch();
+
+        return note;
+    }
+
+    private void Touch()
+    {
+        var now = DateTimeOffset.UtcNow;
+        UpdatedAt = now > UpdatedAt ? now : UpdatedAt.AddTicks(1);
+    }
+
     private static string EnsureRequired(string value, string parameterName)
     {
         if (string.IsNullOrWhiteSpace(value))

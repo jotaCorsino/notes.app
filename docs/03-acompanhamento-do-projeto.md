@@ -39,7 +39,7 @@ Corrigir
 | 0 — Documentação e base do repositório | Criar documentação inicial do projeto e realizar primeiro commit/push | Documentação inicial validada, commitada e enviada para `origin/main` | Aprovado | `docs/01-visao-geral-do-app.md`, `docs/02-planejamento-de-construcao.md`, `docs/03-acompanhamento-do-projeto.md` | Confirmar que existem apenas os três documentos iniciais dentro de `docs` e que não há código criado | Concluída em 2026-07-08 |
 | 1 — Criação da solução backend em C# | Criar estrutura inicial da solução backend | Criada solução `CadernoApp.sln`, projetos em `src` e `tests`, referências entre camadas e validação local | Aprovado | `.gitignore`, `CadernoApp.sln`, `src/CadernoApp.Api/`, `src/CadernoApp.Application/`, `src/CadernoApp.Domain/`, `src/CadernoApp.Infrastructure/`, `tests/CadernoApp.Tests/`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build` e `dotnet test` executados com sucesso | Usado .NET SDK `10.0.301` com target framework `net10.0`; sem entidades, serviços, banco, endpoints de negócio ou PDF |
 | 2 — Entidades de domínio | Criar entidades principais do domínio | Criadas entidades principais em `CadernoApp.Domain` e testes unitários em `CadernoApp.Tests` | Aprovado | `src/CadernoApp.Domain/Entities/`, `tests/CadernoApp.Tests/Domain/`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build` e `dotnet test` executados com sucesso | Sem banco, EF, migrations, endpoints, controllers, serviços de aplicação, repositórios, DTOs ou PDF |
-| 3 — Regras de negócio | Implementar regras básicas do domínio | Pendente | Pendente | A definir | Regras implementadas e testáveis | Incluir regras de página, tags e favoritos |
+| 3 — Regras de negócio | Implementar regras básicas do domínio | Implementadas operações controladas para módulos, anotações, páginas, tags, favoritos e atualização de conteúdo | Aprovado | `src/CadernoApp.Domain/Entities/`, `tests/CadernoApp.Tests/Domain/CoreDomainEntitiesTests.cs`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format` executados com sucesso | Sem banco, EF, migrations, endpoints, controllers, serviços de aplicação, repositórios, DTOs ou PDF |
 | 4 — Persistência | Configurar banco de dados e mapeamento das entidades | Pendente | Pendente | A definir | Banco configurado e entidades persistíveis | Persistência inicial recomendada: SQLite |
 | 5 — Serviços de aplicação | Criar casos de uso principais | Pendente | Pendente | A definir | Serviços criados e solução compilando | Camada de aplicação deve evitar dependência direta da API |
 | 6 — Camada de entrada/API | Expor endpoints para consumo futuro pelo frontend | Pendente | Pendente | A definir | Endpoints básicos funcionando | Incluir endpoints para matérias, módulos, anotações, páginas, tags e favoritos |
@@ -155,21 +155,20 @@ Motivo:
 
 ### Tarefa atual
 
-Etapa 2 concluída: criação das entidades principais do domínio.
+Etapa 3 concluída: implementação das regras básicas de negócio do domínio.
 
 ### Próxima tarefa sugerida
 
-Implementar as regras de negócio do domínio.
+Configurar a persistência inicial do projeto.
 
-Regras previstas para a próxima etapa:
+Itens previstos para a próxima etapa:
 
-- Operações controladas para adicionar módulos a matérias.
-- Operações controladas para adicionar anotações a módulos.
-- Operações controladas para adicionar páginas a anotações.
-- Regras de ordenação e numeração de páginas.
-- Regras iniciais para tags e favoritos.
+- Escolher e configurar o pacote de persistência.
+- Definir o projeto responsável pela infraestrutura de dados.
+- Preparar o mapeamento das entidades sem misturar regras de domínio com persistência.
+- Definir a estratégia inicial de banco local, conforme planejamento.
 
-Não configurar persistência, Entity Framework, migrations, endpoints, serviços de aplicação ou PDF nessa próxima etapa.
+Não criar endpoints de API, controllers, serviços de aplicação, autenticação ou PDF nessa próxima etapa.
 
 ## Registro da Etapa 1
 
@@ -293,6 +292,110 @@ feat: add core domain entities
 - Foram usadas validações básicas para campos obrigatórios.
 - Não foram criados banco de dados, Entity Framework, migrations, endpoints, controllers, serviços de aplicação, repositórios, DTOs ou lógica de PDF.
 
+## Registro da Etapa 3
+
+### Objetivo realizado
+
+Implementadas regras básicas de negócio diretamente nas entidades de domínio, mantendo o escopo restrito ao projeto `CadernoApp.Domain` e aos testes unitários em `CadernoApp.Tests`.
+
+### Regras implementadas
+
+```text
+Subject
+- Adiciona módulos por método de domínio.
+- Rejeita módulo com título duplicado dentro da mesma matéria, com comparação case-insensitive.
+- Define OrderIndex automaticamente no final quando não informado.
+- Atualiza UpdatedAt ao adicionar módulo.
+
+StudyModule
+- Adiciona anotações por método de domínio.
+- Rejeita anotação com título duplicado dentro do mesmo módulo, com comparação case-insensitive.
+- Atualiza UpdatedAt ao adicionar anotação.
+
+Note
+- Adiciona páginas por método de domínio.
+- Define PageNumber sequencial automaticamente a partir de 1.
+- Define OrderIndex acompanhando a ordem das páginas.
+- Adiciona tags por método de domínio.
+- Rejeita tag duplicada na mesma anotação, com comparação case-insensitive.
+- Remove tag por nome ou por Id.
+- Mantém MarkAsFavorite e UnmarkAsFavorite idempotentes.
+- Atualiza UpdatedAt ao adicionar página, adicionar tag, remover tag ou alterar favorito.
+
+NotePage
+- Mantém A4 como tamanho padrão: 210mm x 297mm.
+- Mantém ContentFormat padrão como html.
+- Valida PageNumber, OrderIndex, WidthMm e HeightMm.
+- Atualiza conteúdo por UpdateContent.
+- Atualiza UpdatedAt ao alterar conteúdo.
+
+Tag
+- Mantém nome obrigatório e cor opcional.
+- Permite atualizar nome e cor por método de domínio.
+```
+
+### Testes criados ou ajustados
+
+```text
+CoreDomainEntitiesTests
+- Cobertura de criação das entidades principais.
+- Cobertura de Subject.AddModule.
+- Cobertura de duplicidade de módulos por título.
+- Cobertura de UpdatedAt ao adicionar módulo.
+- Cobertura de StudyModule.AddNote.
+- Cobertura de duplicidade de anotações por título.
+- Cobertura de UpdatedAt ao adicionar anotação.
+- Cobertura de Note.AddPage com primeira página e múltiplas páginas sequenciais.
+- Cobertura de UpdatedAt ao adicionar página.
+- Cobertura de Note.AddTag.
+- Cobertura de duplicidade de tags por nome.
+- Cobertura de remoção de tag por nome e por Id.
+- Cobertura de idempotência de favoritos.
+- Cobertura de NotePage.UpdateContent.
+- Cobertura das validações de PageNumber, OrderIndex, WidthMm e HeightMm.
+```
+
+### Arquivos criados
+
+```text
+Nenhum arquivo novo foi criado nesta etapa.
+```
+
+### Arquivos alterados
+
+```text
+src/CadernoApp.Domain/Entities/Subject.cs
+src/CadernoApp.Domain/Entities/StudyModule.cs
+src/CadernoApp.Domain/Entities/Note.cs
+src/CadernoApp.Domain/Entities/NotePage.cs
+src/CadernoApp.Domain/Entities/Tag.cs
+tests/CadernoApp.Tests/Domain/CoreDomainEntitiesTests.cs
+docs/03-acompanhamento-do-projeto.md
+```
+
+### Resultado de build, test e format
+
+```text
+dotnet restore: sucesso
+dotnet build: sucesso, 0 avisos, 0 erros
+dotnet test: sucesso, 35 testes aprovados
+dotnet format: sucesso
+```
+
+### Commit gerado
+
+```text
+feat: add domain business rules
+```
+
+### Observações técnicas
+
+- As regras foram implementadas somente nas entidades do projeto `CadernoApp.Domain`.
+- Os testes foram ajustados somente no projeto `CadernoApp.Tests`.
+- `UpdatedAt` usa atualização monotônica para evitar igualdade acidental quando operações acontecem no mesmo tick.
+- `dotnet test` e `dotnet format` precisaram ser executados fora do sandbox por acesso ao `NuGet.Config` do usuário.
+- Não foram criados banco de dados, Entity Framework, migrations, endpoints, controllers, serviços de aplicação, repositórios, DTOs, autenticação ou lógica de PDF.
+
 ## Histórico de Validações
 
 | Data | Etapa | Resultado | Resumo | Observações |
@@ -300,6 +403,7 @@ feat: add core domain entities
 | 2026-07-08 | Etapa 0 | Aprovado | Documentação inicial validada, commitada e enviada para `origin/main` | Commit `docs: add initial project documentation` |
 | 2026-07-08 | Etapa 1 | Aprovado | Estrutura inicial backend em C# criada e validada com `dotnet restore`, `dotnet build` e `dotnet test` | Commit `chore: add initial backend solution structure`; `dotnet test` sem testes disponíveis |
 | 2026-07-08 | Etapa 2 | Aprovado | Entidades principais do domínio criadas e validadas com testes unitários | Commit `feat: add core domain entities`; `dotnet test` com 9 testes aprovados |
+| 2026-07-08 | Etapa 3 | Aprovado | Regras básicas de negócio do domínio implementadas e validadas com testes unitários | Commit `feat: add domain business rules`; `dotnet test` com 35 testes aprovados |
 
 ## Checklist de validação da Etapa 0
 

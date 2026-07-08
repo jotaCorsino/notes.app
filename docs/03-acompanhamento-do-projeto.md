@@ -46,7 +46,7 @@ Corrigir
 | 7 — Testes | Criar testes do domínio e dos fluxos principais | Ampliada cobertura de domínio, aplicação e API; criado workflow inicial de CI no GitHub Actions | Aprovado | `.github/workflows/ci.yml`, `tests/CadernoApp.Tests/Domain/CoreDomainEntitiesTests.cs`, `tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs`, `tests/CadernoApp.Tests/Api/ApiEndpointsTests.cs`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format --no-restore` executados com sucesso | Sem novas features de produto, frontend, autenticação, autorização, PDF, migrations ou controllers |
 | 8 — Preparação para exportação PDF | Preparar contratos e estrutura para PDF A4 | Criados DTOs e serviço de aplicação para retornar anotações em formato imprimível/exportável; criado endpoint JSON `/api/notes/{id}/printable` | Aprovado | `src/CadernoApp.Application/DTOs/Export/`, `src/CadernoApp.Application/Services/NoteExportService.cs`, `src/CadernoApp.Application/DependencyInjection.cs`, `src/CadernoApp.Api/Endpoints/NoteEndpoints.cs`, `tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs`, `tests/CadernoApp.Tests/Api/ApiEndpointsTests.cs`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test --no-restore`, `dotnet test --no-build` e `dotnet format --no-restore` executados com sucesso | Sem geração real de PDF, bibliotecas de PDF, arquivo `.pdf`, download, frontend, autenticação, autorização, migrations ou controllers |
 | M1 — Manutenção de estilo C# | Padronizar formatação, legibilidade e configuração básica de estilo | Criado `.editorconfig`, executado `dotnet format --no-restore` e organizado `using` afetado pelo format | Aprovado | `.editorconfig`, `tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format --no-restore` executados com sucesso | Sem alteração de comportamento, novas features, pacotes, endpoints, migrations, PDF, frontend ou autenticação |
-| 9 — Integração futura com frontend | Preparar backend para editor visual e app final | Pendente | Pendente | A definir | API pronta para consumo inicial | Frontend será planejado depois |
+| 9 — Especificação técnica do editor A4 | Definir editor A4, contrato de conteúdo e estratégia futura de PDF | Criado documento técnico `docs/04-especificacao-editor-a4-e-pdf.md` com responsabilidades de frontend/backend, contrato HTML controlado, paginação A4, riscos e decisões | Aprovado | `docs/04-especificacao-editor-a4-e-pdf.md`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format --no-restore` executados com sucesso | Etapa apenas documental; sem frontend, PDF real, pacotes, entidades, serviços, endpoints ou testes novos |
 
 ## Decisões Técnicas
 
@@ -156,18 +156,18 @@ Motivo:
 
 ### Tarefa atual
 
-Manutenção M1 concluída: padronização básica de estilo e formatação C#.
+Etapa 9 concluída: especificação técnica do editor A4 e contrato de conteúdo.
 
 ### Próxima tarefa sugerida
 
-Revisar a estratégia de frontend/editor para consumir o formato imprimível.
+Planejar o frontend/editor A4 ou a implementação futura do PDF real.
 
 Itens previstos para a próxima etapa:
 
-- Validar como o futuro editor visual consumirá `GET /api/notes/{id}/printable`.
-- Definir o formato final de armazenamento do conteúdo da página.
-- Decidir se a geração real de PDF deve ficar no backend ou em uma camada dedicada.
-- Manter a API sem autenticação e sem frontend até a etapa própria.
+- Escolher biblioteca ou abordagem de editor rich text.
+- Criar protótipo visual da página A4.
+- Validar sanitização do HTML controlado.
+- Definir se a próxima entrega será frontend/editor ou PDF real.
 
 Não criar autenticação, frontend ou implementação final de PDF sem uma etapa específica.
 
@@ -977,6 +977,82 @@ style: normalize csharp formatting
 - Não foram criadas features, endpoints, pacotes, migrations, PDF, frontend, autenticação ou autorização.
 - Nenhum contrato público da API ou comportamento de domínio foi alterado intencionalmente.
 
+## Registro da Etapa 9
+
+### Objetivo realizado
+
+Criada a especificação técnica do editor A4, do contrato de conteúdo das páginas e da estratégia futura de exportação PDF.
+
+### Documento criado
+
+```text
+docs/04-especificacao-editor-a4-e-pdf.md
+```
+
+### Decisões documentadas
+
+```text
+O conteúdo será salvo por página.
+O formato inicial será HTML controlado.
+ContentFormat padrão permanece "html".
+O frontend será responsável pela paginação visual.
+O backend não fará quebra automática de página no MVP.
+O endpoint GET /api/notes/{id}/printable será a base para exportação futura.
+A geração real de PDF será etapa futura.
+Scripts, iframes, eventos inline e estilos arbitrários perigosos não fazem parte do contrato permitido.
+```
+
+### Conteúdos documentados
+
+```text
+Objetivo do editor A4.
+Responsabilidades do frontend.
+Responsabilidades do backend.
+Contrato de conteúdo HTML controlado.
+Subconjunto inicial de tags e estilos permitidos.
+Modelo de página A4 com 210mm x 297mm.
+Estratégia de paginação visual.
+Estratégia futura de exportação PDF.
+Riscos técnicos.
+Próximas etapas recomendadas.
+```
+
+### Arquivos criados
+
+```text
+docs/04-especificacao-editor-a4-e-pdf.md
+```
+
+### Arquivos alterados
+
+```text
+docs/03-acompanhamento-do-projeto.md
+```
+
+### Resultado de restore, build, test e format
+
+```text
+dotnet restore: sucesso
+dotnet build: sucesso, 0 avisos, 0 erros
+dotnet test: sucesso, 87 testes aprovados
+dotnet format --no-restore: sucesso
+```
+
+### Commit gerado
+
+```text
+docs: define a4 editor and content contract
+```
+
+### Observações técnicas
+
+- Nenhuma feature nova foi criada.
+- Nenhum código de frontend foi criado.
+- Nenhum PDF real foi gerado.
+- Nenhuma biblioteca de PDF foi instalada.
+- Nenhuma entidade, serviço, endpoint, teste, migration, pacote ou target framework foi alterado.
+- Os documentos `docs/01-visao-geral-do-app.md` e `docs/02-planejamento-de-construcao.md` não foram alterados.
+
 ## Histórico de Validações
 
 | Data | Etapa | Resultado | Resumo | Observações |
@@ -991,6 +1067,7 @@ style: normalize csharp formatting
 | 2026-07-08 | Etapa 7 | Aprovado | Cobertura de testes ampliada e CI inicial criado no GitHub Actions | Commit `test: expand coverage and add ci workflow`; `dotnet test` com 80 testes aprovados |
 | 2026-07-08 | Etapa 8 | Aprovado | Estrutura printable/export ready criada para anotações A4, com endpoint JSON e testes | Commit `feat: prepare printable note export`; `dotnet test` com 87 testes aprovados |
 | 2026-07-08 | Manutenção M1 | Aprovado | `.editorconfig` criado e formatação C# normalizada sem alteração funcional | Commit `style: normalize csharp formatting`; `dotnet test` com 87 testes aprovados |
+| 2026-07-08 | Etapa 9 | Aprovado | Especificação técnica do editor A4, contrato HTML controlado e estratégia futura de PDF documentados | Commit `docs: define a4 editor and content contract`; `dotnet test` com 87 testes aprovados |
 
 ## Checklist de validação da Etapa 0
 

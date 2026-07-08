@@ -101,6 +101,20 @@ public sealed class CoreDomainEntitiesTests
     }
 
     [Fact]
+    public void Subject_Update_UpdatesBasicData()
+    {
+        var subject = new Subject("Mathematics");
+        var previousUpdatedAt = subject.UpdatedAt;
+
+        subject.Update("Physics", "Mechanics", "#00aaee");
+
+        Assert.Equal("Physics", subject.Name);
+        Assert.Equal("Mechanics", subject.Description);
+        Assert.Equal("#00aaee", subject.Color);
+        Assert.True(subject.UpdatedAt > previousUpdatedAt);
+    }
+
+    [Fact]
     public void Subject_AddModule_AddsModuleToSubject()
     {
         var subject = new Subject("Mathematics");
@@ -232,6 +246,18 @@ public sealed class CoreDomainEntitiesTests
         Assert.Same(tag, note.Tags.Single());
         Assert.Equal("Important", tag.Name);
         Assert.Equal("#ffcc00", tag.Color);
+    }
+
+    [Fact]
+    public void Note_AddTag_WithExistingTag_AddsTagToNote()
+    {
+        var note = new Note(Guid.NewGuid(), "Linear equations");
+        var tag = new Tag("Important", "#ffcc00");
+
+        var addedTag = note.AddTag(tag);
+
+        Assert.Same(tag, addedTag);
+        Assert.Same(tag, note.Tags.Single());
     }
 
     [Fact]

@@ -33,6 +33,14 @@ public sealed class Subject
 
     public IReadOnlyCollection<StudyModule> Modules => _modules;
 
+    public void Update(string name, string? description = null, string? color = null)
+    {
+        Name = EnsureRequired(name, nameof(name));
+        Description = NormalizeOptional(description);
+        Color = NormalizeOptional(color);
+        Touch();
+    }
+
     public StudyModule AddModule(string title, string? description = null, int? orderIndex = null)
     {
         var normalizedTitle = EnsureRequired(title, nameof(title));

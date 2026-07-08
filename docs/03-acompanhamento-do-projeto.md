@@ -41,7 +41,7 @@ Corrigir
 | 2 — Entidades de domínio | Criar entidades principais do domínio | Criadas entidades principais em `CadernoApp.Domain` e testes unitários em `CadernoApp.Tests` | Aprovado | `src/CadernoApp.Domain/Entities/`, `tests/CadernoApp.Tests/Domain/`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build` e `dotnet test` executados com sucesso | Sem banco, EF, migrations, endpoints, controllers, serviços de aplicação, repositórios, DTOs ou PDF |
 | 3 — Regras de negócio | Implementar regras básicas do domínio | Implementadas operações controladas para módulos, anotações, páginas, tags, favoritos e atualização de conteúdo | Aprovado | `src/CadernoApp.Domain/Entities/`, `tests/CadernoApp.Tests/Domain/CoreDomainEntitiesTests.cs`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format` executados com sucesso | Sem banco, EF, migrations, endpoints, controllers, serviços de aplicação, repositórios, DTOs ou PDF |
 | 4 — Persistência | Configurar banco de dados e mapeamento das entidades | Configurado EF Core com SQLite, `CadernoAppDbContext`, mapeamentos Fluent API e testes com SQLite em memória | Aprovado | `src/CadernoApp.Infrastructure/`, `src/CadernoApp.Domain/Entities/`, `tests/CadernoApp.Tests/Infrastructure/`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format` executados com sucesso | Sem migrations, endpoints, controllers, serviços de aplicação, repositórios, DTOs, autenticação ou PDF |
-| 5 — Serviços de aplicação | Criar casos de uso principais | Pendente | Pendente | A definir | Serviços criados e solução compilando | Camada de aplicação deve evitar dependência direta da API |
+| 5 — Serviços de aplicação | Criar casos de uso principais | Criados serviços de aplicação, DTOs, interfaces de persistência, repositórios EF Core e testes de fluxos com SQLite em memória | Aprovado | `src/CadernoApp.Application/`, `src/CadernoApp.Infrastructure/Persistence/Repositories/`, `src/CadernoApp.Domain/Entities/`, `tests/CadernoApp.Tests/Application/`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format` executados com sucesso | Sem endpoints, controllers, autenticação, frontend, PDF, MediatR, AutoMapper ou FluentValidation |
 | 6 — Camada de entrada/API | Expor endpoints para consumo futuro pelo frontend | Pendente | Pendente | A definir | Endpoints básicos funcionando | Incluir endpoints para matérias, módulos, anotações, páginas, tags e favoritos |
 | 7 — Testes | Criar testes do domínio e dos fluxos principais | Pendente | Pendente | A definir | Testes executando com sucesso | Priorizar regras de página, tags e favoritos |
 | 8 — Preparação para exportação PDF | Preparar contratos e estrutura para PDF A4 | Pendente | Pendente | A definir | Anotações retornando páginas em ordem e estrutura pronta para exportação | Não precisa gerar PDF final nesta etapa |
@@ -155,20 +155,20 @@ Motivo:
 
 ### Tarefa atual
 
-Etapa 4 concluída: configuração inicial de persistência com EF Core e SQLite.
+Etapa 5 concluída: criação dos serviços de aplicação e casos de uso iniciais.
 
 ### Próxima tarefa sugerida
 
-Criar serviços de aplicação e casos de uso iniciais.
+Criar a camada de entrada/API.
 
 Itens previstos para a próxima etapa:
 
-- Criar contratos e casos de uso na camada `CadernoApp.Application`.
-- Definir operações iniciais para matérias, módulos, anotações, páginas, tags e favoritos.
-- Manter a API sem endpoints de negócio até a etapa própria.
-- Manter persistência acessada pela aplicação por abstrações adequadas, sem acoplar o domínio ao EF Core.
+- Registrar a composição necessária no `Program.cs`.
+- Expor endpoints iniciais para matérias, módulos, anotações, páginas, tags e favoritos.
+- Consumir os serviços de aplicação já criados.
+- Manter entidades de domínio fora dos contratos HTTP.
 
-Não criar endpoints de API, controllers, autenticação ou PDF nessa próxima etapa.
+Não criar autenticação, frontend ou PDF nessa próxima etapa.
 
 ## Registro da Etapa 1
 
@@ -481,6 +481,143 @@ feat: add initial persistence layer
 - `Program.cs` da API não foi alterado.
 - Não foram criados endpoints, controllers, serviços de aplicação, repositórios, DTOs, autenticação ou PDF.
 
+## Registro da Etapa 5
+
+### Objetivo realizado
+
+Criada a camada de aplicação com casos de uso iniciais para matérias, módulos, anotações, páginas, tags e favoritos. A aplicação depende apenas do domínio e de interfaces próprias; as implementações EF Core ficaram isoladas na infraestrutura.
+
+### Interfaces criadas
+
+```text
+ISubjectRepository
+IStudyModuleRepository
+INoteRepository
+ITagRepository
+IUnitOfWork
+```
+
+### Serviços criados
+
+```text
+SubjectService
+StudyModuleService
+NoteService
+```
+
+### DTOs criados
+
+```text
+SubjectDto
+StudyModuleDto
+NoteDto
+NoteSummaryDto
+NotePageDto
+TagDto
+```
+
+### Repositórios criados
+
+```text
+SubjectRepository
+StudyModuleRepository
+NoteRepository
+TagRepository
+UnitOfWork
+```
+
+### Arquivos criados
+
+```text
+src/CadernoApp.Application/Abstractions/ISubjectRepository.cs
+src/CadernoApp.Application/Abstractions/IStudyModuleRepository.cs
+src/CadernoApp.Application/Abstractions/INoteRepository.cs
+src/CadernoApp.Application/Abstractions/ITagRepository.cs
+src/CadernoApp.Application/Abstractions/IUnitOfWork.cs
+src/CadernoApp.Application/DTOs/SubjectDto.cs
+src/CadernoApp.Application/DTOs/StudyModuleDto.cs
+src/CadernoApp.Application/DTOs/NoteDto.cs
+src/CadernoApp.Application/DTOs/NoteSummaryDto.cs
+src/CadernoApp.Application/DTOs/NotePageDto.cs
+src/CadernoApp.Application/DTOs/TagDto.cs
+src/CadernoApp.Application/Services/SubjectService.cs
+src/CadernoApp.Application/Services/StudyModuleService.cs
+src/CadernoApp.Application/Services/NoteService.cs
+src/CadernoApp.Application/DependencyInjection.cs
+src/CadernoApp.Infrastructure/DependencyInjection.cs
+src/CadernoApp.Infrastructure/Persistence/Repositories/SubjectRepository.cs
+src/CadernoApp.Infrastructure/Persistence/Repositories/StudyModuleRepository.cs
+src/CadernoApp.Infrastructure/Persistence/Repositories/NoteRepository.cs
+src/CadernoApp.Infrastructure/Persistence/Repositories/TagRepository.cs
+src/CadernoApp.Infrastructure/Persistence/Repositories/UnitOfWork.cs
+tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs
+```
+
+### Arquivos alterados
+
+```text
+src/CadernoApp.Application/CadernoApp.Application.csproj
+src/CadernoApp.Domain/Entities/Subject.cs
+src/CadernoApp.Domain/Entities/Note.cs
+tests/CadernoApp.Tests/Domain/CoreDomainEntitiesTests.cs
+docs/03-acompanhamento-do-projeto.md
+```
+
+### Ajustes no domínio
+
+```text
+Subject.Update
+Note.AddTag(Tag tag)
+```
+
+Esses métodos foram adicionados para suportar casos de uso de aplicação sem expor setters públicos nem remover regras de domínio.
+
+### Testes criados ou ajustados
+
+```text
+ApplicationServicesTests.SubjectService_CreatesSubject
+ApplicationServicesTests.SubjectService_ListsSubjects
+ApplicationServicesTests.SubjectService_UpdatesSubject
+ApplicationServicesTests.StudyModuleService_CreatesModuleInsideSubject
+ApplicationServicesTests.NoteService_CreatesNoteInsideModule
+ApplicationServicesTests.NoteService_AddsPage
+ApplicationServicesTests.NoteService_UpdatesPageContent
+ApplicationServicesTests.NoteService_AddsTag
+ApplicationServicesTests.NoteService_RemovesTag
+ApplicationServicesTests.NoteService_MarksAndUnmarksFavorite
+ApplicationServicesTests.NoteService_ListsFavorites
+ApplicationServicesTests.NoteService_SearchesByTitleAndTag
+CoreDomainEntitiesTests.Subject_Update_UpdatesBasicData
+CoreDomainEntitiesTests.Note_AddTag_WithExistingTag_AddsTagToNote
+```
+
+### Resultado de restore, build, test e format
+
+```text
+dotnet restore: sucesso
+dotnet build: sucesso, 0 avisos, 0 erros
+dotnet test: sucesso, 54 testes aprovados
+dotnet format: sucesso
+```
+
+### Commit gerado
+
+```text
+feat: add application services
+```
+
+### Observações técnicas
+
+- `CadernoApp.Application` continua sem depender de `CadernoApp.Infrastructure`.
+- `CadernoApp.Domain` continua sem dependência de EF Core.
+- `CadernoApp.Infrastructure` implementa as interfaces definidas em `CadernoApp.Application`.
+- Foi adicionado apenas o pacote oficial `Microsoft.Extensions.DependencyInjection.Abstractions` ao projeto `CadernoApp.Application` para registrar serviços via DI.
+- Os testes de aplicação usam SQLite em memória com repositórios reais, sem passar pela API.
+- Ao criar filhos de agregados já rastreados, os repositórios marcam explicitamente as novas entidades como `Added` para o EF Core persistir corretamente coleções encapsuladas.
+- `Program.cs` da API não foi alterado.
+- Não foram criados endpoints, controllers, autenticação, frontend ou PDF.
+- Não foram adicionados MediatR, AutoMapper ou FluentValidation.
+
 ## Histórico de Validações
 
 | Data | Etapa | Resultado | Resumo | Observações |
@@ -490,6 +627,7 @@ feat: add initial persistence layer
 | 2026-07-08 | Etapa 2 | Aprovado | Entidades principais do domínio criadas e validadas com testes unitários | Commit `feat: add core domain entities`; `dotnet test` com 9 testes aprovados |
 | 2026-07-08 | Etapa 3 | Aprovado | Regras básicas de negócio do domínio implementadas e validadas com testes unitários | Commit `feat: add domain business rules`; `dotnet test` com 35 testes aprovados |
 | 2026-07-08 | Etapa 4 | Aprovado | Persistência inicial com EF Core e SQLite configurada e validada com testes de persistência | Commit `feat: add initial persistence layer`; `dotnet test` com 40 testes aprovados |
+| 2026-07-08 | Etapa 5 | Aprovado | Serviços de aplicação, DTOs, interfaces, repositórios e testes de fluxos criados | Commit `feat: add application services`; `dotnet test` com 54 testes aprovados |
 
 ## Checklist de validação da Etapa 0
 

@@ -86,6 +86,21 @@ public sealed class Note
         return tag;
     }
 
+    public Tag AddTag(Tag tag)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+
+        if (_tags.Any(existingTag => string.Equals(existingTag.Name, tag.Name, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException("A tag with the same name already exists in this note.");
+        }
+
+        _tags.Add(tag);
+        Touch();
+
+        return tag;
+    }
+
     public bool RemoveTag(Guid tagId)
     {
         var tag = _tags.SingleOrDefault(tag => tag.Id == tagId);

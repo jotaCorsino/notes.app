@@ -21,9 +21,13 @@ WidthMm = 210
 HeightMm = 297
 ```
 
-O usuário deve escrever dentro de uma área visual que simula uma folha de papel A4. O conteúdo não deve ser tratado como um texto infinito, mas como blocos salvos por página.
+O usuário deve escrever dentro de uma área visual que simula uma folha de papel A4.
 
-Quando o conteúdo ultrapassar a área útil da página atual, o editor deve criar uma nova página visualmente. Cada página será enviada ao backend separadamente, preservando ordem, conteúdo e formato.
+O conteúdo não deve ser tratado como um texto infinito, mas como blocos salvos por página.
+
+Quando o conteúdo ultrapassar a área útil da página atual, o editor deve criar uma nova página visualmente.
+
+Cada página será enviada ao backend separadamente, preservando ordem, conteúdo e formato.
 
 ## 3. Responsabilidade do Frontend
 
@@ -74,7 +78,10 @@ ContentFormat = html
 
 O campo `Content` deve armazenar HTML controlado produzido pelo editor.
 
-Esse HTML deve ser simples, previsível e seguro para futura renderização. O conteúdo salvo não deve depender de scripts, eventos inline ou estilos arbitrários difíceis de reproduzir na exportação PDF.
+Esse HTML deve ser simples, previsível e seguro para futura renderização.
+
+O conteúdo salvo não deve depender de scripts, eventos inline ou estilos arbitrários difíceis de reproduzir
+na exportação PDF.
 
 ### Conteúdo Não Permitido
 
@@ -132,7 +139,9 @@ WidthMm = 210
 HeightMm = 297
 ```
 
-As margens internas serão responsabilidade inicial do frontend/editor. O backend preserva as dimensões da página e retorna esses valores nas estruturas de leitura e exportação.
+As margens internas serão responsabilidade inicial do frontend/editor.
+
+O backend preserva as dimensões da página e retorna esses valores nas estruturas de leitura e exportação.
 
 A futura exportação PDF deve respeitar as dimensões salvas em cada `PrintableNotePageDto`, criando páginas compatíveis com A4.
 
@@ -142,7 +151,10 @@ A paginação visual será feita pelo frontend.
 
 O backend recebe páginas já separadas, com `PageNumber` e `OrderIndex` definidos ou preservados conforme as regras atuais do domínio.
 
-Nesta fase, o backend não deve tentar quebrar HTML em múltiplas páginas. Essa decisão reduz complexidade e evita inconsistência entre a forma como o usuário vê o conteúdo no editor e a forma como o PDF será gerado no futuro.
+Nesta fase, o backend não deve tentar quebrar HTML em múltiplas páginas.
+
+Essa decisão reduz complexidade e evita inconsistência entre a forma como o usuário vê o conteúdo no editor
+e a forma como o PDF será gerado no futuro.
 
 Futuramente, pode existir uma camada mais avançada de validação ou um motor de paginação, mas isso deve ser decidido em etapa própria.
 

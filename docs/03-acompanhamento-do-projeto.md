@@ -34,20 +34,247 @@ Corrigir
 
 ## Tabela de acompanhamento
 
-| Etapa | Objetivo planejado | O que foi feito | Status | Arquivos alterados | Critério de validação | Observações |
-|---|---|---|---|---|---|---|
-| 0 — Documentação e base do repositório | Criar documentação inicial do projeto e realizar primeiro commit/push | Documentação inicial validada, commitada e enviada para `origin/main` | Aprovado | `docs/01-visao-geral-do-app.md`, `docs/02-planejamento-de-construcao.md`, `docs/03-acompanhamento-do-projeto.md` | Confirmar que existem apenas os três documentos iniciais dentro de `docs` e que não há código criado | Concluída em 2026-07-08 |
-| 1 — Criação da solução backend em C# | Criar estrutura inicial da solução backend | Criada solução `CadernoApp.sln`, projetos em `src` e `tests`, referências entre camadas e validação local | Aprovado | `.gitignore`, `CadernoApp.sln`, `src/CadernoApp.Api/`, `src/CadernoApp.Application/`, `src/CadernoApp.Domain/`, `src/CadernoApp.Infrastructure/`, `tests/CadernoApp.Tests/`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build` e `dotnet test` executados com sucesso | Usado .NET SDK `10.0.301` com target framework `net10.0`; sem entidades, serviços, banco, endpoints de negócio ou PDF |
-| 2 — Entidades de domínio | Criar entidades principais do domínio | Criadas entidades principais em `CadernoApp.Domain` e testes unitários em `CadernoApp.Tests` | Aprovado | `src/CadernoApp.Domain/Entities/`, `tests/CadernoApp.Tests/Domain/`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build` e `dotnet test` executados com sucesso | Sem banco, EF, migrations, endpoints, controllers, serviços de aplicação, repositórios, DTOs ou PDF |
-| 3 — Regras de negócio | Implementar regras básicas do domínio | Implementadas operações controladas para módulos, anotações, páginas, tags, favoritos e atualização de conteúdo | Aprovado | `src/CadernoApp.Domain/Entities/`, `tests/CadernoApp.Tests/Domain/CoreDomainEntitiesTests.cs`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format` executados com sucesso | Sem banco, EF, migrations, endpoints, controllers, serviços de aplicação, repositórios, DTOs ou PDF |
-| 4 — Persistência | Configurar banco de dados e mapeamento das entidades | Configurado EF Core com SQLite, `CadernoAppDbContext`, mapeamentos Fluent API e testes com SQLite em memória | Aprovado | `src/CadernoApp.Infrastructure/`, `src/CadernoApp.Domain/Entities/`, `tests/CadernoApp.Tests/Infrastructure/`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format` executados com sucesso | Sem migrations, endpoints, controllers, serviços de aplicação, repositórios, DTOs, autenticação ou PDF |
-| 5 — Serviços de aplicação | Criar casos de uso principais | Criados serviços de aplicação, DTOs, interfaces de persistência, repositórios EF Core e testes de fluxos com SQLite em memória | Aprovado | `src/CadernoApp.Application/`, `src/CadernoApp.Infrastructure/Persistence/Repositories/`, `src/CadernoApp.Domain/Entities/`, `tests/CadernoApp.Tests/Application/`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format` executados com sucesso | Sem endpoints, controllers, autenticação, frontend, PDF, MediatR, AutoMapper ou FluentValidation |
-| 6 — Camada de entrada/API | Expor endpoints para consumo futuro pelo frontend | Criados endpoints Minimal APIs, contratos HTTP, registro de DI da Application/Infrastructure e testes de integração com SQLite em memória | Aprovado | `src/CadernoApp.Api/`, `tests/CadernoApp.Tests/Api/`, `tests/CadernoApp.Tests/CadernoApp.Tests.csproj`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format` executados com sucesso | Sem controllers, autenticação, frontend, PDF, migrations ou exposição direta de entidades de domínio |
-| 7 — Testes | Criar testes do domínio e dos fluxos principais | Ampliada cobertura de domínio, aplicação e API; criado workflow inicial de CI no GitHub Actions | Aprovado | `.github/workflows/ci.yml`, `tests/CadernoApp.Tests/Domain/CoreDomainEntitiesTests.cs`, `tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs`, `tests/CadernoApp.Tests/Api/ApiEndpointsTests.cs`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format --no-restore` executados com sucesso | Sem novas features de produto, frontend, autenticação, autorização, PDF, migrations ou controllers |
-| 8 — Preparação para exportação PDF | Preparar contratos e estrutura para PDF A4 | Criados DTOs e serviço de aplicação para retornar anotações em formato imprimível/exportável; criado endpoint JSON `/api/notes/{id}/printable` | Aprovado | `src/CadernoApp.Application/DTOs/Export/`, `src/CadernoApp.Application/Services/NoteExportService.cs`, `src/CadernoApp.Application/DependencyInjection.cs`, `src/CadernoApp.Api/Endpoints/NoteEndpoints.cs`, `tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs`, `tests/CadernoApp.Tests/Api/ApiEndpointsTests.cs`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test --no-restore`, `dotnet test --no-build` e `dotnet format --no-restore` executados com sucesso | Sem geração real de PDF, bibliotecas de PDF, arquivo `.pdf`, download, frontend, autenticação, autorização, migrations ou controllers |
-| M1 — Manutenção de estilo C# | Padronizar formatação, legibilidade e configuração básica de estilo | Criado `.editorconfig`, executado `dotnet format --no-restore` e organizado `using` afetado pelo format | Aprovado | `.editorconfig`, `tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format --no-restore` executados com sucesso | Sem alteração de comportamento, novas features, pacotes, endpoints, migrations, PDF, frontend ou autenticação |
-| 9 — Especificação técnica do editor A4 | Definir editor A4, contrato de conteúdo e estratégia futura de PDF | Criado documento técnico `docs/04-especificacao-editor-a4-e-pdf.md` com responsabilidades de frontend/backend, contrato HTML controlado, paginação A4, riscos e decisões | Aprovado | `docs/04-especificacao-editor-a4-e-pdf.md`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format --no-restore` executados com sucesso | Etapa apenas documental; sem frontend, PDF real, pacotes, entidades, serviços, endpoints ou testes novos |
-| M2 — Manutenção documental | Normalizar formatação Markdown e atualizar pendências resolvidas pela Etapa 9 | Melhorada a legibilidade de `docs/04-especificacao-editor-a4-e-pdf.md` e atualizadas pendências do acompanhamento | Aprovado | `docs/04-especificacao-editor-a4-e-pdf.md`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format --no-restore` executados com sucesso | Sem alteração de código C#, backend, API, testes, CI, pacotes, target framework, frontend ou PDF |
+Para manter o arquivo legível no GitHub raw, o acompanhamento é registrado em blocos por etapa.
+
+### 0 — Documentação e base do repositório
+
+- Objetivo planejado: criar documentação inicial do projeto e realizar primeiro commit/push.
+- O que foi feito: documentação inicial validada, commitada e enviada para `origin/main`.
+- Status: Aprovado.
+- Arquivos alterados:
+
+```text
+docs/01-visao-geral-do-app.md
+docs/02-planejamento-de-construcao.md
+docs/03-acompanhamento-do-projeto.md
+```
+
+- Critério de validação: confirmar que existem apenas os três documentos iniciais dentro de `docs`
+  e que não há código criado.
+- Observações: concluída em 2026-07-08.
+
+### 1 — Criação da solução backend em C#
+
+- Objetivo planejado: criar estrutura inicial da solução backend.
+- O que foi feito: criada solução `CadernoApp.sln`, projetos em `src` e `tests`,
+  referências entre camadas e validação local.
+- Status: Aprovado.
+- Arquivos alterados:
+
+```text
+.gitignore
+CadernoApp.sln
+src/CadernoApp.Api/
+src/CadernoApp.Application/
+src/CadernoApp.Domain/
+src/CadernoApp.Infrastructure/
+tests/CadernoApp.Tests/
+docs/03-acompanhamento-do-projeto.md
+```
+
+- Critério de validação: `dotnet restore`, `dotnet build` e `dotnet test` executados com sucesso.
+- Observações: usado .NET SDK `10.0.301` com target framework `net10.0`;
+  sem entidades, serviços, banco, endpoints de negócio ou PDF.
+
+### 2 — Entidades de domínio
+
+- Objetivo planejado: criar entidades principais do domínio.
+- O que foi feito: criadas entidades principais em `CadernoApp.Domain` e testes unitários
+  em `CadernoApp.Tests`.
+- Status: Aprovado.
+- Arquivos alterados:
+
+```text
+src/CadernoApp.Domain/Entities/
+tests/CadernoApp.Tests/Domain/
+docs/03-acompanhamento-do-projeto.md
+```
+
+- Critério de validação: `dotnet restore`, `dotnet build` e `dotnet test` executados com sucesso.
+- Observações: sem banco, EF, migrations, endpoints, controllers, serviços de aplicação,
+  repositórios, DTOs ou PDF.
+
+### 3 — Regras de negócio
+
+- Objetivo planejado: implementar regras básicas do domínio.
+- O que foi feito: implementadas operações controladas para módulos, anotações, páginas,
+  tags, favoritos e atualização de conteúdo.
+- Status: Aprovado.
+- Arquivos alterados:
+
+```text
+src/CadernoApp.Domain/Entities/
+tests/CadernoApp.Tests/Domain/CoreDomainEntitiesTests.cs
+docs/03-acompanhamento-do-projeto.md
+```
+
+- Critério de validação: `dotnet restore`, `dotnet build`, `dotnet test`
+  e `dotnet format` executados com sucesso.
+- Observações: sem banco, EF, migrations, endpoints, controllers, serviços de aplicação,
+  repositórios, DTOs ou PDF.
+
+### 4 — Persistência
+
+- Objetivo planejado: configurar banco de dados e mapeamento das entidades.
+- O que foi feito: configurado EF Core com SQLite, `CadernoAppDbContext`,
+  mapeamentos Fluent API e testes com SQLite em memória.
+- Status: Aprovado.
+- Arquivos alterados:
+
+```text
+src/CadernoApp.Infrastructure/
+src/CadernoApp.Domain/Entities/
+tests/CadernoApp.Tests/Infrastructure/
+docs/03-acompanhamento-do-projeto.md
+```
+
+- Critério de validação: `dotnet restore`, `dotnet build`, `dotnet test`
+  e `dotnet format` executados com sucesso.
+- Observações: sem migrations, endpoints, controllers, serviços de aplicação, repositórios,
+  DTOs, autenticação ou PDF.
+
+### 5 — Serviços de aplicação
+
+- Objetivo planejado: criar casos de uso principais.
+- O que foi feito: criados serviços de aplicação, DTOs, interfaces de persistência,
+  repositórios EF Core e testes de fluxos com SQLite em memória.
+- Status: Aprovado.
+- Arquivos alterados:
+
+```text
+src/CadernoApp.Application/
+src/CadernoApp.Infrastructure/Persistence/Repositories/
+src/CadernoApp.Domain/Entities/
+tests/CadernoApp.Tests/Application/
+docs/03-acompanhamento-do-projeto.md
+```
+
+- Critério de validação: `dotnet restore`, `dotnet build`, `dotnet test`
+  e `dotnet format` executados com sucesso.
+- Observações: sem endpoints, controllers, autenticação, frontend, PDF, MediatR,
+  AutoMapper ou FluentValidation.
+
+### 6 — Camada de entrada/API
+
+- Objetivo planejado: expor endpoints para consumo futuro pelo frontend.
+- O que foi feito: criados endpoints Minimal APIs, contratos HTTP, registro de DI
+  da Application/Infrastructure e testes de integração com SQLite em memória.
+- Status: Aprovado.
+- Arquivos alterados:
+
+```text
+src/CadernoApp.Api/
+tests/CadernoApp.Tests/Api/
+tests/CadernoApp.Tests/CadernoApp.Tests.csproj
+docs/03-acompanhamento-do-projeto.md
+```
+
+- Critério de validação: `dotnet restore`, `dotnet build`, `dotnet test`
+  e `dotnet format` executados com sucesso.
+- Observações: sem controllers, autenticação, frontend, PDF, migrations ou exposição direta
+  de entidades de domínio.
+
+### 7 — Testes
+
+- Objetivo planejado: criar testes do domínio e dos fluxos principais.
+- O que foi feito: ampliada cobertura de domínio, aplicação e API; criado workflow inicial
+  de CI no GitHub Actions.
+- Status: Aprovado.
+- Arquivos alterados:
+
+```text
+.github/workflows/ci.yml
+tests/CadernoApp.Tests/Domain/CoreDomainEntitiesTests.cs
+tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs
+tests/CadernoApp.Tests/Api/ApiEndpointsTests.cs
+docs/03-acompanhamento-do-projeto.md
+```
+
+- Critério de validação: `dotnet restore`, `dotnet build`, `dotnet test`
+  e `dotnet format --no-restore` executados com sucesso.
+- Observações: sem novas features de produto, frontend, autenticação, autorização, PDF,
+  migrations ou controllers.
+
+### 8 — Preparação para exportação PDF
+
+- Objetivo planejado: preparar contratos e estrutura para PDF A4.
+- O que foi feito: criados DTOs e serviço de aplicação para retornar anotações em formato
+  imprimível/exportável; criado endpoint JSON `/api/notes/{id}/printable`.
+- Status: Aprovado.
+- Arquivos alterados:
+
+```text
+src/CadernoApp.Application/DTOs/Export/
+src/CadernoApp.Application/Services/NoteExportService.cs
+src/CadernoApp.Application/DependencyInjection.cs
+src/CadernoApp.Api/Endpoints/NoteEndpoints.cs
+tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs
+tests/CadernoApp.Tests/Api/ApiEndpointsTests.cs
+docs/03-acompanhamento-do-projeto.md
+```
+
+- Critério de validação: `dotnet restore`, `dotnet build`, `dotnet test --no-restore`,
+  `dotnet test --no-build` e `dotnet format --no-restore` executados com sucesso.
+- Observações: sem geração real de PDF, bibliotecas de PDF, arquivo `.pdf`, download,
+  frontend, autenticação, autorização, migrations ou controllers.
+
+### M1 — Manutenção de estilo C#
+
+- Objetivo planejado: padronizar formatação, legibilidade e configuração básica de estilo.
+- O que foi feito: criado `.editorconfig`, executado `dotnet format --no-restore`
+  e organizado `using` afetado pelo format.
+- Status: Aprovado.
+- Arquivos alterados:
+
+```text
+.editorconfig
+tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs
+docs/03-acompanhamento-do-projeto.md
+```
+
+- Critério de validação: `dotnet restore`, `dotnet build`, `dotnet test`
+  e `dotnet format --no-restore` executados com sucesso.
+- Observações: sem alteração de comportamento, novas features, pacotes, endpoints,
+  migrations, PDF, frontend ou autenticação.
+
+### 9 — Especificação técnica do editor A4
+
+- Objetivo planejado: definir editor A4, contrato de conteúdo e estratégia futura de PDF.
+- O que foi feito: criado documento técnico `docs/04-especificacao-editor-a4-e-pdf.md`
+  com responsabilidades de frontend/backend, contrato HTML controlado, paginação A4,
+  riscos e decisões.
+- Status: Aprovado.
+- Arquivos alterados:
+
+```text
+docs/04-especificacao-editor-a4-e-pdf.md
+docs/03-acompanhamento-do-projeto.md
+```
+
+- Critério de validação: `dotnet restore`, `dotnet build`, `dotnet test`
+  e `dotnet format --no-restore` executados com sucesso.
+- Observações: etapa apenas documental; sem frontend, PDF real, pacotes, entidades,
+  serviços, endpoints ou testes novos.
+
+### M2 — Manutenção documental
+
+- Objetivo planejado: normalizar formatação Markdown e atualizar pendências resolvidas
+  pela Etapa 9.
+- O que foi feito: melhorada a legibilidade de `docs/04-especificacao-editor-a4-e-pdf.md`
+  e atualizadas pendências do acompanhamento.
+- Status: Aprovado / corrigido.
+- Arquivos alterados:
+
+```text
+docs/04-especificacao-editor-a4-e-pdf.md
+docs/03-acompanhamento-do-projeto.md
+```
+
+- Critério de validação: `dotnet restore`, `dotnet build`, `dotnet test`
+  e `dotnet format --no-restore` executados com sucesso.
+- Observações: sem alteração de código C#, backend, API, testes, CI, pacotes,
+  target framework, frontend ou PDF. Foi necessária correção posterior das quebras
+  de linha reais no Markdown para melhorar a leitura no GitHub raw.
 
 ## Decisões Técnicas
 
@@ -142,18 +369,67 @@ Motivo:
 
 ## Pendências
 
-| Item | Descrição | Prioridade | Status |
-|---|---|---|---|
-| P-001 | Criar pasta `docs` no repositório local | Alta | Concluído |
-| P-002 | Adicionar os três documentos iniciais em `docs` | Alta | Concluído |
-| P-003 | Pedir ao Codex para analisar, commitar e fazer push da documentação inicial | Alta | Concluído |
-| P-004 | Validar o primeiro commit no GitHub | Alta | Concluído |
-| P-005 | Definir versão do .NET usada no backend | Média | Concluído — `net10.0` |
-| P-006 | Confirmar nome técnico da solução/projetos C# | Média | Concluído — `CadernoApp` |
-| P-007 | Decidir formato de armazenamento do conteúdo da página: `ContentFormat` padrão `html` com HTML controlado | Alta | Concluído — decisão inicial documentada na Etapa 9 |
-| P-008 | Definir estratégia futura de PDF A4 baseada em `PrintableNoteDto` e uma página A4 por `PrintableNotePageDto` | Média | Concluído — estratégia inicial documentada na Etapa 9 |
-| P-009 | Implementar sanitização real do HTML controlado | Alta | Pendente |
-| P-010 | Implementar exportação PDF A4 real | Média | Pendente |
+### P-001
+
+- Descrição: criar pasta `docs` no repositório local.
+- Prioridade: Alta.
+- Status: Concluído.
+
+### P-002
+
+- Descrição: adicionar os três documentos iniciais em `docs`.
+- Prioridade: Alta.
+- Status: Concluído.
+
+### P-003
+
+- Descrição: pedir ao Codex para analisar, commitar e fazer push da documentação inicial.
+- Prioridade: Alta.
+- Status: Concluído.
+
+### P-004
+
+- Descrição: validar o primeiro commit no GitHub.
+- Prioridade: Alta.
+- Status: Concluído.
+
+### P-005
+
+- Descrição: definir versão do .NET usada no backend.
+- Prioridade: Média.
+- Status: Concluído — `net10.0`.
+
+### P-006
+
+- Descrição: confirmar nome técnico da solução/projetos C#.
+- Prioridade: Média.
+- Status: Concluído — `CadernoApp`.
+
+### P-007
+
+- Descrição: decidir formato de armazenamento do conteúdo da página:
+  `ContentFormat` padrão `html` com HTML controlado.
+- Prioridade: Alta.
+- Status: Concluído — decisão inicial documentada na Etapa 9.
+
+### P-008
+
+- Descrição: definir estratégia futura de PDF A4 baseada em `PrintableNoteDto`
+  e uma página A4 por `PrintableNotePageDto`.
+- Prioridade: Média.
+- Status: Concluído — estratégia inicial documentada na Etapa 9.
+
+### P-009
+
+- Descrição: implementar sanitização real do HTML controlado.
+- Prioridade: Alta.
+- Status: Pendente.
+
+### P-010
+
+- Descrição: implementar exportação PDF A4 real.
+- Prioridade: Média.
+- Status: Pendente.
 
 ## Próxima Tarefa
 
@@ -178,7 +454,8 @@ Não criar autenticação, frontend ou implementação final de PDF sem uma etap
 
 ### Objetivo realizado
 
-Criada a estrutura inicial da solução backend em C#, organizada para evoluir com domínio, aplicação, infraestrutura, API, testes e futura exportação PDF A4.
+Criada a estrutura inicial da solução backend em C#, organizada para evoluir com domínio,
+aplicação, infraestrutura, API, testes e futura exportação PDF A4.
 
 ### Arquivos criados
 
@@ -300,7 +577,10 @@ feat: add core domain entities
 
 ### Objetivo realizado
 
-Implementadas regras básicas de negócio diretamente nas entidades de domínio, mantendo o escopo restrito ao projeto `CadernoApp.Domain` e aos testes unitários em `CadernoApp.Tests`.
+Implementadas regras básicas de negócio diretamente nas entidades de domínio.
+
+O escopo foi mantido restrito ao projeto `CadernoApp.Domain` e aos testes unitários
+em `CadernoApp.Tests`.
 
 ### Regras implementadas
 
@@ -398,13 +678,18 @@ feat: add domain business rules
 - Os testes foram ajustados somente no projeto `CadernoApp.Tests`.
 - `UpdatedAt` usa atualização monotônica para evitar igualdade acidental quando operações acontecem no mesmo tick.
 - `dotnet test` e `dotnet format` precisaram ser executados fora do sandbox por acesso ao `NuGet.Config` do usuário.
-- Não foram criados banco de dados, Entity Framework, migrations, endpoints, controllers, serviços de aplicação, repositórios, DTOs, autenticação ou lógica de PDF.
+- Não foram criados banco de dados, Entity Framework, migrations, endpoints, controllers,
+  serviços de aplicação, repositórios, DTOs, autenticação ou lógica de PDF.
 
 ## Registro da Etapa 4
 
 ### Objetivo realizado
 
-Configurada a persistência inicial no projeto `CadernoApp.Infrastructure` usando SQLite e Entity Framework Core, com mapeamento das entidades principais do domínio e testes de persistência com SQLite em memória.
+Configurada a persistência inicial no projeto `CadernoApp.Infrastructure` usando SQLite
+e Entity Framework Core.
+
+Também foram criados mapeamentos das entidades principais do domínio e testes de persistência
+com SQLite em memória.
 
 ### Banco e ORM escolhidos
 
@@ -479,7 +764,8 @@ feat: add initial persistence layer
 - Os mapeamentos foram criados por classe de configuração usando Fluent API.
 - A relação `Note`/`Tag` foi mapeada como many-to-many com tabela de junção `NoteTags`, sem criar entidade de domínio `NoteTag`.
 - As coleções encapsuladas do domínio foram mapeadas usando acesso por campo.
-- As entidades de domínio receberam apenas ajustes técnicos mínimos para EF Core: construtores privados sem parâmetros e setters privados em propriedades que precisam ser materializadas.
+- As entidades de domínio receberam apenas ajustes técnicos mínimos para EF Core:
+  construtores privados sem parâmetros e setters privados em propriedades que precisam ser materializadas.
 - O projeto `CadernoApp.Domain` continua sem referência a Entity Framework.
 - Nenhuma migration foi criada.
 - `Program.cs` da API não foi alterado.
@@ -489,7 +775,12 @@ feat: add initial persistence layer
 
 ### Objetivo realizado
 
-Criada a camada de aplicação com casos de uso iniciais para matérias, módulos, anotações, páginas, tags e favoritos. A aplicação depende apenas do domínio e de interfaces próprias; as implementações EF Core ficaram isoladas na infraestrutura.
+Criada a camada de aplicação com casos de uso iniciais para matérias, módulos, anotações,
+páginas, tags e favoritos.
+
+A aplicação depende apenas do domínio e de interfaces próprias.
+
+As implementações EF Core ficaram isoladas na infraestrutura.
 
 ### Interfaces criadas
 
@@ -615,9 +906,11 @@ feat: add application services
 - `CadernoApp.Application` continua sem depender de `CadernoApp.Infrastructure`.
 - `CadernoApp.Domain` continua sem dependência de EF Core.
 - `CadernoApp.Infrastructure` implementa as interfaces definidas em `CadernoApp.Application`.
-- Foi adicionado apenas o pacote oficial `Microsoft.Extensions.DependencyInjection.Abstractions` ao projeto `CadernoApp.Application` para registrar serviços via DI.
+- Foi adicionado apenas o pacote oficial `Microsoft.Extensions.DependencyInjection.Abstractions`
+  ao projeto `CadernoApp.Application` para registrar serviços via DI.
 - Os testes de aplicação usam SQLite em memória com repositórios reais, sem passar pela API.
-- Ao criar filhos de agregados já rastreados, os repositórios marcam explicitamente as novas entidades como `Added` para o EF Core persistir corretamente coleções encapsuladas.
+- Ao criar filhos de agregados já rastreados, os repositórios marcam explicitamente
+  as novas entidades como `Added` para o EF Core persistir corretamente coleções encapsuladas.
 - `Program.cs` da API não foi alterado.
 - Não foram criados endpoints, controllers, autenticação, frontend ou PDF.
 - Não foram adicionados MediatR, AutoMapper ou FluentValidation.
@@ -626,7 +919,10 @@ feat: add application services
 
 ### Objetivo realizado
 
-Criada a camada inicial de entrada/API no projeto `CadernoApp.Api` usando Minimal APIs. Os endpoints consomem os serviços de aplicação existentes, retornam DTOs da camada `CadernoApp.Application` e não expõem entidades de domínio diretamente.
+Criada a camada inicial de entrada/API no projeto `CadernoApp.Api` usando Minimal APIs.
+
+Os endpoints consomem os serviços de aplicação existentes, retornam DTOs da camada
+`CadernoApp.Application` e não expõem entidades de domínio diretamente.
 
 ### Endpoints criados
 
@@ -743,7 +1039,10 @@ feat: add initial api endpoints
 
 ### Objetivo realizado
 
-Consolidada a cobertura de testes do backend e criada a configuração inicial de integração contínua no GitHub Actions para executar restore, build e test em push e pull request para `main`.
+Consolidada a cobertura de testes do backend e criada a configuração inicial
+de integração contínua no GitHub Actions.
+
+O workflow executa restore, build e test em push e pull request para `main`.
 
 ### Arquivo de CI criado
 
@@ -822,14 +1121,19 @@ test: expand coverage and add ci workflow
 - Os novos testes HTTP validam respostas `400` e `404` e verificam que erros esperados não expõem stack trace.
 - O `WebApplicationFactory` usado nos testes limpa providers de logging para não depender do Windows EventLog durante execução local/sandbox.
 - O comportamento atual de `NotePage` aceita conteúdo nulo como página em branco; isso foi documentado por teste, sem criar nova regra de produto.
-- `dotnet test` completo precisou ser executado uma vez fora do sandbox por acesso ao `NuGet.Config`; a validação final foi feita com `dotnet test --no-build` dentro do sandbox.
+- `dotnet test` completo precisou ser executado uma vez fora do sandbox por acesso
+  ao `NuGet.Config`; a validação final foi feita com `dotnet test --no-build` dentro do sandbox.
 - Não foram criados frontend, autenticação, autorização, PDF, migrations, controllers, MediatR, AutoMapper, FluentValidation ou novas entidades de produto.
 
 ## Registro da Etapa 8
 
 ### Objetivo realizado
 
-Criada uma estrutura de aplicação para obter uma anotação em formato pronto para impressão/exportação futura. O retorno contém metadados da matéria, módulo e anotação, páginas A4 ordenadas, dimensões, conteúdo e formato do conteúdo.
+Criada uma estrutura de aplicação para obter uma anotação em formato pronto
+para impressão/exportação futura.
+
+O retorno contém metadados da matéria, módulo e anotação, páginas A4 ordenadas,
+dimensões, conteúdo e formato do conteúdo.
 
 ### DTOs criados
 
@@ -845,7 +1149,9 @@ PrintableNotePageDto
 NoteExportService
 ```
 
-O serviço busca a anotação por Id, carrega páginas, módulo e matéria por meio das abstrações existentes, ordena as páginas por `OrderIndex` e `PageNumber`, preserva conteúdo/dimensões/formato e lança `KeyNotFoundException` quando a anotação não existe.
+O serviço busca a anotação por Id, carrega páginas, módulo e matéria por meio
+das abstrações existentes, ordena as páginas por `OrderIndex` e `PageNumber`,
+preserva conteúdo/dimensões/formato e lança `KeyNotFoundException` quando a anotação não existe.
 
 ### Endpoint criado
 
@@ -853,7 +1159,9 @@ O serviço busca a anotação por Id, carrega páginas, módulo e matéria por m
 GET /api/notes/{id}/printable
 ```
 
-O endpoint retorna `PrintableNoteDto` em JSON e responde `404` quando a anotação não existe. Não retorna PDF, não usa `application/pdf` e não cria endpoint de download.
+O endpoint retorna `PrintableNoteDto` em JSON e responde `404` quando a anotação não existe.
+
+Não retorna PDF, não usa `application/pdf` e não cria endpoint de download.
 
 ### Arquivos criados
 
@@ -911,13 +1219,18 @@ feat: prepare printable note export
 - A resposta printable usa DTOs da Application e não expõe entidades de domínio diretamente pela API.
 - Nenhum PDF real foi gerado.
 - Nenhuma biblioteca de PDF foi instalada.
-- Não foram criados arquivo `.pdf`, endpoint de download, endpoint `/pdf`, frontend, autenticação, autorização, migrations, controllers, MediatR, AutoMapper ou FluentValidation.
+- Não foram criados arquivo `.pdf`, endpoint de download, endpoint `/pdf`, frontend,
+  autenticação, autorização, migrations, controllers, MediatR, AutoMapper ou FluentValidation.
 
 ## Registro da Manutenção M1
 
 ### Objetivo realizado
 
-Criada configuração básica de estilo C#/.NET na raiz do repositório e executada formatação local para manter legibilidade, organização de `using` e regras leves de estilo sem alterar comportamento do sistema.
+Criada configuração básica de estilo C#/.NET na raiz do repositório e executada
+formatação local para manter legibilidade.
+
+A manutenção também preservou organização de `using` e regras leves de estilo
+sem alterar comportamento do sistema.
 
 ### Arquivo criado
 
@@ -949,7 +1262,10 @@ csharp_prefer_braces = true:suggestion
 tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs
 ```
 
-O `dotnet format --no-restore` reorganizou apenas a ordem de `using` nesse arquivo. Os demais arquivos C# permaneceram sem alteração textual após a configuração de EOL compatível com o repositório.
+O `dotnet format --no-restore` reorganizou apenas a ordem de `using` nesse arquivo.
+
+Os demais arquivos C# permaneceram sem alteração textual após a configuração de EOL
+compatível com o repositório.
 
 ### Arquivos alterados
 
@@ -1075,6 +1391,7 @@ docs/03-acompanhamento-do-projeto.md:
 - Atualização das pendências P-007 e P-008 como decisões iniciais concluídas.
 - Criação das pendências P-009 e P-010 para implementações reais ainda futuras.
 - Atualização da tarefa atual e do histórico de validações.
+- Correção posterior das quebras de linha reais no Markdown.
 ```
 
 ### Resultado de restore, build, test e format
@@ -1098,24 +1415,91 @@ docs: normalize markdown documentation
 - Nenhum código C# foi alterado.
 - Nenhum backend, API, teste, CI, pacote ou target framework foi alterado.
 - Nenhum frontend ou PDF real foi implementado.
+- Foi necessária correção posterior de quebras de linha reais no Markdown
+  para melhorar a leitura no GitHub raw.
 - Os documentos `docs/01-visao-geral-do-app.md` e `docs/02-planejamento-de-construcao.md` não foram alterados.
 
 ## Histórico de Validações
 
-| Data | Etapa | Resultado | Resumo | Observações |
-|---|---|---|---|---|
-| 2026-07-08 | Etapa 0 | Aprovado | Documentação inicial validada, commitada e enviada para `origin/main` | Commit `docs: add initial project documentation` |
-| 2026-07-08 | Etapa 1 | Aprovado | Estrutura inicial backend em C# criada e validada com `dotnet restore`, `dotnet build` e `dotnet test` | Commit `chore: add initial backend solution structure`; `dotnet test` sem testes disponíveis |
-| 2026-07-08 | Etapa 2 | Aprovado | Entidades principais do domínio criadas e validadas com testes unitários | Commit `feat: add core domain entities`; `dotnet test` com 9 testes aprovados |
-| 2026-07-08 | Etapa 3 | Aprovado | Regras básicas de negócio do domínio implementadas e validadas com testes unitários | Commit `feat: add domain business rules`; `dotnet test` com 35 testes aprovados |
-| 2026-07-08 | Etapa 4 | Aprovado | Persistência inicial com EF Core e SQLite configurada e validada com testes de persistência | Commit `feat: add initial persistence layer`; `dotnet test` com 40 testes aprovados |
-| 2026-07-08 | Etapa 5 | Aprovado | Serviços de aplicação, DTOs, interfaces, repositórios e testes de fluxos criados | Commit `feat: add application services`; `dotnet test` com 54 testes aprovados |
-| 2026-07-08 | Etapa 6 | Aprovado | Endpoints iniciais da API criados com Minimal APIs e validados com testes de integração | Commit `feat: add initial api endpoints`; `dotnet test` com 63 testes aprovados |
-| 2026-07-08 | Etapa 7 | Aprovado | Cobertura de testes ampliada e CI inicial criado no GitHub Actions | Commit `test: expand coverage and add ci workflow`; `dotnet test` com 80 testes aprovados |
-| 2026-07-08 | Etapa 8 | Aprovado | Estrutura printable/export ready criada para anotações A4, com endpoint JSON e testes | Commit `feat: prepare printable note export`; `dotnet test` com 87 testes aprovados |
-| 2026-07-08 | Manutenção M1 | Aprovado | `.editorconfig` criado e formatação C# normalizada sem alteração funcional | Commit `style: normalize csharp formatting`; `dotnet test` com 87 testes aprovados |
-| 2026-07-08 | Etapa 9 | Aprovado | Especificação técnica do editor A4, contrato HTML controlado e estratégia futura de PDF documentados | Commit `docs: define a4 editor and content contract`; `dotnet test` com 87 testes aprovados |
-| 2026-07-08 | Manutenção M2 | Aprovado | Markdown da documentação normalizado e pendências resolvidas pela Etapa 9 atualizadas | Commit `docs: normalize markdown documentation`; `dotnet test` com 87 testes aprovados |
+### 2026-07-08 — Etapa 0
+
+- Resultado: Aprovado.
+- Resumo: documentação inicial validada, commitada e enviada para `origin/main`.
+- Observações: commit `docs: add initial project documentation`.
+
+### 2026-07-08 — Etapa 1
+
+- Resultado: Aprovado.
+- Resumo: estrutura inicial backend em C# criada e validada com `dotnet restore`,
+  `dotnet build` e `dotnet test`.
+- Observações: commit `chore: add initial backend solution structure`;
+  `dotnet test` sem testes disponíveis.
+
+### 2026-07-08 — Etapa 2
+
+- Resultado: Aprovado.
+- Resumo: entidades principais do domínio criadas e validadas com testes unitários.
+- Observações: commit `feat: add core domain entities`; `dotnet test` com 9 testes aprovados.
+
+### 2026-07-08 — Etapa 3
+
+- Resultado: Aprovado.
+- Resumo: regras básicas de negócio do domínio implementadas e validadas com testes unitários.
+- Observações: commit `feat: add domain business rules`; `dotnet test` com 35 testes aprovados.
+
+### 2026-07-08 — Etapa 4
+
+- Resultado: Aprovado.
+- Resumo: persistência inicial com EF Core e SQLite configurada e validada com testes
+  de persistência.
+- Observações: commit `feat: add initial persistence layer`; `dotnet test` com 40 testes aprovados.
+
+### 2026-07-08 — Etapa 5
+
+- Resultado: Aprovado.
+- Resumo: serviços de aplicação, DTOs, interfaces, repositórios e testes de fluxos criados.
+- Observações: commit `feat: add application services`; `dotnet test` com 54 testes aprovados.
+
+### 2026-07-08 — Etapa 6
+
+- Resultado: Aprovado.
+- Resumo: endpoints iniciais da API criados com Minimal APIs e validados com testes de integração.
+- Observações: commit `feat: add initial api endpoints`; `dotnet test` com 63 testes aprovados.
+
+### 2026-07-08 — Etapa 7
+
+- Resultado: Aprovado.
+- Resumo: cobertura de testes ampliada e CI inicial criado no GitHub Actions.
+- Observações: commit `test: expand coverage and add ci workflow`;
+  `dotnet test` com 80 testes aprovados.
+
+### 2026-07-08 — Etapa 8
+
+- Resultado: Aprovado.
+- Resumo: estrutura printable/export ready criada para anotações A4, com endpoint JSON e testes.
+- Observações: commit `feat: prepare printable note export`; `dotnet test` com 87 testes aprovados.
+
+### 2026-07-08 — Manutenção M1
+
+- Resultado: Aprovado.
+- Resumo: `.editorconfig` criado e formatação C# normalizada sem alteração funcional.
+- Observações: commit `style: normalize csharp formatting`; `dotnet test` com 87 testes aprovados.
+
+### 2026-07-08 — Etapa 9
+
+- Resultado: Aprovado.
+- Resumo: especificação técnica do editor A4, contrato HTML controlado e estratégia futura
+  de PDF documentados.
+- Observações: commit `docs: define a4 editor and content contract`;
+  `dotnet test` com 87 testes aprovados.
+
+### 2026-07-08 — Manutenção M2
+
+- Resultado: Aprovado / corrigido.
+- Resumo: Markdown da documentação normalizado e pendências resolvidas pela Etapa 9 atualizadas.
+- Observações: commit `docs: normalize markdown documentation`;
+  correção posterior das quebras de linha reais registrada nesta manutenção;
+  `dotnet test` com 87 testes aprovados.
 
 ## Checklist de validação da Etapa 0
 

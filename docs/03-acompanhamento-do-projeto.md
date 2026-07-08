@@ -42,7 +42,7 @@ Corrigir
 | 3 — Regras de negócio | Implementar regras básicas do domínio | Implementadas operações controladas para módulos, anotações, páginas, tags, favoritos e atualização de conteúdo | Aprovado | `src/CadernoApp.Domain/Entities/`, `tests/CadernoApp.Tests/Domain/CoreDomainEntitiesTests.cs`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format` executados com sucesso | Sem banco, EF, migrations, endpoints, controllers, serviços de aplicação, repositórios, DTOs ou PDF |
 | 4 — Persistência | Configurar banco de dados e mapeamento das entidades | Configurado EF Core com SQLite, `CadernoAppDbContext`, mapeamentos Fluent API e testes com SQLite em memória | Aprovado | `src/CadernoApp.Infrastructure/`, `src/CadernoApp.Domain/Entities/`, `tests/CadernoApp.Tests/Infrastructure/`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format` executados com sucesso | Sem migrations, endpoints, controllers, serviços de aplicação, repositórios, DTOs, autenticação ou PDF |
 | 5 — Serviços de aplicação | Criar casos de uso principais | Criados serviços de aplicação, DTOs, interfaces de persistência, repositórios EF Core e testes de fluxos com SQLite em memória | Aprovado | `src/CadernoApp.Application/`, `src/CadernoApp.Infrastructure/Persistence/Repositories/`, `src/CadernoApp.Domain/Entities/`, `tests/CadernoApp.Tests/Application/`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format` executados com sucesso | Sem endpoints, controllers, autenticação, frontend, PDF, MediatR, AutoMapper ou FluentValidation |
-| 6 — Camada de entrada/API | Expor endpoints para consumo futuro pelo frontend | Pendente | Pendente | A definir | Endpoints básicos funcionando | Incluir endpoints para matérias, módulos, anotações, páginas, tags e favoritos |
+| 6 — Camada de entrada/API | Expor endpoints para consumo futuro pelo frontend | Criados endpoints Minimal APIs, contratos HTTP, registro de DI da Application/Infrastructure e testes de integração com SQLite em memória | Aprovado | `src/CadernoApp.Api/`, `tests/CadernoApp.Tests/Api/`, `tests/CadernoApp.Tests/CadernoApp.Tests.csproj`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format` executados com sucesso | Sem controllers, autenticação, frontend, PDF, migrations ou exposição direta de entidades de domínio |
 | 7 — Testes | Criar testes do domínio e dos fluxos principais | Pendente | Pendente | A definir | Testes executando com sucesso | Priorizar regras de página, tags e favoritos |
 | 8 — Preparação para exportação PDF | Preparar contratos e estrutura para PDF A4 | Pendente | Pendente | A definir | Anotações retornando páginas em ordem e estrutura pronta para exportação | Não precisa gerar PDF final nesta etapa |
 | 9 — Integração futura com frontend | Preparar backend para editor visual e app final | Pendente | Pendente | A definir | API pronta para consumo inicial | Frontend será planejado depois |
@@ -155,18 +155,18 @@ Motivo:
 
 ### Tarefa atual
 
-Etapa 5 concluída: criação dos serviços de aplicação e casos de uso iniciais.
+Etapa 6 concluída: criação da camada inicial de entrada/API com Minimal APIs.
 
 ### Próxima tarefa sugerida
 
-Criar a camada de entrada/API.
+Ampliar e revisar os testes dos fluxos principais.
 
 Itens previstos para a próxima etapa:
 
-- Registrar a composição necessária no `Program.cs`.
-- Expor endpoints iniciais para matérias, módulos, anotações, páginas, tags e favoritos.
-- Consumir os serviços de aplicação já criados.
-- Manter entidades de domínio fora dos contratos HTTP.
+- Consolidar cobertura dos fluxos principais da API, aplicação e domínio.
+- Revisar cenários de erro e validação.
+- Manter os testes usando SQLite em memória ou banco temporário.
+- Evitar dependência do arquivo real `cadernoapp.db`.
 
 Não criar autenticação, frontend ou PDF nessa próxima etapa.
 
@@ -618,6 +618,123 @@ feat: add application services
 - Não foram criados endpoints, controllers, autenticação, frontend ou PDF.
 - Não foram adicionados MediatR, AutoMapper ou FluentValidation.
 
+## Registro da Etapa 6
+
+### Objetivo realizado
+
+Criada a camada inicial de entrada/API no projeto `CadernoApp.Api` usando Minimal APIs. Os endpoints consomem os serviços de aplicação existentes, retornam DTOs da camada `CadernoApp.Application` e não expõem entidades de domínio diretamente.
+
+### Endpoints criados
+
+```text
+POST /api/subjects
+GET /api/subjects
+GET /api/subjects/{id}
+PUT /api/subjects/{id}
+DELETE /api/subjects/{id}
+
+POST /api/subjects/{subjectId}/modules
+GET /api/subjects/{subjectId}/modules
+GET /api/modules/{id}
+DELETE /api/modules/{id}
+
+POST /api/modules/{moduleId}/notes
+GET /api/modules/{moduleId}/notes
+GET /api/notes/{id}
+POST /api/notes/{noteId}/pages
+PUT /api/notes/{noteId}/pages/{pageId}/content
+POST /api/notes/{noteId}/tags
+DELETE /api/notes/{noteId}/tags/{tagName}
+PUT /api/notes/{noteId}/favorite
+DELETE /api/notes/{noteId}/favorite
+GET /api/notes/favorites
+GET /api/notes/search?query=texto
+```
+
+### Contracts criados
+
+```text
+CreateSubjectRequest
+UpdateSubjectRequest
+CreateStudyModuleRequest
+CreateNoteRequest
+AddNotePageRequest
+UpdateNotePageContentRequest
+AddTagToNoteRequest
+ErrorResponse
+```
+
+### Arquivos criados
+
+```text
+src/CadernoApp.Api/Contracts/ErrorResponse.cs
+src/CadernoApp.Api/Contracts/Subjects/CreateSubjectRequest.cs
+src/CadernoApp.Api/Contracts/Subjects/UpdateSubjectRequest.cs
+src/CadernoApp.Api/Contracts/StudyModules/CreateStudyModuleRequest.cs
+src/CadernoApp.Api/Contracts/Notes/CreateNoteRequest.cs
+src/CadernoApp.Api/Contracts/Notes/AddNotePageRequest.cs
+src/CadernoApp.Api/Contracts/Notes/UpdateNotePageContentRequest.cs
+src/CadernoApp.Api/Contracts/Notes/AddTagToNoteRequest.cs
+src/CadernoApp.Api/Endpoints/EndpointResults.cs
+src/CadernoApp.Api/Endpoints/SubjectEndpoints.cs
+src/CadernoApp.Api/Endpoints/StudyModuleEndpoints.cs
+src/CadernoApp.Api/Endpoints/NoteEndpoints.cs
+tests/CadernoApp.Tests/Api/ApiEndpointsTests.cs
+```
+
+### Arquivos alterados
+
+```text
+src/CadernoApp.Api/Program.cs
+src/CadernoApp.Api/appsettings.json
+tests/CadernoApp.Tests/CadernoApp.Tests.csproj
+docs/03-acompanhamento-do-projeto.md
+```
+
+### Pacote adicionado
+
+```text
+Microsoft.AspNetCore.Mvc.Testing 10.0.9
+```
+
+### Testes criados ou ajustados
+
+```text
+ApiEndpointsTests.PostSubject_CreatesSubject
+ApiEndpointsTests.GetSubjects_ListsSubjects
+ApiEndpointsTests.PostModule_CreatesStudyModuleInsideSubject
+ApiEndpointsTests.PostNote_CreatesNoteInsideModule
+ApiEndpointsTests.PostPage_AddsPageToNote
+ApiEndpointsTests.PostTag_AddsTagToNote
+ApiEndpointsTests.PutFavorite_MarksNoteAsFavorite
+ApiEndpointsTests.GetFavorites_ReturnsFavoriteNotes
+ApiEndpointsTests.GetSubject_ReturnsNotFound_WhenSubjectDoesNotExist
+```
+
+### Resultado de restore, build, test e format
+
+```text
+dotnet restore: sucesso
+dotnet build: sucesso, 0 avisos, 0 erros
+dotnet test: sucesso, 63 testes aprovados
+dotnet format: sucesso
+```
+
+### Commit gerado
+
+```text
+feat: add initial api endpoints
+```
+
+### Observações técnicas
+
+- `Program.cs` registra `AddApplication()` e `AddInfrastructure(connectionString)`.
+- `appsettings.json` define `DefaultConnection` como `Data Source=cadernoapp.db`.
+- `Program` recebeu declaração parcial pública para permitir testes com `WebApplicationFactory`.
+- Os testes de integração substituem o `CadernoAppDbContext` por SQLite em memória e não usam o arquivo real `cadernoapp.db`.
+- Erros esperados de domínio/aplicação são convertidos para `404` ou `400` sem expor stack trace.
+- Não foram criados controllers, autenticação, frontend, PDF, migrations ou endpoints fora do escopo da etapa.
+
 ## Histórico de Validações
 
 | Data | Etapa | Resultado | Resumo | Observações |
@@ -628,6 +745,7 @@ feat: add application services
 | 2026-07-08 | Etapa 3 | Aprovado | Regras básicas de negócio do domínio implementadas e validadas com testes unitários | Commit `feat: add domain business rules`; `dotnet test` com 35 testes aprovados |
 | 2026-07-08 | Etapa 4 | Aprovado | Persistência inicial com EF Core e SQLite configurada e validada com testes de persistência | Commit `feat: add initial persistence layer`; `dotnet test` com 40 testes aprovados |
 | 2026-07-08 | Etapa 5 | Aprovado | Serviços de aplicação, DTOs, interfaces, repositórios e testes de fluxos criados | Commit `feat: add application services`; `dotnet test` com 54 testes aprovados |
+| 2026-07-08 | Etapa 6 | Aprovado | Endpoints iniciais da API criados com Minimal APIs e validados com testes de integração | Commit `feat: add initial api endpoints`; `dotnet test` com 63 testes aprovados |
 
 ## Checklist de validação da Etapa 0
 

@@ -329,6 +329,20 @@ public sealed class CoreDomainEntitiesTests
     }
 
     [Fact]
+    public void Note_RemoveTag_WhenTagDoesNotExist_ReturnsFalseAndKeepsUpdatedAt()
+    {
+        var note = new Note(Guid.NewGuid(), "Linear equations");
+        note.AddTag("Important");
+        var previousUpdatedAt = note.UpdatedAt;
+
+        var removed = note.RemoveTag("Review");
+
+        Assert.False(removed);
+        Assert.Single(note.Tags);
+        Assert.Equal(previousUpdatedAt, note.UpdatedAt);
+    }
+
+    [Fact]
     public void NotePage_UpdateContent_UpdatesContent()
     {
         var page = new NotePage(Guid.NewGuid(), pageNumber: 1, content: "<p>Before</p>");
@@ -348,6 +362,27 @@ public sealed class CoreDomainEntitiesTests
         page.UpdateContent("<p>After</p>");
 
         Assert.True(page.UpdatedAt > previousUpdatedAt);
+    }
+
+    [Fact]
+    public void NotePage_WithNullContent_UsesEmptyContent()
+    {
+        var page = new NotePage(Guid.NewGuid(), pageNumber: 1, content: null);
+
+        Assert.Equal(string.Empty, page.Content);
+    }
+
+    [Fact]
+    public void Tag_Update_UpdatesBasicData()
+    {
+        var tag = new Tag("Important", "#ffcc00");
+        var previousUpdatedAt = tag.UpdatedAt;
+
+        tag.Update("Review", "#00aaee");
+
+        Assert.Equal("Review", tag.Name);
+        Assert.Equal("#00aaee", tag.Color);
+        Assert.True(tag.UpdatedAt > previousUpdatedAt);
     }
 
     [Theory]

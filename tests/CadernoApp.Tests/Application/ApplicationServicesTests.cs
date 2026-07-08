@@ -22,6 +22,15 @@ public sealed class ApplicationServicesTests
     }
 
     [Fact]
+    public async Task SubjectService_CreateSubject_WithInvalidName_ThrowsArgumentException()
+    {
+        await using var fixture = await ApplicationServicesFixture.CreateAsync();
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => fixture.SubjectService.CreateAsync(" "));
+    }
+
+    [Fact]
     public async Task SubjectService_ListsSubjects()
     {
         await using var fixture = await ApplicationServicesFixture.CreateAsync();
@@ -62,6 +71,15 @@ public sealed class ApplicationServicesTests
     }
 
     [Fact]
+    public async Task StudyModuleService_CreateModule_WithMissingSubject_ThrowsKeyNotFoundException()
+    {
+        await using var fixture = await ApplicationServicesFixture.CreateAsync();
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => fixture.StudyModuleService.CreateAsync(Guid.NewGuid(), "Algebra"));
+    }
+
+    [Fact]
     public async Task NoteService_CreatesNoteInsideModule()
     {
         await using var fixture = await ApplicationServicesFixture.CreateAsync();
@@ -73,6 +91,15 @@ public sealed class ApplicationServicesTests
         Assert.Equal(module.Id, note.StudyModuleId);
         Assert.Equal("Linear equations", note.Title);
         Assert.False(note.IsFavorite);
+    }
+
+    [Fact]
+    public async Task NoteService_CreateNote_WithMissingModule_ThrowsKeyNotFoundException()
+    {
+        await using var fixture = await ApplicationServicesFixture.CreateAsync();
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => fixture.NoteService.CreateAsync(Guid.NewGuid(), "Linear equations"));
     }
 
     [Fact]
@@ -90,6 +117,15 @@ public sealed class ApplicationServicesTests
     }
 
     [Fact]
+    public async Task NoteService_AddPage_WithMissingNote_ThrowsKeyNotFoundException()
+    {
+        await using var fixture = await ApplicationServicesFixture.CreateAsync();
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => fixture.NoteService.AddPageAsync(Guid.NewGuid(), "<p>First page</p>"));
+    }
+
+    [Fact]
     public async Task NoteService_UpdatesPageContent()
     {
         await using var fixture = await ApplicationServicesFixture.CreateAsync();
@@ -103,6 +139,16 @@ public sealed class ApplicationServicesTests
     }
 
     [Fact]
+    public async Task NoteService_UpdatePageContent_WithMissingPage_ThrowsKeyNotFoundException()
+    {
+        await using var fixture = await ApplicationServicesFixture.CreateAsync();
+        var note = await CreateNoteAsync(fixture);
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => fixture.NoteService.UpdatePageContentAsync(note.Id, Guid.NewGuid(), "<p>After</p>"));
+    }
+
+    [Fact]
     public async Task NoteService_AddsTag()
     {
         await using var fixture = await ApplicationServicesFixture.CreateAsync();
@@ -113,6 +159,17 @@ public sealed class ApplicationServicesTests
         Assert.NotEqual(Guid.Empty, tag.Id);
         Assert.Equal("Important", tag.Name);
         Assert.Equal("#ffcc00", tag.Color);
+    }
+
+    [Fact]
+    public async Task NoteService_AddTag_WithDuplicateTag_ThrowsInvalidOperationException()
+    {
+        await using var fixture = await ApplicationServicesFixture.CreateAsync();
+        var note = await CreateNoteAsync(fixture);
+        await fixture.NoteService.AddTagAsync(note.Id, "Important");
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => fixture.NoteService.AddTagAsync(note.Id, " important "));
     }
 
     [Fact]
@@ -156,17 +213,27 @@ public sealed class ApplicationServicesTests
     }
 
     [Fact]
-    public async Task NoteService_SearchesByTitleAndTag()
+    public async Task NoteService_SearchesByTitle()
     {
         await using var fixture = await ApplicationServicesFixture.CreateAsync();
         var firstNote = await CreateNoteAsync(fixture, "Linear equations");
+        await CreateNoteAsync(fixture, "Geometry basics");
+
+        var byTitle = await fixture.NoteService.SearchAsync("linear");
+
+        Assert.Equal(firstNote.Id, Assert.Single(byTitle).Id);
+    }
+
+    [Fact]
+    public async Task NoteService_SearchesByTag()
+    {
+        await using var fixture = await ApplicationServicesFixture.CreateAsync();
+        await CreateNoteAsync(fixture, "Linear equations");
         var secondNote = await CreateNoteAsync(fixture, "Geometry basics");
         await fixture.NoteService.AddTagAsync(secondNote.Id, "Important");
 
-        var byTitle = await fixture.NoteService.SearchAsync("linear");
         var byTag = await fixture.NoteService.SearchAsync("important");
 
-        Assert.Equal(firstNote.Id, Assert.Single(byTitle).Id);
         Assert.Equal(secondNote.Id, Assert.Single(byTag).Id);
     }
 

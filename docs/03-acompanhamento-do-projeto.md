@@ -43,7 +43,7 @@ Corrigir
 | 4 — Persistência | Configurar banco de dados e mapeamento das entidades | Configurado EF Core com SQLite, `CadernoAppDbContext`, mapeamentos Fluent API e testes com SQLite em memória | Aprovado | `src/CadernoApp.Infrastructure/`, `src/CadernoApp.Domain/Entities/`, `tests/CadernoApp.Tests/Infrastructure/`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format` executados com sucesso | Sem migrations, endpoints, controllers, serviços de aplicação, repositórios, DTOs, autenticação ou PDF |
 | 5 — Serviços de aplicação | Criar casos de uso principais | Criados serviços de aplicação, DTOs, interfaces de persistência, repositórios EF Core e testes de fluxos com SQLite em memória | Aprovado | `src/CadernoApp.Application/`, `src/CadernoApp.Infrastructure/Persistence/Repositories/`, `src/CadernoApp.Domain/Entities/`, `tests/CadernoApp.Tests/Application/`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format` executados com sucesso | Sem endpoints, controllers, autenticação, frontend, PDF, MediatR, AutoMapper ou FluentValidation |
 | 6 — Camada de entrada/API | Expor endpoints para consumo futuro pelo frontend | Criados endpoints Minimal APIs, contratos HTTP, registro de DI da Application/Infrastructure e testes de integração com SQLite em memória | Aprovado | `src/CadernoApp.Api/`, `tests/CadernoApp.Tests/Api/`, `tests/CadernoApp.Tests/CadernoApp.Tests.csproj`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format` executados com sucesso | Sem controllers, autenticação, frontend, PDF, migrations ou exposição direta de entidades de domínio |
-| 7 — Testes | Criar testes do domínio e dos fluxos principais | Pendente | Pendente | A definir | Testes executando com sucesso | Priorizar regras de página, tags e favoritos |
+| 7 — Testes | Criar testes do domínio e dos fluxos principais | Ampliada cobertura de domínio, aplicação e API; criado workflow inicial de CI no GitHub Actions | Aprovado | `.github/workflows/ci.yml`, `tests/CadernoApp.Tests/Domain/CoreDomainEntitiesTests.cs`, `tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs`, `tests/CadernoApp.Tests/Api/ApiEndpointsTests.cs`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format --no-restore` executados com sucesso | Sem novas features de produto, frontend, autenticação, autorização, PDF, migrations ou controllers |
 | 8 — Preparação para exportação PDF | Preparar contratos e estrutura para PDF A4 | Pendente | Pendente | A definir | Anotações retornando páginas em ordem e estrutura pronta para exportação | Não precisa gerar PDF final nesta etapa |
 | 9 — Integração futura com frontend | Preparar backend para editor visual e app final | Pendente | Pendente | A definir | API pronta para consumo inicial | Frontend será planejado depois |
 
@@ -155,20 +155,20 @@ Motivo:
 
 ### Tarefa atual
 
-Etapa 6 concluída: criação da camada inicial de entrada/API com Minimal APIs.
+Etapa 7 concluída: consolidação de testes, validações e integração contínua.
 
 ### Próxima tarefa sugerida
 
-Ampliar e revisar os testes dos fluxos principais.
+Preparar a estrutura para exportação PDF A4.
 
 Itens previstos para a próxima etapa:
 
-- Consolidar cobertura dos fluxos principais da API, aplicação e domínio.
-- Revisar cenários de erro e validação.
-- Manter os testes usando SQLite em memória ou banco temporário.
-- Evitar dependência do arquivo real `cadernoapp.db`.
+- Revisar contratos e dados necessários para exportar anotações em páginas A4.
+- Garantir ordenação e dimensões das páginas no retorno da aplicação/API.
+- Planejar a camada responsável por geração futura de PDF.
+- Manter a geração real de PDF fora do escopo até a etapa correspondente.
 
-Não criar autenticação, frontend ou PDF nessa próxima etapa.
+Não criar autenticação, frontend ou implementação final de PDF nessa próxima etapa.
 
 ## Registro da Etapa 1
 
@@ -735,6 +735,92 @@ feat: add initial api endpoints
 - Erros esperados de domínio/aplicação são convertidos para `404` ou `400` sem expor stack trace.
 - Não foram criados controllers, autenticação, frontend, PDF, migrations ou endpoints fora do escopo da etapa.
 
+## Registro da Etapa 7
+
+### Objetivo realizado
+
+Consolidada a cobertura de testes do backend e criada a configuração inicial de integração contínua no GitHub Actions para executar restore, build e test em push e pull request para `main`.
+
+### Arquivo de CI criado
+
+```text
+.github/workflows/ci.yml
+```
+
+O workflow usa `ubuntu-latest`, `actions/checkout@v4`, `actions/setup-dotnet@v4` com `dotnet-version: 10.0.x` e executa:
+
+```text
+dotnet restore
+dotnet build --no-restore
+dotnet test --no-build
+```
+
+### Testes adicionados ou ajustados
+
+```text
+CoreDomainEntitiesTests.Note_RemoveTag_WhenTagDoesNotExist_ReturnsFalseAndKeepsUpdatedAt
+CoreDomainEntitiesTests.NotePage_WithNullContent_UsesEmptyContent
+CoreDomainEntitiesTests.Tag_Update_UpdatesBasicData
+
+ApplicationServicesTests.SubjectService_CreateSubject_WithInvalidName_ThrowsArgumentException
+ApplicationServicesTests.StudyModuleService_CreateModule_WithMissingSubject_ThrowsKeyNotFoundException
+ApplicationServicesTests.NoteService_CreateNote_WithMissingModule_ThrowsKeyNotFoundException
+ApplicationServicesTests.NoteService_AddPage_WithMissingNote_ThrowsKeyNotFoundException
+ApplicationServicesTests.NoteService_UpdatePageContent_WithMissingPage_ThrowsKeyNotFoundException
+ApplicationServicesTests.NoteService_AddTag_WithDuplicateTag_ThrowsInvalidOperationException
+ApplicationServicesTests.NoteService_SearchesByTitle
+ApplicationServicesTests.NoteService_SearchesByTag
+
+ApiEndpointsTests.PostSubject_WithEmptyName_ReturnsBadRequest
+ApiEndpointsTests.PostModule_WithMissingSubject_ReturnsNotFound
+ApiEndpointsTests.PostNote_WithMissingModule_ReturnsNotFound
+ApiEndpointsTests.PostPage_WithMissingNote_ReturnsNotFound
+ApiEndpointsTests.PostTag_WithDuplicateTag_ReturnsBadRequest
+ApiEndpointsTests.DeleteFavorite_WithMissingNote_ReturnsNotFound
+ApiEndpointsTests.GetSearch_ReturnsNotesMatchingTitleOrTag
+```
+
+Também foi ajustado o teste `ApiEndpointsTests.GetSubject_ReturnsNotFound_WhenSubjectDoesNotExist` para validar que a resposta de erro não expõe stack trace.
+
+### Arquivos criados
+
+```text
+.github/workflows/ci.yml
+```
+
+### Arquivos alterados
+
+```text
+tests/CadernoApp.Tests/Domain/CoreDomainEntitiesTests.cs
+tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs
+tests/CadernoApp.Tests/Api/ApiEndpointsTests.cs
+docs/03-acompanhamento-do-projeto.md
+```
+
+### Resultado de restore, build, test e format
+
+```text
+dotnet restore: sucesso
+dotnet build: sucesso, 0 avisos, 0 erros
+dotnet test: sucesso, 80 testes aprovados
+dotnet format --no-restore: sucesso
+```
+
+### Commit gerado
+
+```text
+test: expand coverage and add ci workflow
+```
+
+### Observações técnicas
+
+- A API manteve o tratamento simples por endpoint com o helper `EndpointResults`.
+- Os novos testes HTTP validam respostas `400` e `404` e verificam que erros esperados não expõem stack trace.
+- O `WebApplicationFactory` usado nos testes limpa providers de logging para não depender do Windows EventLog durante execução local/sandbox.
+- O comportamento atual de `NotePage` aceita conteúdo nulo como página em branco; isso foi documentado por teste, sem criar nova regra de produto.
+- `dotnet test` completo precisou ser executado uma vez fora do sandbox por acesso ao `NuGet.Config`; a validação final foi feita com `dotnet test --no-build` dentro do sandbox.
+- Não foram criados frontend, autenticação, autorização, PDF, migrations, controllers, MediatR, AutoMapper, FluentValidation ou novas entidades de produto.
+
 ## Histórico de Validações
 
 | Data | Etapa | Resultado | Resumo | Observações |
@@ -746,6 +832,7 @@ feat: add initial api endpoints
 | 2026-07-08 | Etapa 4 | Aprovado | Persistência inicial com EF Core e SQLite configurada e validada com testes de persistência | Commit `feat: add initial persistence layer`; `dotnet test` com 40 testes aprovados |
 | 2026-07-08 | Etapa 5 | Aprovado | Serviços de aplicação, DTOs, interfaces, repositórios e testes de fluxos criados | Commit `feat: add application services`; `dotnet test` com 54 testes aprovados |
 | 2026-07-08 | Etapa 6 | Aprovado | Endpoints iniciais da API criados com Minimal APIs e validados com testes de integração | Commit `feat: add initial api endpoints`; `dotnet test` com 63 testes aprovados |
+| 2026-07-08 | Etapa 7 | Aprovado | Cobertura de testes ampliada e CI inicial criado no GitHub Actions | Commit `test: expand coverage and add ci workflow`; `dotnet test` com 80 testes aprovados |
 
 ## Checklist de validação da Etapa 0
 

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using CadernoApp.Api.Contracts;
 using CadernoApp.Api.Contracts.Notes;
 using CadernoApp.Api.Contracts.StudyModules;
 using CadernoApp.Api.Contracts.Subjects;
@@ -12,6 +13,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace CadernoApp.Tests.Api;
 
@@ -183,6 +185,109 @@ public sealed class ApiEndpointsTests
         var response = await client.GetAsync($"/api/subjects/{Guid.NewGuid()}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await AssertErrorDoesNotExposeStackTraceAsync(response);
+    }
+
+    [Fact]
+    public async Task PostSubject_WithEmptyName_ReturnsBadRequest()
+    {
+        await using var factory = await CadernoAppApiFactory.CreateAsync();
+        using var client = factory.CreateClient();
+
+        var response = await client.PostAsJsonAsync(
+            "/api/subjects",
+            new CreateSubjectRequest { Name = " " });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await AssertErrorDoesNotExposeStackTraceAsync(response);
+    }
+
+    [Fact]
+    public async Task PostModule_WithMissingSubject_ReturnsNotFound()
+    {
+        await using var factory = await CadernoAppApiFactory.CreateAsync();
+        using var client = factory.CreateClient();
+
+        var response = await client.PostAsJsonAsync(
+            $"/api/subjects/{Guid.NewGuid()}/modules",
+            new CreateStudyModuleRequest { Title = "Algebra" });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await AssertErrorDoesNotExposeStackTraceAsync(response);
+    }
+
+    [Fact]
+    public async Task PostNote_WithMissingModule_ReturnsNotFound()
+    {
+        await using var factory = await CadernoAppApiFactory.CreateAsync();
+        using var client = factory.CreateClient();
+
+        var response = await client.PostAsJsonAsync(
+            $"/api/modules/{Guid.NewGuid()}/notes",
+            new CreateNoteRequest { Title = "Linear equations" });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await AssertErrorDoesNotExposeStackTraceAsync(response);
+    }
+
+    [Fact]
+    public async Task PostPage_WithMissingNote_ReturnsNotFound()
+    {
+        await using var factory = await CadernoAppApiFactory.CreateAsync();
+        using var client = factory.CreateClient();
+
+        var response = await client.PostAsJsonAsync(
+            $"/api/notes/{Guid.NewGuid()}/pages",
+            new AddNotePageRequest { Content = "<p>First page</p>" });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await AssertErrorDoesNotExposeStackTraceAsync(response);
+    }
+
+    [Fact]
+    public async Task PostTag_WithDuplicateTag_ReturnsBadRequest()
+    {
+        await using var factory = await CadernoAppApiFactory.CreateAsync();
+        using var client = factory.CreateClient();
+        var note = await CreateNoteAsync(client);
+        await AddTagAsync(client, note.Id, "Important");
+
+        var response = await client.PostAsJsonAsync(
+            $"/api/notes/{note.Id}/tags",
+            new AddTagToNoteRequest { Name = " important " });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await AssertErrorDoesNotExposeStackTraceAsync(response);
+    }
+
+    [Fact]
+    public async Task DeleteFavorite_WithMissingNote_ReturnsNotFound()
+    {
+        await using var factory = await CadernoAppApiFactory.CreateAsync();
+        using var client = factory.CreateClient();
+
+        var response = await client.DeleteAsync($"/api/notes/{Guid.NewGuid()}/favorite");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await AssertErrorDoesNotExposeStackTraceAsync(response);
+    }
+
+    [Fact]
+    public async Task GetSearch_ReturnsNotesMatchingTitleOrTag()
+    {
+        await using var factory = await CadernoAppApiFactory.CreateAsync();
+        using var client = factory.CreateClient();
+        var firstNote = await CreateNoteAsync(client, title: "Linear equations");
+        var secondNote = await CreateNoteAsync(client, title: "Geometry basics");
+        await AddTagAsync(client, secondNote.Id, "Important");
+
+        var byTitle = await client.GetFromJsonAsync<IReadOnlyList<NoteSummaryDto>>("/api/notes/search?query=Linear");
+        var byTag = await client.GetFromJsonAsync<IReadOnlyList<NoteSummaryDto>>("/api/notes/search?query=Important");
+
+        Assert.NotNull(byTitle);
+        Assert.NotNull(byTag);
+        Assert.Equal(firstNote.Id, Assert.Single(byTitle).Id);
+        Assert.Equal(secondNote.Id, Assert.Single(byTag).Id);
     }
 
     private static async Task<SubjectDto> CreateSubjectAsync(
@@ -233,6 +338,33 @@ public sealed class ApiEndpointsTests
             ?? throw new InvalidOperationException("The API did not return a note.");
     }
 
+    private static async Task<TagDto> AddTagAsync(
+        HttpClient client,
+        Guid noteId,
+        string name)
+    {
+        var response = await client.PostAsJsonAsync(
+            $"/api/notes/{noteId}/tags",
+            new AddTagToNoteRequest { Name = name });
+
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadFromJsonAsync<TagDto>()
+            ?? throw new InvalidOperationException("The API did not return a tag.");
+    }
+
+    private static async Task AssertErrorDoesNotExposeStackTraceAsync(HttpResponseMessage response)
+    {
+        var body = await response.Content.ReadAsStringAsync();
+        var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        Assert.NotNull(error);
+        Assert.False(string.IsNullOrWhiteSpace(error.Error));
+        Assert.DoesNotContain("System.", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("StackTrace", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(" at ", body, StringComparison.OrdinalIgnoreCase);
+    }
+
     private sealed class CadernoAppApiFactory : WebApplicationFactory<Program>, IAsyncDisposable
     {
         private readonly SqliteConnection _connection = new("Data Source=:memory:");
@@ -251,6 +383,8 @@ public sealed class ApiEndpointsTests
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
+            builder.ConfigureLogging(logging => logging.ClearProviders());
+
             builder.ConfigureTestServices(services =>
             {
                 services.RemoveAll<DbContextOptions<CadernoAppDbContext>>();

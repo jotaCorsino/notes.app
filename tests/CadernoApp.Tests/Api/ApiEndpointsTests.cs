@@ -5,6 +5,7 @@ using CadernoApp.Api.Contracts.Notes;
 using CadernoApp.Api.Contracts.StudyModules;
 using CadernoApp.Api.Contracts.Subjects;
 using CadernoApp.Application.DTOs;
+using CadernoApp.Application.DTOs.Export;
 using CadernoApp.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -290,6 +291,50 @@ public sealed class ApiEndpointsTests
         Assert.Equal(secondNote.Id, Assert.Single(byTag).Id);
     }
 
+    [Fact]
+    public async Task GetPrintableNote_ReturnsPrintableNoteAsJson()
+    {
+        await using var factory = await CadernoAppApiFactory.CreateAsync();
+        using var client = factory.CreateClient();
+        var note = await CreateNoteAsync(client, title: "Linear equations");
+        await AddPageAsync(client, note.Id, "<p>First page</p>");
+        await AddPageAsync(client, note.Id, "<p>Second page</p>");
+
+        var response = await client.GetAsync($"/api/notes/{note.Id}/printable");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(response.Content.Headers.ContentType);
+        Assert.Equal("application/json", response.Content.Headers.ContentType.MediaType);
+
+        var printableNote = await response.Content.ReadFromJsonAsync<PrintableNoteDto>();
+
+        Assert.NotNull(printableNote);
+        Assert.Equal(note.Id, printableNote.NoteId);
+        Assert.Equal("Linear equations", printableNote.Title);
+        Assert.Equal("Mathematics", printableNote.Metadata.SubjectName);
+        Assert.Equal("Algebra", printableNote.Metadata.StudyModuleTitle);
+        Assert.Equal([1, 2], printableNote.Pages.Select(page => page.PageNumber));
+        Assert.Equal(2, printableNote.PageCount);
+        Assert.All(printableNote.Pages, page =>
+        {
+            Assert.Equal(210m, page.WidthMm);
+            Assert.Equal(297m, page.HeightMm);
+            Assert.Equal("html", page.ContentFormat);
+        });
+    }
+
+    [Fact]
+    public async Task GetPrintableNote_WithMissingNote_ReturnsNotFound()
+    {
+        await using var factory = await CadernoAppApiFactory.CreateAsync();
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync($"/api/notes/{Guid.NewGuid()}/printable");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await AssertErrorDoesNotExposeStackTraceAsync(response);
+    }
+
     private static async Task<SubjectDto> CreateSubjectAsync(
         HttpClient client,
         string name = "Mathematics")
@@ -351,6 +396,21 @@ public sealed class ApiEndpointsTests
 
         return await response.Content.ReadFromJsonAsync<TagDto>()
             ?? throw new InvalidOperationException("The API did not return a tag.");
+    }
+
+    private static async Task<NotePageDto> AddPageAsync(
+        HttpClient client,
+        Guid noteId,
+        string content)
+    {
+        var response = await client.PostAsJsonAsync(
+            $"/api/notes/{noteId}/pages",
+            new AddNotePageRequest { Content = content });
+
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadFromJsonAsync<NotePageDto>()
+            ?? throw new InvalidOperationException("The API did not return a note page.");
     }
 
     private static async Task AssertErrorDoesNotExposeStackTraceAsync(HttpResponseMessage response)

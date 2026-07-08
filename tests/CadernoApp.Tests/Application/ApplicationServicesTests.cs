@@ -1,4 +1,5 @@
 using CadernoApp.Application.Services;
+using CadernoApp.Application.DTOs.Export;
 using CadernoApp.Infrastructure.Persistence;
 using CadernoApp.Infrastructure.Persistence.Repositories;
 using Microsoft.Data.Sqlite;
@@ -237,6 +238,77 @@ public sealed class ApplicationServicesTests
         Assert.Equal(secondNote.Id, Assert.Single(byTag).Id);
     }
 
+    [Fact]
+    public async Task NoteExportService_ReturnsPrintableNoteWithMetadata()
+    {
+        await using var fixture = await ApplicationServicesFixture.CreateAsync();
+        var note = await CreateNoteAsync(fixture, "Linear equations");
+
+        var printableNote = await fixture.NoteExportService.GetPrintableNoteAsync(note.Id);
+
+        Assert.Equal(note.Id, printableNote.NoteId);
+        Assert.Equal("Linear equations", printableNote.Title);
+        Assert.False(printableNote.IsFavorite);
+        Assert.Equal("Mathematics", printableNote.Metadata.SubjectName);
+        Assert.Equal("Algebra", printableNote.Metadata.StudyModuleTitle);
+        Assert.NotEqual(Guid.Empty, printableNote.Metadata.SubjectId);
+        Assert.NotEqual(Guid.Empty, printableNote.Metadata.StudyModuleId);
+        Assert.Equal(note.CreatedAt, printableNote.Metadata.CreatedAt);
+        Assert.Equal(note.UpdatedAt, printableNote.Metadata.UpdatedAt);
+    }
+
+    [Fact]
+    public async Task NoteExportService_ReturnsPagesOrderedForPrinting()
+    {
+        await using var fixture = await ApplicationServicesFixture.CreateAsync();
+        var note = await CreateNoteAsync(fixture);
+        await fixture.NoteService.AddPageAsync(note.Id, "<p>First page</p>");
+        await fixture.NoteService.AddPageAsync(note.Id, "<p>Second page</p>");
+
+        var printableNote = await fixture.NoteExportService.GetPrintableNoteAsync(note.Id);
+
+        Assert.Equal([1, 2], printableNote.Pages.Select(page => page.PageNumber));
+        Assert.Equal([0, 1], printableNote.Pages.Select(page => page.OrderIndex));
+    }
+
+    [Fact]
+    public async Task NoteExportService_ReturnsPageCount()
+    {
+        await using var fixture = await ApplicationServicesFixture.CreateAsync();
+        var note = await CreateNoteAsync(fixture);
+        await fixture.NoteService.AddPageAsync(note.Id, "<p>First page</p>");
+        await fixture.NoteService.AddPageAsync(note.Id, "<p>Second page</p>");
+
+        var printableNote = await fixture.NoteExportService.GetPrintableNoteAsync(note.Id);
+
+        Assert.Equal(2, printableNote.PageCount);
+    }
+
+    [Fact]
+    public async Task NoteExportService_PreservesPageDimensionsContentAndFormat()
+    {
+        await using var fixture = await ApplicationServicesFixture.CreateAsync();
+        var note = await CreateNoteAsync(fixture);
+        await fixture.NoteService.AddPageAsync(note.Id, "# First page", "markdown");
+
+        var printableNote = await fixture.NoteExportService.GetPrintableNoteAsync(note.Id);
+
+        var page = Assert.Single(printableNote.Pages);
+        Assert.Equal(210m, page.WidthMm);
+        Assert.Equal(297m, page.HeightMm);
+        Assert.Equal("# First page", page.Content);
+        Assert.Equal("markdown", page.ContentFormat);
+    }
+
+    [Fact]
+    public async Task NoteExportService_WithMissingNote_ThrowsKeyNotFoundException()
+    {
+        await using var fixture = await ApplicationServicesFixture.CreateAsync();
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => fixture.NoteExportService.GetPrintableNoteAsync(Guid.NewGuid()));
+    }
+
     private static async Task<CadernoApp.Application.DTOs.StudyModuleDto> CreateModuleAsync(
         ApplicationServicesFixture fixture)
     {
@@ -270,6 +342,7 @@ public sealed class ApplicationServicesTests
             SubjectService = new SubjectService(subjectRepository, unitOfWork);
             StudyModuleService = new StudyModuleService(subjectRepository, studyModuleRepository, unitOfWork);
             NoteService = new NoteService(studyModuleRepository, noteRepository, tagRepository, unitOfWork);
+            NoteExportService = new NoteExportService(noteRepository, studyModuleRepository, subjectRepository);
         }
 
         public SubjectService SubjectService { get; }
@@ -277,6 +350,8 @@ public sealed class ApplicationServicesTests
         public StudyModuleService StudyModuleService { get; }
 
         public NoteService NoteService { get; }
+
+        public NoteExportService NoteExportService { get; }
 
         private SqliteConnection Connection { get; }
 

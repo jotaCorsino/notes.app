@@ -18,6 +18,7 @@ public static class NoteEndpoints
 
         notesGroup.MapGet("/favorites", ListFavoriteNotesAsync);
         notesGroup.MapGet("/search", SearchNotesAsync);
+        notesGroup.MapGet("/{id:guid}/printable", GetPrintableNoteAsync);
         notesGroup.MapGet("/{id:guid}", GetNoteByIdAsync);
         notesGroup.MapPost("/{noteId:guid}/pages", AddPageAsync);
         notesGroup.MapPut("/{noteId:guid}/pages/{pageId:guid}/content", UpdatePageContentAsync);
@@ -65,6 +66,23 @@ public static class NoteEndpoints
         try
         {
             var note = await noteService.GetByIdAsync(id, cancellationToken);
+
+            return Results.Ok(note);
+        }
+        catch (Exception exception)
+        {
+            return EndpointResults.FromException(exception);
+        }
+    }
+
+    private static async Task<IResult> GetPrintableNoteAsync(
+        Guid id,
+        NoteExportService noteExportService,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var note = await noteExportService.GetPrintableNoteAsync(id, cancellationToken);
 
             return Results.Ok(note);
         }

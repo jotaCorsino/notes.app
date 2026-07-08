@@ -10,6 +10,7 @@ public static class DependencyInjection
         services.AddScoped<SubjectService>();
         services.AddScoped<StudyModuleService>();
         services.AddScoped<NoteService>();
+        services.AddScoped<NoteExportService>();
 
         return services;
     }

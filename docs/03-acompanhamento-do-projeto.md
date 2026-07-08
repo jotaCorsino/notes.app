@@ -44,7 +44,7 @@ Corrigir
 | 5 — Serviços de aplicação | Criar casos de uso principais | Criados serviços de aplicação, DTOs, interfaces de persistência, repositórios EF Core e testes de fluxos com SQLite em memória | Aprovado | `src/CadernoApp.Application/`, `src/CadernoApp.Infrastructure/Persistence/Repositories/`, `src/CadernoApp.Domain/Entities/`, `tests/CadernoApp.Tests/Application/`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format` executados com sucesso | Sem endpoints, controllers, autenticação, frontend, PDF, MediatR, AutoMapper ou FluentValidation |
 | 6 — Camada de entrada/API | Expor endpoints para consumo futuro pelo frontend | Criados endpoints Minimal APIs, contratos HTTP, registro de DI da Application/Infrastructure e testes de integração com SQLite em memória | Aprovado | `src/CadernoApp.Api/`, `tests/CadernoApp.Tests/Api/`, `tests/CadernoApp.Tests/CadernoApp.Tests.csproj`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format` executados com sucesso | Sem controllers, autenticação, frontend, PDF, migrations ou exposição direta de entidades de domínio |
 | 7 — Testes | Criar testes do domínio e dos fluxos principais | Ampliada cobertura de domínio, aplicação e API; criado workflow inicial de CI no GitHub Actions | Aprovado | `.github/workflows/ci.yml`, `tests/CadernoApp.Tests/Domain/CoreDomainEntitiesTests.cs`, `tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs`, `tests/CadernoApp.Tests/Api/ApiEndpointsTests.cs`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format --no-restore` executados com sucesso | Sem novas features de produto, frontend, autenticação, autorização, PDF, migrations ou controllers |
-| 8 — Preparação para exportação PDF | Preparar contratos e estrutura para PDF A4 | Pendente | Pendente | A definir | Anotações retornando páginas em ordem e estrutura pronta para exportação | Não precisa gerar PDF final nesta etapa |
+| 8 — Preparação para exportação PDF | Preparar contratos e estrutura para PDF A4 | Criados DTOs e serviço de aplicação para retornar anotações em formato imprimível/exportável; criado endpoint JSON `/api/notes/{id}/printable` | Aprovado | `src/CadernoApp.Application/DTOs/Export/`, `src/CadernoApp.Application/Services/NoteExportService.cs`, `src/CadernoApp.Application/DependencyInjection.cs`, `src/CadernoApp.Api/Endpoints/NoteEndpoints.cs`, `tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs`, `tests/CadernoApp.Tests/Api/ApiEndpointsTests.cs`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test --no-restore`, `dotnet test --no-build` e `dotnet format --no-restore` executados com sucesso | Sem geração real de PDF, bibliotecas de PDF, arquivo `.pdf`, download, frontend, autenticação, autorização, migrations ou controllers |
 | 9 — Integração futura com frontend | Preparar backend para editor visual e app final | Pendente | Pendente | A definir | API pronta para consumo inicial | Frontend será planejado depois |
 
 ## Decisões Técnicas
@@ -155,20 +155,20 @@ Motivo:
 
 ### Tarefa atual
 
-Etapa 7 concluída: consolidação de testes, validações e integração contínua.
+Etapa 8 concluída: preparação da estrutura para exportação PDF A4.
 
 ### Próxima tarefa sugerida
 
-Preparar a estrutura para exportação PDF A4.
+Revisar a estratégia de frontend/editor para consumir o formato imprimível.
 
 Itens previstos para a próxima etapa:
 
-- Revisar contratos e dados necessários para exportar anotações em páginas A4.
-- Garantir ordenação e dimensões das páginas no retorno da aplicação/API.
-- Planejar a camada responsável por geração futura de PDF.
-- Manter a geração real de PDF fora do escopo até a etapa correspondente.
+- Validar como o futuro editor visual consumirá `GET /api/notes/{id}/printable`.
+- Definir o formato final de armazenamento do conteúdo da página.
+- Decidir se a geração real de PDF deve ficar no backend ou em uma camada dedicada.
+- Manter a API sem autenticação e sem frontend até a etapa própria.
 
-Não criar autenticação, frontend ou implementação final de PDF nessa próxima etapa.
+Não criar autenticação, frontend ou implementação final de PDF sem uma etapa específica.
 
 ## Registro da Etapa 1
 
@@ -821,6 +821,94 @@ test: expand coverage and add ci workflow
 - `dotnet test` completo precisou ser executado uma vez fora do sandbox por acesso ao `NuGet.Config`; a validação final foi feita com `dotnet test --no-build` dentro do sandbox.
 - Não foram criados frontend, autenticação, autorização, PDF, migrations, controllers, MediatR, AutoMapper, FluentValidation ou novas entidades de produto.
 
+## Registro da Etapa 8
+
+### Objetivo realizado
+
+Criada uma estrutura de aplicação para obter uma anotação em formato pronto para impressão/exportação futura. O retorno contém metadados da matéria, módulo e anotação, páginas A4 ordenadas, dimensões, conteúdo e formato do conteúdo.
+
+### DTOs criados
+
+```text
+PrintableNoteDto
+PrintableNoteMetadataDto
+PrintableNotePageDto
+```
+
+### Serviço criado
+
+```text
+NoteExportService
+```
+
+O serviço busca a anotação por Id, carrega páginas, módulo e matéria por meio das abstrações existentes, ordena as páginas por `OrderIndex` e `PageNumber`, preserva conteúdo/dimensões/formato e lança `KeyNotFoundException` quando a anotação não existe.
+
+### Endpoint criado
+
+```text
+GET /api/notes/{id}/printable
+```
+
+O endpoint retorna `PrintableNoteDto` em JSON e responde `404` quando a anotação não existe. Não retorna PDF, não usa `application/pdf` e não cria endpoint de download.
+
+### Arquivos criados
+
+```text
+src/CadernoApp.Application/DTOs/Export/PrintableNoteDto.cs
+src/CadernoApp.Application/DTOs/Export/PrintableNoteMetadataDto.cs
+src/CadernoApp.Application/DTOs/Export/PrintableNotePageDto.cs
+src/CadernoApp.Application/Services/NoteExportService.cs
+```
+
+### Arquivos alterados
+
+```text
+src/CadernoApp.Application/DependencyInjection.cs
+src/CadernoApp.Api/Endpoints/NoteEndpoints.cs
+tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs
+tests/CadernoApp.Tests/Api/ApiEndpointsTests.cs
+docs/03-acompanhamento-do-projeto.md
+```
+
+### Testes criados ou ajustados
+
+```text
+ApplicationServicesTests.NoteExportService_ReturnsPrintableNoteWithMetadata
+ApplicationServicesTests.NoteExportService_ReturnsPagesOrderedForPrinting
+ApplicationServicesTests.NoteExportService_ReturnsPageCount
+ApplicationServicesTests.NoteExportService_PreservesPageDimensionsContentAndFormat
+ApplicationServicesTests.NoteExportService_WithMissingNote_ThrowsKeyNotFoundException
+
+ApiEndpointsTests.GetPrintableNote_ReturnsPrintableNoteAsJson
+ApiEndpointsTests.GetPrintableNote_WithMissingNote_ReturnsNotFound
+```
+
+### Resultado de restore, build, test e format
+
+```text
+dotnet restore: sucesso
+dotnet build: sucesso, 0 avisos, 0 erros
+dotnet test --no-restore: sucesso, 87 testes aprovados
+dotnet test --no-build: sucesso, 87 testes aprovados
+dotnet format --no-restore: sucesso
+```
+
+### Commit gerado
+
+```text
+feat: prepare printable note export
+```
+
+### Observações técnicas
+
+- `CadernoApp.Application` continua sem depender de `CadernoApp.Infrastructure`.
+- `CadernoApp.Domain` continua sem dependência de Application, Infrastructure ou EF Core.
+- Não foi necessário alterar repositórios EF Core, pois as abstrações existentes já permitem carregar anotação, módulo e matéria.
+- A resposta printable usa DTOs da Application e não expõe entidades de domínio diretamente pela API.
+- Nenhum PDF real foi gerado.
+- Nenhuma biblioteca de PDF foi instalada.
+- Não foram criados arquivo `.pdf`, endpoint de download, endpoint `/pdf`, frontend, autenticação, autorização, migrations, controllers, MediatR, AutoMapper ou FluentValidation.
+
 ## Histórico de Validações
 
 | Data | Etapa | Resultado | Resumo | Observações |
@@ -833,6 +921,7 @@ test: expand coverage and add ci workflow
 | 2026-07-08 | Etapa 5 | Aprovado | Serviços de aplicação, DTOs, interfaces, repositórios e testes de fluxos criados | Commit `feat: add application services`; `dotnet test` com 54 testes aprovados |
 | 2026-07-08 | Etapa 6 | Aprovado | Endpoints iniciais da API criados com Minimal APIs e validados com testes de integração | Commit `feat: add initial api endpoints`; `dotnet test` com 63 testes aprovados |
 | 2026-07-08 | Etapa 7 | Aprovado | Cobertura de testes ampliada e CI inicial criado no GitHub Actions | Commit `test: expand coverage and add ci workflow`; `dotnet test` com 80 testes aprovados |
+| 2026-07-08 | Etapa 8 | Aprovado | Estrutura printable/export ready criada para anotações A4, com endpoint JSON e testes | Commit `feat: prepare printable note export`; `dotnet test` com 87 testes aprovados |
 
 ## Checklist de validação da Etapa 0
 

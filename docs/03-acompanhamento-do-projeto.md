@@ -45,6 +45,7 @@ Corrigir
 | 6 — Camada de entrada/API | Expor endpoints para consumo futuro pelo frontend | Criados endpoints Minimal APIs, contratos HTTP, registro de DI da Application/Infrastructure e testes de integração com SQLite em memória | Aprovado | `src/CadernoApp.Api/`, `tests/CadernoApp.Tests/Api/`, `tests/CadernoApp.Tests/CadernoApp.Tests.csproj`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format` executados com sucesso | Sem controllers, autenticação, frontend, PDF, migrations ou exposição direta de entidades de domínio |
 | 7 — Testes | Criar testes do domínio e dos fluxos principais | Ampliada cobertura de domínio, aplicação e API; criado workflow inicial de CI no GitHub Actions | Aprovado | `.github/workflows/ci.yml`, `tests/CadernoApp.Tests/Domain/CoreDomainEntitiesTests.cs`, `tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs`, `tests/CadernoApp.Tests/Api/ApiEndpointsTests.cs`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format --no-restore` executados com sucesso | Sem novas features de produto, frontend, autenticação, autorização, PDF, migrations ou controllers |
 | 8 — Preparação para exportação PDF | Preparar contratos e estrutura para PDF A4 | Criados DTOs e serviço de aplicação para retornar anotações em formato imprimível/exportável; criado endpoint JSON `/api/notes/{id}/printable` | Aprovado | `src/CadernoApp.Application/DTOs/Export/`, `src/CadernoApp.Application/Services/NoteExportService.cs`, `src/CadernoApp.Application/DependencyInjection.cs`, `src/CadernoApp.Api/Endpoints/NoteEndpoints.cs`, `tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs`, `tests/CadernoApp.Tests/Api/ApiEndpointsTests.cs`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test --no-restore`, `dotnet test --no-build` e `dotnet format --no-restore` executados com sucesso | Sem geração real de PDF, bibliotecas de PDF, arquivo `.pdf`, download, frontend, autenticação, autorização, migrations ou controllers |
+| M1 — Manutenção de estilo C# | Padronizar formatação, legibilidade e configuração básica de estilo | Criado `.editorconfig`, executado `dotnet format --no-restore` e organizado `using` afetado pelo format | Aprovado | `.editorconfig`, `tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build`, `dotnet test` e `dotnet format --no-restore` executados com sucesso | Sem alteração de comportamento, novas features, pacotes, endpoints, migrations, PDF, frontend ou autenticação |
 | 9 — Integração futura com frontend | Preparar backend para editor visual e app final | Pendente | Pendente | A definir | API pronta para consumo inicial | Frontend será planejado depois |
 
 ## Decisões Técnicas
@@ -155,7 +156,7 @@ Motivo:
 
 ### Tarefa atual
 
-Etapa 8 concluída: preparação da estrutura para exportação PDF A4.
+Manutenção M1 concluída: padronização básica de estilo e formatação C#.
 
 ### Próxima tarefa sugerida
 
@@ -909,6 +910,73 @@ feat: prepare printable note export
 - Nenhuma biblioteca de PDF foi instalada.
 - Não foram criados arquivo `.pdf`, endpoint de download, endpoint `/pdf`, frontend, autenticação, autorização, migrations, controllers, MediatR, AutoMapper ou FluentValidation.
 
+## Registro da Manutenção M1
+
+### Objetivo realizado
+
+Criada configuração básica de estilo C#/.NET na raiz do repositório e executada formatação local para manter legibilidade, organização de `using` e regras leves de estilo sem alterar comportamento do sistema.
+
+### Arquivo criado
+
+```text
+.editorconfig
+```
+
+### Regras configuradas
+
+```text
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4 para C#/CSX
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+csharp_style_namespace_declarations = file_scoped:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_elsewhere = false:suggestion
+csharp_prefer_braces = true:suggestion
+```
+
+### Arquivos C# reformatados
+
+```text
+tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs
+```
+
+O `dotnet format --no-restore` reorganizou apenas a ordem de `using` nesse arquivo. Os demais arquivos C# permaneceram sem alteração textual após a configuração de EOL compatível com o repositório.
+
+### Arquivos alterados
+
+```text
+tests/CadernoApp.Tests/Application/ApplicationServicesTests.cs
+docs/03-acompanhamento-do-projeto.md
+```
+
+### Resultado de restore, build, test e format
+
+```text
+dotnet restore: sucesso
+dotnet build: sucesso, 0 avisos, 0 erros
+dotnet test: sucesso, 87 testes aprovados
+dotnet format --no-restore: sucesso
+```
+
+### Commit gerado
+
+```text
+style: normalize csharp formatting
+```
+
+### Observações técnicas
+
+- `dotnet test` precisou ser executado fora do sandbox para acessar o `NuGet.Config` do usuário.
+- A configuração usa severidade `suggestion` para regras de estilo, evitando quebrar o build por preferência estética.
+- Não foram criadas features, endpoints, pacotes, migrations, PDF, frontend, autenticação ou autorização.
+- Nenhum contrato público da API ou comportamento de domínio foi alterado intencionalmente.
+
 ## Histórico de Validações
 
 | Data | Etapa | Resultado | Resumo | Observações |
@@ -922,6 +990,7 @@ feat: prepare printable note export
 | 2026-07-08 | Etapa 6 | Aprovado | Endpoints iniciais da API criados com Minimal APIs e validados com testes de integração | Commit `feat: add initial api endpoints`; `dotnet test` com 63 testes aprovados |
 | 2026-07-08 | Etapa 7 | Aprovado | Cobertura de testes ampliada e CI inicial criado no GitHub Actions | Commit `test: expand coverage and add ci workflow`; `dotnet test` com 80 testes aprovados |
 | 2026-07-08 | Etapa 8 | Aprovado | Estrutura printable/export ready criada para anotações A4, com endpoint JSON e testes | Commit `feat: prepare printable note export`; `dotnet test` com 87 testes aprovados |
+| 2026-07-08 | Manutenção M1 | Aprovado | `.editorconfig` criado e formatação C# normalizada sem alteração funcional | Commit `style: normalize csharp formatting`; `dotnet test` com 87 testes aprovados |
 
 ## Checklist de validação da Etapa 0
 

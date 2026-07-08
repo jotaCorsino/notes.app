@@ -36,8 +36,8 @@ Corrigir
 
 | Etapa | Objetivo planejado | O que foi feito | Status | Arquivos alterados | Critério de validação | Observações |
 |---|---|---|---|---|---|---|
-| 0 — Documentação e base do repositório | Criar documentação inicial do projeto e realizar primeiro commit/push | Pendente | Pendente | `docs/01-visao-geral-do-app.md`, `docs/02-planejamento-de-construcao.md`, `docs/03-acompanhamento-do-projeto.md` | Confirmar que existem apenas os três documentos iniciais dentro de `docs` e que não há código criado | Esta é a primeira etapa do projeto |
-| 1 — Criação da solução backend em C# | Criar estrutura inicial da solução backend | Pendente | Pendente | A definir | Solução criada, organizada e compilando | Só iniciar após aprovação da Etapa 0 |
+| 0 — Documentação e base do repositório | Criar documentação inicial do projeto e realizar primeiro commit/push | Documentação inicial validada, commitada e enviada para `origin/main` | Aprovado | `docs/01-visao-geral-do-app.md`, `docs/02-planejamento-de-construcao.md`, `docs/03-acompanhamento-do-projeto.md` | Confirmar que existem apenas os três documentos iniciais dentro de `docs` e que não há código criado | Concluída em 2026-07-08 |
+| 1 — Criação da solução backend em C# | Criar estrutura inicial da solução backend | Criada solução `CadernoApp.sln`, projetos em `src` e `tests`, referências entre camadas e validação local | Aprovado | `.gitignore`, `CadernoApp.sln`, `src/CadernoApp.Api/`, `src/CadernoApp.Application/`, `src/CadernoApp.Domain/`, `src/CadernoApp.Infrastructure/`, `tests/CadernoApp.Tests/`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build` e `dotnet test` executados com sucesso | Usado .NET SDK `10.0.301` com target framework `net10.0`; sem entidades, serviços, banco, endpoints de negócio ou PDF |
 | 2 — Entidades de domínio | Criar entidades principais do domínio | Pendente | Pendente | A definir | Entidades criadas em `Domain` e solução compilando | Deve incluir matéria, módulo, anotação, página e tag |
 | 3 — Regras de negócio | Implementar regras básicas do domínio | Pendente | Pendente | A definir | Regras implementadas e testáveis | Incluir regras de página, tags e favoritos |
 | 4 — Persistência | Configurar banco de dados e mapeamento das entidades | Pendente | Pendente | A definir | Banco configurado e entidades persistíveis | Persistência inicial recomendada: SQLite |
@@ -142,12 +142,12 @@ Motivo:
 
 | Item | Descrição | Prioridade | Status |
 |---|---|---|---|
-| P-001 | Criar pasta `docs` no repositório local | Alta | Pendente |
-| P-002 | Adicionar os três documentos iniciais em `docs` | Alta | Pendente |
-| P-003 | Pedir ao Codex para analisar, commitar e fazer push da documentação inicial | Alta | Pendente |
-| P-004 | Validar o primeiro commit no GitHub | Alta | Pendente |
-| P-005 | Definir versão do .NET usada no backend | Média | Pendente |
-| P-006 | Confirmar nome técnico da solução/projetos C# | Média | Pendente |
+| P-001 | Criar pasta `docs` no repositório local | Alta | Concluído |
+| P-002 | Adicionar os três documentos iniciais em `docs` | Alta | Concluído |
+| P-003 | Pedir ao Codex para analisar, commitar e fazer push da documentação inicial | Alta | Concluído |
+| P-004 | Validar o primeiro commit no GitHub | Alta | Concluído |
+| P-005 | Definir versão do .NET usada no backend | Média | Concluído — `net10.0` |
+| P-006 | Confirmar nome técnico da solução/projetos C# | Média | Concluído — `CadernoApp` |
 | P-007 | Decidir formato de armazenamento do conteúdo da página: HTML sanitizado, JSON de editor ou outro formato | Alta | Pendente |
 | P-008 | Definir estratégia futura de PDF A4 | Média | Pendente |
 
@@ -155,62 +155,91 @@ Motivo:
 
 ### Tarefa atual
 
-Criar a pasta `docs` na raiz do repositório e adicionar os três documentos iniciais:
+Etapa 1 concluída: criação da estrutura inicial do backend em C#.
+
+### Próxima tarefa sugerida
+
+Criar as entidades de domínio do Caderno App em `src/CadernoApp.Domain`.
+
+Entidades previstas para a próxima etapa:
+
+- Matéria.
+- Módulo.
+- Anotação.
+- Página A4.
+- Tag.
+- Favorito.
+
+Não configurar persistência, Entity Framework, migrations, endpoints ou PDF nessa próxima etapa.
+
+## Registro da Etapa 1
+
+### Objetivo realizado
+
+Criada a estrutura inicial da solução backend em C#, organizada para evoluir com domínio, aplicação, infraestrutura, API, testes e futura exportação PDF A4.
+
+### Arquivos criados
 
 ```text
-docs/01-visao-geral-do-app.md
-docs/02-planejamento-de-construcao.md
-docs/03-acompanhamento-do-projeto.md
+.gitignore
+CadernoApp.sln
+src/CadernoApp.Api/CadernoApp.Api.csproj
+src/CadernoApp.Api/Program.cs
+src/CadernoApp.Api/appsettings.json
+src/CadernoApp.Api/appsettings.Development.json
+src/CadernoApp.Api/Properties/launchSettings.json
+src/CadernoApp.Application/CadernoApp.Application.csproj
+src/CadernoApp.Domain/CadernoApp.Domain.csproj
+src/CadernoApp.Infrastructure/CadernoApp.Infrastructure.csproj
+tests/CadernoApp.Tests/CadernoApp.Tests.csproj
 ```
 
-### Próximo comando para o Codex
-
-Depois que os arquivos estiverem no repositório local, solicitar ao Codex:
+### Versão do .NET usada
 
 ```text
-Analise o estado atual do repositório notes.app.
-
-O projeto é o Caderno App, um app de anotações para estudos. Neste momento, a única tarefa é validar a documentação inicial, garantir que a pasta docs contém os três documentos esperados, realizar o primeiro commit e fazer push para o repositório remoto.
-
-Regras:
-- Não crie código ainda.
-- Não crie solução C# ainda.
-- Não crie projetos, entidades, banco de dados, API ou testes.
-- Não altere o conteúdo dos documentos, exceto se encontrar erro evidente de formatação Markdown.
-- Mantenha o repositório limpo.
-- Faça commit apenas dos arquivos existentes em docs.
-- Use uma mensagem de commit clara, como: docs: add initial project documentation
-- Faça push para o repositório remoto.
-- Ao final, entregue um resumo objetivo com:
-  1. Arquivos encontrados.
-  2. Arquivos alterados.
-  3. Mensagem do commit.
-  4. Branch utilizada.
-  5. Confirmação do push.
-  6. Observações, se houver.
+SDK: 10.0.301
+Target framework: net10.0
 ```
+
+### Commit gerado
+
+```text
+chore: add initial backend solution structure
+```
+
+### Observações técnicas
+
+- A solução foi criada em formato `.sln`, pois o SDK .NET 10 usa `.slnx` como padrão.
+- A API foi criada com o template ASP.NET Core vazio.
+- O endpoint de exemplo `MapGet("/")` foi removido para evitar endpoints prematuros.
+- Os arquivos `Class1.cs` gerados pelos templates de biblioteca foram removidos.
+- O teste placeholder `UnitTest1.cs` foi removido; o projeto xUnit permanece configurado.
+- Nenhuma entidade de domínio, serviço de aplicação, banco de dados, migration, autenticação ou lógica de PDF foi criada.
+- `dotnet restore` e `dotnet build` passaram sem erros.
+- `dotnet test` passou, sem testes disponíveis nesta etapa.
 
 ## Histórico de Validações
 
 | Data | Etapa | Resultado | Resumo | Observações |
 |---|---|---|---|---|
-| 2026-07-08 | Etapa 0 | Pendente | Documentação inicial ainda não validada no repositório remoto | Aguardando criação da pasta `docs`, inclusão dos arquivos e primeiro commit/push |
+| 2026-07-08 | Etapa 0 | Aprovado | Documentação inicial validada, commitada e enviada para `origin/main` | Commit `docs: add initial project documentation` |
+| 2026-07-08 | Etapa 1 | Aprovado | Estrutura inicial backend em C# criada e validada com `dotnet restore`, `dotnet build` e `dotnet test` | Commit `chore: add initial backend solution structure`; `dotnet test` sem testes disponíveis |
 
 ## Checklist de validação da Etapa 0
 
 Antes de aprovar a Etapa 0, confirmar:
 
-- [ ] Existe uma pasta `docs` na raiz do repositório.
-- [ ] Existe o arquivo `docs/01-visao-geral-do-app.md`.
-- [ ] Existe o arquivo `docs/02-planejamento-de-construcao.md`.
-- [ ] Existe o arquivo `docs/03-acompanhamento-do-projeto.md`.
-- [ ] Não existem arquivos `.cs`.
-- [ ] Não existe pasta `src`.
-- [ ] Não existe pasta `tests`.
-- [ ] Não existe solução `.sln`.
-- [ ] O Codex fez commit com mensagem clara.
-- [ ] O Codex fez push para o repositório remoto.
-- [ ] O resumo do Codex corresponde ao que aparece no GitHub.
+- [x] Existe uma pasta `docs` na raiz do repositório.
+- [x] Existe o arquivo `docs/01-visao-geral-do-app.md`.
+- [x] Existe o arquivo `docs/02-planejamento-de-construcao.md`.
+- [x] Existe o arquivo `docs/03-acompanhamento-do-projeto.md`.
+- [x] Não existiam arquivos `.cs` no momento da validação da Etapa 0.
+- [x] Não existia pasta `src` no momento da validação da Etapa 0.
+- [x] Não existia pasta `tests` no momento da validação da Etapa 0.
+- [x] Não existia solução `.sln` no momento da validação da Etapa 0.
+- [x] O Codex fez commit com mensagem clara.
+- [x] O Codex fez push para o repositório remoto.
+- [x] O resumo do Codex corresponde ao que aparece no GitHub.
 
 ## Observações gerais
 

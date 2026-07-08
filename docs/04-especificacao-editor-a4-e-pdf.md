@@ -4,7 +4,9 @@
 
 Este documento define a especificação técnica inicial do editor A4 do Caderno App.
 
-Ele orienta as decisões de frontend, backend e futura exportação para PDF, garantindo que as anotações sejam estruturadas como páginas reais e possam evoluir para impressão A4 sem retrabalho conceitual.
+Ele orienta as decisões de frontend, backend e futura exportação para PDF.
+
+O objetivo é garantir que as anotações sejam estruturadas como páginas reais e possam evoluir para impressão A4 sem retrabalho conceitual.
 
 Esta especificação não implementa frontend, não define uma biblioteca final de editor rich text e não implementa geração real de PDF.
 
@@ -40,6 +42,8 @@ O frontend também deve limpar ou rejeitar conteúdo colado de fontes externas q
 
 ## 4. Responsabilidade do Backend
 
+### Responsabilidades Assumidas
+
 O backend será responsável por:
 
 - Persistir matérias, módulos, anotações, páginas, tags e favoritos.
@@ -47,6 +51,8 @@ O backend será responsável por:
 - Preservar `PageNumber`, `OrderIndex`, `WidthMm`, `HeightMm`, `Content` e `ContentFormat`.
 - Retornar anotações em formato imprimível pelo endpoint existente `GET /api/notes/{id}/printable`.
 - Validar dados obrigatórios.
+
+### Fora do Escopo do Backend no MVP
 
 No MVP, o backend não será responsável por:
 
@@ -58,6 +64,8 @@ No MVP, o backend não será responsável por:
 
 ## 5. Contrato de Conteúdo
 
+### Estratégia Inicial
+
 A estratégia inicial de conteúdo será:
 
 ```text
@@ -68,6 +76,8 @@ O campo `Content` deve armazenar HTML controlado produzido pelo editor.
 
 Esse HTML deve ser simples, previsível e seguro para futura renderização. O conteúdo salvo não deve depender de scripts, eventos inline ou estilos arbitrários difíceis de reproduzir na exportação PDF.
 
+### Conteúdo Não Permitido
+
 O contrato inicial não deve aceitar:
 
 - `script`.
@@ -77,6 +87,8 @@ O contrato inicial não deve aceitar:
 - HTML colado de Word, Google Docs ou páginas externas sem limpeza prévia.
 
 ## 6. Subconjunto HTML Permitido
+
+### Tags Permitidas
 
 Proposta inicial de tags permitidas:
 
@@ -97,6 +109,8 @@ Proposta inicial de tags permitidas:
 - `blockquote`
 - `span` com estilos limitados
 - `div` apenas quando necessário
+
+### Estilos Permitidos
 
 Estilos permitidos inicialmente:
 
@@ -134,6 +148,8 @@ Futuramente, pode existir uma camada mais avançada de validação ou um motor d
 
 ## 9. Exportação PDF Futura
 
+### Estrutura Base
+
 O endpoint atual:
 
 ```text
@@ -143,6 +159,8 @@ GET /api/notes/{id}/printable
 já retorna a estrutura base para exportação futura.
 
 A geração real de PDF deve usar `PrintableNoteDto` como entrada. Cada `PrintableNotePageDto` deve virar uma página A4 no PDF.
+
+### Diretrizes de Renderização
 
 O conteúdo HTML de cada página deve ser renderizado dentro da área útil da página, respeitando:
 

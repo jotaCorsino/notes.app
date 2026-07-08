@@ -38,7 +38,7 @@ Corrigir
 |---|---|---|---|---|---|---|
 | 0 — Documentação e base do repositório | Criar documentação inicial do projeto e realizar primeiro commit/push | Documentação inicial validada, commitada e enviada para `origin/main` | Aprovado | `docs/01-visao-geral-do-app.md`, `docs/02-planejamento-de-construcao.md`, `docs/03-acompanhamento-do-projeto.md` | Confirmar que existem apenas os três documentos iniciais dentro de `docs` e que não há código criado | Concluída em 2026-07-08 |
 | 1 — Criação da solução backend em C# | Criar estrutura inicial da solução backend | Criada solução `CadernoApp.sln`, projetos em `src` e `tests`, referências entre camadas e validação local | Aprovado | `.gitignore`, `CadernoApp.sln`, `src/CadernoApp.Api/`, `src/CadernoApp.Application/`, `src/CadernoApp.Domain/`, `src/CadernoApp.Infrastructure/`, `tests/CadernoApp.Tests/`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build` e `dotnet test` executados com sucesso | Usado .NET SDK `10.0.301` com target framework `net10.0`; sem entidades, serviços, banco, endpoints de negócio ou PDF |
-| 2 — Entidades de domínio | Criar entidades principais do domínio | Pendente | Pendente | A definir | Entidades criadas em `Domain` e solução compilando | Deve incluir matéria, módulo, anotação, página e tag |
+| 2 — Entidades de domínio | Criar entidades principais do domínio | Criadas entidades principais em `CadernoApp.Domain` e testes unitários em `CadernoApp.Tests` | Aprovado | `src/CadernoApp.Domain/Entities/`, `tests/CadernoApp.Tests/Domain/`, `docs/03-acompanhamento-do-projeto.md` | `dotnet restore`, `dotnet build` e `dotnet test` executados com sucesso | Sem banco, EF, migrations, endpoints, controllers, serviços de aplicação, repositórios, DTOs ou PDF |
 | 3 — Regras de negócio | Implementar regras básicas do domínio | Pendente | Pendente | A definir | Regras implementadas e testáveis | Incluir regras de página, tags e favoritos |
 | 4 — Persistência | Configurar banco de dados e mapeamento das entidades | Pendente | Pendente | A definir | Banco configurado e entidades persistíveis | Persistência inicial recomendada: SQLite |
 | 5 — Serviços de aplicação | Criar casos de uso principais | Pendente | Pendente | A definir | Serviços criados e solução compilando | Camada de aplicação deve evitar dependência direta da API |
@@ -155,22 +155,21 @@ Motivo:
 
 ### Tarefa atual
 
-Etapa 1 concluída: criação da estrutura inicial do backend em C#.
+Etapa 2 concluída: criação das entidades principais do domínio.
 
 ### Próxima tarefa sugerida
 
-Criar as entidades de domínio do Caderno App em `src/CadernoApp.Domain`.
+Implementar as regras de negócio do domínio.
 
-Entidades previstas para a próxima etapa:
+Regras previstas para a próxima etapa:
 
-- Matéria.
-- Módulo.
-- Anotação.
-- Página A4.
-- Tag.
-- Favorito.
+- Operações controladas para adicionar módulos a matérias.
+- Operações controladas para adicionar anotações a módulos.
+- Operações controladas para adicionar páginas a anotações.
+- Regras de ordenação e numeração de páginas.
+- Regras iniciais para tags e favoritos.
 
-Não configurar persistência, Entity Framework, migrations, endpoints ou PDF nessa próxima etapa.
+Não configurar persistência, Entity Framework, migrations, endpoints, serviços de aplicação ou PDF nessa próxima etapa.
 
 ## Registro da Etapa 1
 
@@ -218,12 +217,89 @@ chore: add initial backend solution structure
 - `dotnet restore` e `dotnet build` passaram sem erros.
 - `dotnet test` passou, sem testes disponíveis nesta etapa.
 
+## Registro da Etapa 2
+
+### Objetivo realizado
+
+Criadas as entidades principais do domínio do Caderno App, representando a estrutura central:
+
+```text
+Subject > StudyModule > Note > NotePage
+```
+
+Também foi incluída a entidade `Tag` e o comportamento inicial de favorito em `Note`.
+
+### Entidades criadas
+
+```text
+Subject
+StudyModule
+Note
+NotePage
+Tag
+```
+
+### Testes criados
+
+```text
+CoreDomainEntitiesTests.Subject_WithValidName_IsCreated
+CoreDomainEntitiesTests.Subject_WithEmptyName_ThrowsArgumentException
+CoreDomainEntitiesTests.StudyModule_WithSubjectId_IsCreated
+CoreDomainEntitiesTests.Note_WithStudyModuleId_IsCreatedNotFavorite
+CoreDomainEntitiesTests.Note_CanBeMarkedAsFavoriteAndUnmarked
+CoreDomainEntitiesTests.NotePage_UsesDefaultA4Size
+CoreDomainEntitiesTests.Tag_WithValidName_IsCreated
+```
+
+### Arquivos criados
+
+```text
+src/CadernoApp.Domain/Entities/Subject.cs
+src/CadernoApp.Domain/Entities/StudyModule.cs
+src/CadernoApp.Domain/Entities/Note.cs
+src/CadernoApp.Domain/Entities/NotePage.cs
+src/CadernoApp.Domain/Entities/Tag.cs
+tests/CadernoApp.Tests/Domain/CoreDomainEntitiesTests.cs
+```
+
+### Arquivos alterados
+
+```text
+docs/03-acompanhamento-do-projeto.md
+```
+
+### Resultado de build e test
+
+```text
+dotnet restore: sucesso
+dotnet build: sucesso, 0 avisos, 0 erros
+dotnet test: sucesso, 9 testes aprovados
+```
+
+### Commit gerado
+
+```text
+feat: add core domain entities
+```
+
+### Observações técnicas
+
+- As entidades foram criadas somente no projeto `CadernoApp.Domain`.
+- Os testes foram criados somente no projeto `CadernoApp.Tests`.
+- `StudyModule` foi usado no lugar de `Module` para evitar conflito conceitual com `System.Reflection.Module`.
+- `NotePage` usa A4 como padrão: `210mm x 297mm`.
+- `ContentFormat` começa como `string`, com valor padrão `html`.
+- As coleções foram inicializadas para evitar `null`.
+- Foram usadas validações básicas para campos obrigatórios.
+- Não foram criados banco de dados, Entity Framework, migrations, endpoints, controllers, serviços de aplicação, repositórios, DTOs ou lógica de PDF.
+
 ## Histórico de Validações
 
 | Data | Etapa | Resultado | Resumo | Observações |
 |---|---|---|---|---|
 | 2026-07-08 | Etapa 0 | Aprovado | Documentação inicial validada, commitada e enviada para `origin/main` | Commit `docs: add initial project documentation` |
 | 2026-07-08 | Etapa 1 | Aprovado | Estrutura inicial backend em C# criada e validada com `dotnet restore`, `dotnet build` e `dotnet test` | Commit `chore: add initial backend solution structure`; `dotnet test` sem testes disponíveis |
+| 2026-07-08 | Etapa 2 | Aprovado | Entidades principais do domínio criadas e validadas com testes unitários | Commit `feat: add core domain entities`; `dotnet test` com 9 testes aprovados |
 
 ## Checklist de validação da Etapa 0
 

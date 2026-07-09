@@ -23,7 +23,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - M2.1 — Correção de quebras Markdown — Parcialmente corrigida — Commit dce4e7b
 - M2.2 — Correção final do acompanhamento — Reprovada na formatação — Commit fd12ed6
 - M2.3 — Correção forçada de quebras Markdown — Reprovada na validação remota — Commit a8f7cdc
-- M2.4 — Correção LF sem BOM — Em validação
+- M2.4 — Correção LF sem BOM — Aprovado — Commit 040ced6
+- Etapa 10 — Planejamento do frontend/editor A4 — Aprovado — Commit a preencher após este commit
 
 ## Decisões técnicas aprovadas
 
@@ -42,32 +43,37 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Backend não fará quebra visual automática de página no MVP.
 - Endpoint `GET /api/notes/{id}/printable` como base para exportação futura.
 - PDF real ainda não implementado.
+- Frontend planejado com React, TypeScript e Vite.
+- Editor rich text recomendado: Tiptap.
+- ProseMirror reconhecido como base interna do Tiptap.
+- CSS modularizado recomendado inicialmente.
+- Tailwind CSS mantido como possibilidade futura, sem decisão obrigatória nesta etapa.
 
 ## Pendências atuais
 
 - P-009 — Implementar sanitização real do HTML — Pendente.
 - P-010 — Implementar exportação PDF A4 real — Pendente.
-- P-011 — Planejar frontend/editor A4 — Pendente.
-- P-012 — Escolher tecnologia do frontend — Pendente.
-- P-013 — Escolher ou prototipar editor rich text — Pendente.
+- P-014 — Criar estrutura inicial do frontend — Pendente.
 
 ## Pendências resolvidas
 
 - P-007 — Decidir formato do conteúdo da página — Concluído: HTML controlado.
 - P-008 — Definir estratégia futura de PDF — Concluído: estratégia documentada no `docs/04-especificacao-editor-a4-e-pdf.md`.
+- P-011 — Planejar frontend/editor A4 — Concluído: planejamento criado no `docs/05-planejamento-frontend-editor-a4.md`.
+- P-012 — Escolher tecnologia do frontend — Concluído inicialmente: React, TypeScript e Vite.
+- P-013 — Escolher ou prototipar editor rich text — Concluído inicialmente: Tiptap recomendado.
 
 ## Próxima tarefa
 
-Planejar o frontend/editor A4.
+Criar a estrutura inicial do frontend.
 
 A próxima tarefa deve incluir:
 
-- Escolha da tecnologia de frontend.
-- Escolha ou prototipação do editor rich text.
-- Renderização visual de página A4.
-- Paginação visual no frontend.
-- Geração de HTML controlado compatível com o contrato documentado.
-- Integração futura com o backend já existente.
+- Criar app frontend em etapa específica.
+- Usar React, TypeScript e Vite como base inicial.
+- Não implementar editor completo ainda.
+- Não instalar dependências fora da etapa própria.
+- Preparar estrutura para layout, rotas e integração futura com a API.
 
 ## Histórico de validações
 
@@ -86,7 +92,8 @@ A próxima tarefa deve incluir:
 - M2.1 exigiu correção documental.
 - M2.2 acertou o conteúdo, mas falhou na formatação Markdown real.
 - M2.3 ainda falhou no raw remoto.
-- M2.4 pendente de validação remota.
+- M2.4 aprovada.
+- Etapa 10 aprovada: planejamento do frontend/editor A4 documentado.
 
 ## Observações
 
@@ -94,4 +101,5 @@ A próxima tarefa deve incluir:
 - Não há tabelas grandes neste arquivo.
 - Cada título, lista e seção deve usar quebras de linha reais LF.
 - O documento `docs/04-especificacao-editor-a4-e-pdf.md` permanece como fonte da especificação do editor A4 e da estratégia futura de PDF.
+- O documento `docs/05-planejamento-frontend-editor-a4.md` registra o planejamento do frontend/editor A4.
 - Nenhuma funcionalidade nova foi criada nesta manutenção documental.

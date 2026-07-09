@@ -25,7 +25,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - M2.3 — Correção forçada de quebras Markdown — Reprovada na validação remota — Commit a8f7cdc
 - M2.4 — Correção LF sem BOM — Aprovado — Commit 040ced6
 - Etapa 10 — Planejamento do frontend/editor A4 — Aprovado — Commit f17ab23
-- Etapa 11 — Estrutura inicial do frontend — Aprovado — Commit a preencher após este commit
+- Etapa 11 — Estrutura inicial do frontend — Aprovado — Commit 30253e2
+- M3 — CI do frontend — Aprovado — Commit a preencher após este commit
 
 ## Decisões técnicas aprovadas
 
@@ -54,6 +55,9 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Tiptap ainda não foi instalado.
 - Nenhuma integração com API foi feita no frontend.
 - Nenhum editor A4 foi implementado no frontend.
+- CI organizado em dois jobs: backend e frontend.
+- CI do frontend configurado com Node `24.x`.
+- CI do frontend executa `npm ci`, `npm run build` e `npm run lint`.
 
 ## Pendências atuais
 
@@ -104,6 +108,7 @@ A próxima tarefa deve incluir:
 - M2.4 aprovada.
 - Etapa 10 aprovada: planejamento do frontend/editor A4 documentado.
 - Etapa 11 aprovada: estrutura inicial do frontend criada com React, TypeScript e Vite.
+- M3 aprovada: CI passou a validar backend e frontend.
 
 ## Observações
 
@@ -113,4 +118,5 @@ A próxima tarefa deve incluir:
 - O documento `docs/04-especificacao-editor-a4-e-pdf.md` permanece como fonte da especificação do editor A4 e da estratégia futura de PDF.
 - O documento `docs/05-planejamento-frontend-editor-a4.md` registra o planejamento do frontend/editor A4.
 - A Etapa 11 criou apenas a estrutura inicial do frontend.
+- A manutenção M3 atualizou apenas o workflow de CI e este acompanhamento.
 - Nenhum Tiptap, Tailwind, rota, chamada HTTP, editor A4, PDF ou autenticação foi implementado.

@@ -24,7 +24,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - M2.2 — Correção final do acompanhamento — Reprovada na formatação — Commit fd12ed6
 - M2.3 — Correção forçada de quebras Markdown — Reprovada na validação remota — Commit a8f7cdc
 - M2.4 — Correção LF sem BOM — Aprovado — Commit 040ced6
-- Etapa 10 — Planejamento do frontend/editor A4 — Aprovado — Commit a preencher após este commit
+- Etapa 10 — Planejamento do frontend/editor A4 — Aprovado — Commit f17ab23
+- Etapa 11 — Estrutura inicial do frontend — Aprovado — Commit a preencher após este commit
 
 ## Decisões técnicas aprovadas
 
@@ -48,12 +49,19 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - ProseMirror reconhecido como base interna do Tiptap.
 - CSS modularizado recomendado inicialmente.
 - Tailwind CSS mantido como possibilidade futura, sem decisão obrigatória nesta etapa.
+- Estrutura inicial do frontend criada em `frontend/caderno-app-web`.
+- Frontend inicial criado com React, TypeScript e Vite.
+- Tiptap ainda não foi instalado.
+- Nenhuma integração com API foi feita no frontend.
+- Nenhum editor A4 foi implementado no frontend.
 
 ## Pendências atuais
 
 - P-009 — Implementar sanitização real do HTML — Pendente.
 - P-010 — Implementar exportação PDF A4 real — Pendente.
-- P-014 — Criar estrutura inicial do frontend — Pendente.
+- P-015 — Criar layout visual base do frontend — Pendente.
+- P-016 — Prototipar editor A4 visual — Pendente.
+- P-017 — Integrar frontend com API — Pendente.
 
 ## Pendências resolvidas
 
@@ -62,18 +70,19 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - P-011 — Planejar frontend/editor A4 — Concluído: planejamento criado no `docs/05-planejamento-frontend-editor-a4.md`.
 - P-012 — Escolher tecnologia do frontend — Concluído inicialmente: React, TypeScript e Vite.
 - P-013 — Escolher ou prototipar editor rich text — Concluído inicialmente: Tiptap recomendado.
+- P-014 — Criar estrutura inicial do frontend — Concluído: pasta `frontend/caderno-app-web` criada com Vite.
 
 ## Próxima tarefa
 
-Criar a estrutura inicial do frontend.
+Criar layout visual base do frontend.
 
 A próxima tarefa deve incluir:
 
-- Criar app frontend em etapa específica.
-- Usar React, TypeScript e Vite como base inicial.
-- Não implementar editor completo ainda.
-- Não instalar dependências fora da etapa própria.
-- Preparar estrutura para layout, rotas e integração futura com a API.
+- Criar base visual do layout principal.
+- Preparar área para sidebar, topbar e espaço central.
+- Manter sem editor A4 completo.
+- Manter sem integração com API.
+- Manter sem Tiptap até a etapa de protótipo do editor.
 
 ## Histórico de validações
 
@@ -94,6 +103,7 @@ A próxima tarefa deve incluir:
 - M2.3 ainda falhou no raw remoto.
 - M2.4 aprovada.
 - Etapa 10 aprovada: planejamento do frontend/editor A4 documentado.
+- Etapa 11 aprovada: estrutura inicial do frontend criada com React, TypeScript e Vite.
 
 ## Observações
 
@@ -102,4 +112,5 @@ A próxima tarefa deve incluir:
 - Cada título, lista e seção deve usar quebras de linha reais LF.
 - O documento `docs/04-especificacao-editor-a4-e-pdf.md` permanece como fonte da especificação do editor A4 e da estratégia futura de PDF.
 - O documento `docs/05-planejamento-frontend-editor-a4.md` registra o planejamento do frontend/editor A4.
-- Nenhuma funcionalidade nova foi criada nesta manutenção documental.
+- A Etapa 11 criou apenas a estrutura inicial do frontend.
+- Nenhum Tiptap, Tailwind, rota, chamada HTTP, editor A4, PDF ou autenticação foi implementado.

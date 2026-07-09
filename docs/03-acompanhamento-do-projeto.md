@@ -26,7 +26,7 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - M2.4 — Correção LF sem BOM — Aprovado — Commit 040ced6
 - Etapa 10 — Planejamento do frontend/editor A4 — Aprovado — Commit f17ab23
 - Etapa 11 — Estrutura inicial do frontend — Aprovado — Commit 30253e2
-- M3 — CI do frontend — Aprovado — Commit a preencher após este commit
+- M3 — CI do frontend — Em validação
 
 ## Decisões técnicas aprovadas
 
@@ -47,17 +47,10 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - PDF real ainda não implementado.
 - Frontend planejado com React, TypeScript e Vite.
 - Editor rich text recomendado: Tiptap.
-- ProseMirror reconhecido como base interna do Tiptap.
 - CSS modularizado recomendado inicialmente.
-- Tailwind CSS mantido como possibilidade futura, sem decisão obrigatória nesta etapa.
+- Tailwind CSS mantido como possibilidade futura.
 - Estrutura inicial do frontend criada em `frontend/caderno-app-web`.
-- Frontend inicial criado com React, TypeScript e Vite.
-- Tiptap ainda não foi instalado.
-- Nenhuma integração com API foi feita no frontend.
-- Nenhum editor A4 foi implementado no frontend.
-- CI organizado em dois jobs: backend e frontend.
-- CI do frontend configurado com Node `24.x`.
-- CI do frontend executa `npm ci`, `npm run build` e `npm run lint`.
+- CI separado em dois jobs: backend e frontend.
 
 ## Pendências atuais
 
@@ -100,23 +93,20 @@ A próxima tarefa deve incluir:
 - Etapa 7 aprovada.
 - Etapa 8 aprovada.
 - M1 aprovada.
-- Etapa 9 aprovada no conteúdo.
+- Etapa 9 aprovada.
 - M2 exigiu correção documental.
 - M2.1 exigiu correção documental.
 - M2.2 acertou o conteúdo, mas falhou na formatação Markdown real.
 - M2.3 ainda falhou no raw remoto.
 - M2.4 aprovada.
-- Etapa 10 aprovada: planejamento do frontend/editor A4 documentado.
-- Etapa 11 aprovada: estrutura inicial do frontend criada com React, TypeScript e Vite.
-- M3 aprovada: CI passou a validar backend e frontend.
+- Etapa 10 aprovada.
+- Etapa 11 aprovada.
+- M3 pendente de validação remota após correção de line endings.
 
 ## Observações
 
 - Este documento substitui o acompanhamento anterior por uma versão limpa e objetiva.
-- Não há tabelas grandes neste arquivo.
-- Cada título, lista e seção deve usar quebras de linha reais LF.
 - O documento `docs/04-especificacao-editor-a4-e-pdf.md` permanece como fonte da especificação do editor A4 e da estratégia futura de PDF.
 - O documento `docs/05-planejamento-frontend-editor-a4.md` registra o planejamento do frontend/editor A4.
-- A Etapa 11 criou apenas a estrutura inicial do frontend.
-- A manutenção M3 atualizou apenas o workflow de CI e este acompanhamento.
+- A manutenção M3 deve alterar apenas o workflow de CI e este acompanhamento.
 - Nenhum Tiptap, Tailwind, rota, chamada HTTP, editor A4, PDF ou autenticação foi implementado.

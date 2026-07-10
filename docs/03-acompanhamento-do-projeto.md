@@ -28,7 +28,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Etapa 11 — Estrutura inicial do frontend — Aprovado — Commit 30253e2
 - M3 — CI do frontend — Aprovado — Commit 6b817b4
 - Etapa 12 — Layout visual base do frontend — Aprovado — Commit de7dba3
-- Etapa 13 — Protótipo visual do editor A4 — Concluída nesta entrega
+- Etapa 13 — Protótipo visual do editor A4 — Aprovado — Commit b1edd01
+- Etapa 14 — Integração inicial com Tiptap — Em validação
 
 ## Decisões técnicas aprovadas
 
@@ -58,8 +59,12 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - A Etapa 12 mantém o frontend sem integração com API, Tiptap, editor A4 funcional ou exportação PDF.
 - Protótipo visual do editor A4 criado com toolbar de formatação, navegação de páginas e área que simula edição.
 - Anotação selecionada evoluída para duas páginas mockadas com numeração, dimensões A4 e `ContentFormat` controlado.
-- Área da página usa `contentEditable` apenas para contato visual, sem estado persistido ou salvamento real.
-- Toolbar, navegação e adição de página permanecem visuais, sem Tiptap ou comandos funcionais.
+- Editor A4 inicial integrado com Tiptap para edição rich text local.
+- Pacotes Tiptap instalados: `@tiptap/react`, `@tiptap/pm`, `@tiptap/starter-kit`, `@tiptap/extension-underline`, `@tiptap/extension-highlight` e `@tiptap/extension-text-align`.
+- Toolbar executa comandos iniciais de negrito, itálico, sublinhado, lista com marcadores, lista numerada, marca-texto e alinhamento à esquerda, centralizado e à direita.
+- Seletores de fonte e tamanho permanecem visuais/desabilitados nesta etapa.
+- Edição local ainda não persiste no backend.
+- Ainda não há integração com API, paginação automática, salvamento real ou PDF.
 
 ## Pendências atuais
 
@@ -67,8 +72,9 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - P-010 — Implementar exportação PDF A4 real — Pendente.
 - P-017 — Integrar frontend com API — Pendente.
 - P-018 — Conectar o layout aos dados reais da API — Pendente.
-- P-019 — Instalar e integrar Tiptap — Pendente.
 - P-020 — Implementar salvamento real de páginas — Pendente.
+- P-021 — Implementar troca funcional entre páginas do editor — Pendente.
+- P-022 — Implementar controle funcional de fonte e tamanho — Pendente.
 
 ## Pendências resolvidas
 
@@ -80,15 +86,17 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - P-014 — Criar estrutura inicial do frontend — Concluído: pasta `frontend/caderno-app-web` criada com Vite.
 - P-015 — Criar layout visual base do frontend — Concluído: primeira tela visual criada com dados mockados, sem integração com API.
 - P-016 — Prototipar editor A4 visual — Concluído: toolbar, navegação e área editável visual criadas com duas páginas mockadas.
+- P-019 — Instalar e integrar Tiptap — Concluído: editor A4 usa Tiptap com edição local rich text.
 
 ## Próxima tarefa
 
-Instalar e integrar Tiptap ao protótipo A4.
+Implementar troca funcional entre páginas do editor.
 
 A próxima tarefa deve incluir:
 
-- Substituir a superfície `contentEditable` estática por uma integração inicial com Tiptap.
-- Preservar toolbar, dimensões A4 e navegação visual criadas na Etapa 13.
+- Permitir selecionar páginas no `PageNavigator`.
+- Manter conteúdo local separado por página durante a sessão.
+- Preservar dimensões A4 e toolbar Tiptap.
 - Manter salvamento real e integração com API para tarefas posteriores.
 - Manter exportação PDF fora do escopo.
 
@@ -114,7 +122,8 @@ A próxima tarefa deve incluir:
 - Etapa 11 aprovada.
 - M3 aprovada — Commit 6b817b4.
 - Etapa 12 aprovada — Commit de7dba3.
-- Etapa 13 concluída: protótipo visual criado com toolbar, duas páginas mockadas, navegação e área que simula edição.
+- Etapa 13 aprovada — Commit b1edd01.
+- Etapa 14 em validação: Tiptap instalado e integrado ao protótipo A4 com edição local e comandos básicos de toolbar.
 
 ## Observações
 
@@ -123,6 +132,6 @@ A próxima tarefa deve incluir:
 - O documento `docs/05-planejamento-frontend-editor-a4.md` registra o planejamento do frontend/editor A4.
 - O CI do frontend foi introduzido no commit 716e248; a manutenção M3 foi aprovada no commit 6b817b4.
 - O layout visual base da Etapa 12 foi aprovado no commit de7dba3.
-- O editor da Etapa 13 ainda é um protótipo: toolbar e navegação não executam comandos e alterações locais não são salvas.
+- O editor da Etapa 14 ainda é um protótipo local: alterações não são salvas no backend.
 - Os status de salvamento exibidos são mockados e não representam persistência real.
-- Ainda não há integração com API, Tiptap, Tailwind, rotas, chamadas HTTP, salvamento real, exportação PDF ou autenticação.
+- Ainda não há integração com API, Tailwind, rotas, chamadas HTTP, salvamento real, paginação automática, exportação PDF ou autenticação.

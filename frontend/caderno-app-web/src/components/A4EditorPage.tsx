@@ -1,12 +1,49 @@
-import type { NotebookPage } from '../types/notebook'
+import type { Editor } from '@tiptap/react'
+import type { NotebookPage, NotePageContent } from '../types/notebook'
+import { RichTextEditor } from './RichTextEditor'
 
 interface A4EditorPageProps {
   page: NotebookPage
+  onEditorReady?: (editor: Editor | null) => void
 }
 
-export function A4EditorPage({ page }: A4EditorPageProps) {
+const escapeHtml = (value: string) =>
+  value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+
+const createEditorHtml = (content: NotePageContent) => {
+  const layerItems = content.layers
+    .map(
+      (layer) =>
+        `<li><strong>${layer.number}. ${escapeHtml(layer.name)}</strong>: ${escapeHtml(layer.description)}</li>`,
+    )
+    .join('')
+
+  const layersHtml = layerItems ? `<ul>${layerItems}</ul>` : ''
+
+  return `
+    <p><strong>${escapeHtml(content.eyebrow)}</strong></p>
+    <h1>${escapeHtml(content.title)}</h1>
+    <p><em>${escapeHtml(content.subtitle)}</em></p>
+    <p>${escapeHtml(content.introduction)}</p>
+    <blockquote><p><mark>${escapeHtml(content.highlight)}</mark></p></blockquote>
+    <h2>${escapeHtml(content.sectionTitle)}</h2>
+    <p>${escapeHtml(content.sectionBody)}</p>
+    ${layersHtml}
+    <h3>${escapeHtml(content.takeawayTitle)}</h3>
+    <p>${escapeHtml(content.takeawayBody)}</p>
+    <p>${escapeHtml(content.nextStudy)}</p>
+  `
+}
+
+export function A4EditorPage({ page, onEditorReady }: A4EditorPageProps) {
   const { content } = page
   const pageTitleId = `page-title-${page.id}`
+  const initialContent = createEditorHtml(content)
 
   return (
     <article className="a4-page a4-editor-page" aria-labelledby={pageTitleId}>
@@ -15,63 +52,16 @@ export function A4EditorPage({ page }: A4EditorPageProps) {
         <span>A4 · {page.widthMm} × {page.heightMm} mm</span>
       </div>
 
-      <div
-        className="editable-surface"
-        contentEditable
-        suppressContentEditableWarning
-        role="textbox"
-        aria-label={`Área de edição visual da página ${page.pageNumber}`}
-        aria-multiline="true"
-        spellCheck={false}
-      >
-        <header className="paper-header">
-          <div>
-            <p className="paper-eyebrow">{content.eyebrow}</p>
-            <h2 id={pageTitleId}>{content.title}</h2>
-          </div>
-          <span className="paper-date">18 MAR · 2026</span>
-        </header>
+      <h2 className="sr-only" id={pageTitleId}>
+        {content.title}
+      </h2>
 
-        <p className="paper-subtitle">{content.subtitle}</p>
-        <p className="paper-introduction">
-          {content.introduction}
-          <span className="editor-caret" aria-hidden="true" />
-        </p>
-
-        <aside className="paper-highlight" aria-label="Destaque da anotação">
-          <span aria-hidden="true">✦</span>
-          <p>{content.highlight}</p>
-        </aside>
-
-        <section className="paper-section">
-          <p className="paper-section__number">01</p>
-          <div>
-            <h3>{content.sectionTitle}</h3>
-            <p>{content.sectionBody}</p>
-          </div>
-        </section>
-
-        <ol className="osi-layers" aria-label="Conteúdo estruturado da anotação">
-          {content.layers.map((layer) => (
-            <li key={layer.number}>
-              <span className="layer-number">{layer.number}</span>
-              <strong>{layer.name}</strong>
-              <span>{layer.description}</span>
-            </li>
-          ))}
-        </ol>
-
-        <div className="paper-notes">
-          <section>
-            <span className="paper-note-label">{content.takeawayTitle}</span>
-            <p>{content.takeawayBody}</p>
-          </section>
-          <section className="paper-next-step">
-            <span aria-hidden="true">↗</span>
-            <p>{content.nextStudy}</p>
-          </section>
-        </div>
-      </div>
+      <RichTextEditor
+        initialContent={initialContent}
+        labelledBy={pageTitleId}
+        pageNumber={page.pageNumber}
+        onEditorReady={onEditorReady}
+      />
 
       <footer className="paper-footer">
         <span>CADERNO APP · {content.eyebrow.toUpperCase()}</span>

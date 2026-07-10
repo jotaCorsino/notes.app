@@ -26,7 +26,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - M2.4 — Correção LF sem BOM — Aprovado — Commit 040ced6
 - Etapa 10 — Planejamento do frontend/editor A4 — Aprovado — Commit f17ab23
 - Etapa 11 — Estrutura inicial do frontend — Aprovado — Commit 30253e2
-- M3 — CI do frontend — Em validação
+- M3 — CI do frontend — Aprovado — Commit 6b817b4
+- Etapa 12 — Layout visual base do frontend — Concluída nesta entrega
 
 ## Decisões técnicas aprovadas
 
@@ -51,14 +52,17 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Tailwind CSS mantido como possibilidade futura.
 - Estrutura inicial do frontend criada em `frontend/caderno-app-web`.
 - CI separado em dois jobs: backend e frontend.
+- Layout visual base criado com sidebar, topbar, área central e página A4 simulada.
+- Primeira tela visual criada com dados mockados de matérias, módulos, anotações, tags, favorito e conteúdo.
+- A Etapa 12 mantém o frontend sem integração com API, Tiptap, editor A4 funcional ou exportação PDF.
 
 ## Pendências atuais
 
 - P-009 — Implementar sanitização real do HTML — Pendente.
 - P-010 — Implementar exportação PDF A4 real — Pendente.
-- P-015 — Criar layout visual base do frontend — Pendente.
 - P-016 — Prototipar editor A4 visual — Pendente.
 - P-017 — Integrar frontend com API — Pendente.
+- P-018 — Conectar o layout aos dados reais da API — Pendente.
 
 ## Pendências resolvidas
 
@@ -68,18 +72,18 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - P-012 — Escolher tecnologia do frontend — Concluído inicialmente: React, TypeScript e Vite.
 - P-013 — Escolher ou prototipar editor rich text — Concluído inicialmente: Tiptap recomendado.
 - P-014 — Criar estrutura inicial do frontend — Concluído: pasta `frontend/caderno-app-web` criada com Vite.
+- P-015 — Criar layout visual base do frontend — Concluído: primeira tela visual criada com dados mockados, sem integração com API.
 
 ## Próxima tarefa
 
-Criar layout visual base do frontend.
+Prototipar editor A4 visual.
 
 A próxima tarefa deve incluir:
 
-- Criar base visual do layout principal.
-- Preparar área para sidebar, topbar e espaço central.
-- Manter sem editor A4 completo.
-- Manter sem integração com API.
-- Manter sem Tiptap até a etapa de protótipo do editor.
+- Evoluir a página A4 simulada para um protótipo visual de edição.
+- Preservar o layout base criado na Etapa 12.
+- Manter a integração com API para uma etapa posterior.
+- Manter a exportação PDF fora do escopo.
 
 ## Histórico de validações
 
@@ -101,12 +105,14 @@ A próxima tarefa deve incluir:
 - M2.4 aprovada.
 - Etapa 10 aprovada.
 - Etapa 11 aprovada.
-- M3 pendente de validação remota após correção de line endings.
+- M3 aprovada — Commit 6b817b4.
+- Etapa 12 concluída: layout visual base criado com dados mockados, sem integração com API, Tiptap, editor A4 funcional ou PDF.
 
 ## Observações
 
 - Este documento substitui o acompanhamento anterior por uma versão limpa e objetiva.
 - O documento `docs/04-especificacao-editor-a4-e-pdf.md` permanece como fonte da especificação do editor A4 e da estratégia futura de PDF.
 - O documento `docs/05-planejamento-frontend-editor-a4.md` registra o planejamento do frontend/editor A4.
-- A manutenção M3 deve alterar apenas o workflow de CI e este acompanhamento.
-- Nenhum Tiptap, Tailwind, rota, chamada HTTP, editor A4, PDF ou autenticação foi implementado.
+- O CI do frontend foi introduzido no commit 716e248; a manutenção M3 foi aprovada no commit 6b817b4.
+- A página A4 criada na Etapa 12 é apenas uma prévia visual com conteúdo mockado.
+- Ainda não há integração com API, Tiptap, Tailwind, rotas, chamadas HTTP, editor A4 funcional, exportação PDF ou autenticação.

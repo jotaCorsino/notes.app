@@ -27,7 +27,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Etapa 10 — Planejamento do frontend/editor A4 — Aprovado — Commit f17ab23
 - Etapa 11 — Estrutura inicial do frontend — Aprovado — Commit 30253e2
 - M3 — CI do frontend — Aprovado — Commit 6b817b4
-- Etapa 12 — Layout visual base do frontend — Concluída nesta entrega
+- Etapa 12 — Layout visual base do frontend — Aprovado — Commit de7dba3
+- Etapa 13 — Protótipo visual do editor A4 — Concluída nesta entrega
 
 ## Decisões técnicas aprovadas
 
@@ -55,14 +56,19 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Layout visual base criado com sidebar, topbar, área central e página A4 simulada.
 - Primeira tela visual criada com dados mockados de matérias, módulos, anotações, tags, favorito e conteúdo.
 - A Etapa 12 mantém o frontend sem integração com API, Tiptap, editor A4 funcional ou exportação PDF.
+- Protótipo visual do editor A4 criado com toolbar de formatação, navegação de páginas e área que simula edição.
+- Anotação selecionada evoluída para duas páginas mockadas com numeração, dimensões A4 e `ContentFormat` controlado.
+- Área da página usa `contentEditable` apenas para contato visual, sem estado persistido ou salvamento real.
+- Toolbar, navegação e adição de página permanecem visuais, sem Tiptap ou comandos funcionais.
 
 ## Pendências atuais
 
 - P-009 — Implementar sanitização real do HTML — Pendente.
 - P-010 — Implementar exportação PDF A4 real — Pendente.
-- P-016 — Prototipar editor A4 visual — Pendente.
 - P-017 — Integrar frontend com API — Pendente.
 - P-018 — Conectar o layout aos dados reais da API — Pendente.
+- P-019 — Instalar e integrar Tiptap — Pendente.
+- P-020 — Implementar salvamento real de páginas — Pendente.
 
 ## Pendências resolvidas
 
@@ -73,17 +79,18 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - P-013 — Escolher ou prototipar editor rich text — Concluído inicialmente: Tiptap recomendado.
 - P-014 — Criar estrutura inicial do frontend — Concluído: pasta `frontend/caderno-app-web` criada com Vite.
 - P-015 — Criar layout visual base do frontend — Concluído: primeira tela visual criada com dados mockados, sem integração com API.
+- P-016 — Prototipar editor A4 visual — Concluído: toolbar, navegação e área editável visual criadas com duas páginas mockadas.
 
 ## Próxima tarefa
 
-Prototipar editor A4 visual.
+Instalar e integrar Tiptap ao protótipo A4.
 
 A próxima tarefa deve incluir:
 
-- Evoluir a página A4 simulada para um protótipo visual de edição.
-- Preservar o layout base criado na Etapa 12.
-- Manter a integração com API para uma etapa posterior.
-- Manter a exportação PDF fora do escopo.
+- Substituir a superfície `contentEditable` estática por uma integração inicial com Tiptap.
+- Preservar toolbar, dimensões A4 e navegação visual criadas na Etapa 13.
+- Manter salvamento real e integração com API para tarefas posteriores.
+- Manter exportação PDF fora do escopo.
 
 ## Histórico de validações
 
@@ -106,7 +113,8 @@ A próxima tarefa deve incluir:
 - Etapa 10 aprovada.
 - Etapa 11 aprovada.
 - M3 aprovada — Commit 6b817b4.
-- Etapa 12 concluída: layout visual base criado com dados mockados, sem integração com API, Tiptap, editor A4 funcional ou PDF.
+- Etapa 12 aprovada — Commit de7dba3.
+- Etapa 13 concluída: protótipo visual criado com toolbar, duas páginas mockadas, navegação e área que simula edição.
 
 ## Observações
 
@@ -114,5 +122,7 @@ A próxima tarefa deve incluir:
 - O documento `docs/04-especificacao-editor-a4-e-pdf.md` permanece como fonte da especificação do editor A4 e da estratégia futura de PDF.
 - O documento `docs/05-planejamento-frontend-editor-a4.md` registra o planejamento do frontend/editor A4.
 - O CI do frontend foi introduzido no commit 716e248; a manutenção M3 foi aprovada no commit 6b817b4.
-- A página A4 criada na Etapa 12 é apenas uma prévia visual com conteúdo mockado.
-- Ainda não há integração com API, Tiptap, Tailwind, rotas, chamadas HTTP, editor A4 funcional, exportação PDF ou autenticação.
+- O layout visual base da Etapa 12 foi aprovado no commit de7dba3.
+- O editor da Etapa 13 ainda é um protótipo: toolbar e navegação não executam comandos e alterações locais não são salvas.
+- Os status de salvamento exibidos são mockados e não representam persistência real.
+- Ainda não há integração com API, Tiptap, Tailwind, rotas, chamadas HTTP, salvamento real, exportação PDF ou autenticação.

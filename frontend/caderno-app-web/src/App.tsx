@@ -1,5 +1,5 @@
 import './App.css'
-import { A4PreviewPage } from './components/A4PreviewPage'
+import { A4EditorWorkspace } from './components/A4EditorWorkspace'
 import { Sidebar } from './components/Sidebar'
 import { TagList } from './components/TagList'
 import { Topbar } from './components/Topbar'
@@ -15,6 +15,9 @@ function App() {
   const selectedNote =
     selectedModule.notes.find((note) => note.id === mockNotebook.selectedNoteId) ??
     selectedModule.notes[0]
+  const selectedPage =
+    selectedNote.pages.find((page) => page.pageNumber === selectedNote.activePageNumber) ??
+    selectedNote.pages[0]
 
   return (
     <div className="app-layout">
@@ -57,13 +60,7 @@ function App() {
             )}
           </header>
 
-          <section className="page-stage" aria-label="Pré-visualização da página A4">
-            <div className="page-stage__label">
-              <span>Página 1 de 1</span>
-              <span>A4 · visualização</span>
-            </div>
-            <A4PreviewPage content={selectedNote.page} />
-          </section>
+          <A4EditorWorkspace pages={selectedNote.pages} activePage={selectedPage} />
         </main>
       </div>
     </div>

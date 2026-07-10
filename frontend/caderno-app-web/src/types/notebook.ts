@@ -16,13 +16,23 @@ export interface NotePageContent {
   nextStudy: string
 }
 
+export interface NotebookPage {
+  id: string
+  pageNumber: number
+  widthMm: number
+  heightMm: number
+  contentFormat: 'html'
+  content: NotePageContent
+}
+
 export interface NotebookNote {
   id: string
   title: string
   tags: string[]
   isFavorite: boolean
   saveStatus: string
-  page: NotePageContent
+  activePageNumber: number
+  pages: NotebookPage[]
 }
 
 export interface StudyModule {

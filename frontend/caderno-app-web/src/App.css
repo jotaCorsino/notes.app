@@ -813,10 +813,29 @@
 
 .page-thumbnail {
   display: grid;
-  gap: 0.45rem;
   padding: 0.45rem;
   border: 1px solid transparent;
   border-radius: 0.45rem;
+}
+
+.page-thumbnail__button {
+  display: grid;
+  width: 100%;
+  gap: 0.45rem;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+}
+
+.page-thumbnail__button:not(:disabled) {
+  cursor: pointer;
+}
+
+.page-thumbnail:hover {
+  border-color: #d1d9d4;
+  background: #f4f6f2;
 }
 
 .page-thumbnail--active {
@@ -884,6 +903,16 @@
   background: transparent;
   font-size: 0.65rem;
   font-weight: 750;
+}
+
+.add-page-button:not(:disabled) {
+  cursor: pointer;
+}
+
+.add-page-button:not(:disabled):hover {
+  border-color: #8ca79b;
+  color: #34584d;
+  background: #eef2ed;
 }
 
 .add-page-button span {
@@ -1342,6 +1371,12 @@
 
   .page-thumbnail {
     grid-template-columns: 2.2rem minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .page-thumbnail__button {
+    grid-template-columns: 2.2rem minmax(0, 1fr);
+    grid-column: 1 / -1;
     align-items: center;
   }
 

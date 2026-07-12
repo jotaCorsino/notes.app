@@ -1,49 +1,17 @@
 import type { Editor } from '@tiptap/react'
-import type { NotebookPage, NotePageContent } from '../types/notebook'
+import type { NotebookPage } from '../types/notebook'
 import { RichTextEditor } from './RichTextEditor'
 
 interface A4EditorPageProps {
   page: NotebookPage
+  contentHtml: string
+  onContentChange?: (content: string) => void
   onEditorReady?: (editor: Editor | null) => void
 }
 
-const escapeHtml = (value: string) =>
-  value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;')
-
-const createEditorHtml = (content: NotePageContent) => {
-  const layerItems = content.layers
-    .map(
-      (layer) =>
-        `<li><strong>${layer.number}. ${escapeHtml(layer.name)}</strong>: ${escapeHtml(layer.description)}</li>`,
-    )
-    .join('')
-
-  const layersHtml = layerItems ? `<ul>${layerItems}</ul>` : ''
-
-  return `
-    <p><strong>${escapeHtml(content.eyebrow)}</strong></p>
-    <h1>${escapeHtml(content.title)}</h1>
-    <p><em>${escapeHtml(content.subtitle)}</em></p>
-    <p>${escapeHtml(content.introduction)}</p>
-    <blockquote><p><mark>${escapeHtml(content.highlight)}</mark></p></blockquote>
-    <h2>${escapeHtml(content.sectionTitle)}</h2>
-    <p>${escapeHtml(content.sectionBody)}</p>
-    ${layersHtml}
-    <h3>${escapeHtml(content.takeawayTitle)}</h3>
-    <p>${escapeHtml(content.takeawayBody)}</p>
-    <p>${escapeHtml(content.nextStudy)}</p>
-  `
-}
-
-export function A4EditorPage({ page, onEditorReady }: A4EditorPageProps) {
+export function A4EditorPage({ contentHtml, page, onContentChange, onEditorReady }: A4EditorPageProps) {
   const { content } = page
   const pageTitleId = `page-title-${page.id}`
-  const initialContent = createEditorHtml(content)
 
   return (
     <article className="a4-page a4-editor-page" aria-labelledby={pageTitleId}>
@@ -57,9 +25,10 @@ export function A4EditorPage({ page, onEditorReady }: A4EditorPageProps) {
       </h2>
 
       <RichTextEditor
-        initialContent={initialContent}
+        initialContent={contentHtml}
         labelledBy={pageTitleId}
         pageNumber={page.pageNumber}
+        onContentChange={onContentChange}
         onEditorReady={onEditorReady}
       />
 

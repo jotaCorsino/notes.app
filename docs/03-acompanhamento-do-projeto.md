@@ -29,7 +29,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - M3 — CI do frontend — Aprovado — Commit 6b817b4
 - Etapa 12 — Layout visual base do frontend — Aprovado — Commit de7dba3
 - Etapa 13 — Protótipo visual do editor A4 — Aprovado — Commit b1edd01
-- Etapa 14 — Integração inicial com Tiptap — Em validação
+- Etapa 14 — Integração inicial com Tiptap — Aprovado — Commit 07f0c12
+- Etapa 15 — Troca funcional entre páginas do editor — Em validação
 
 ## Decisões técnicas aprovadas
 
@@ -65,6 +66,11 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Seletores de fonte e tamanho permanecem visuais/desabilitados nesta etapa.
 - Edição local ainda não persiste no backend.
 - Ainda não há integração com API, paginação automática, salvamento real ou PDF.
+- PageNavigator permite selecionar páginas da anotação ativa localmente.
+- Conteúdo editado com Tiptap é mantido separadamente por página durante a sessão.
+- Botão `+ Página` cria página local mockada com tamanho A4 e conteúdo HTML inicial simples.
+- Troca de páginas não chama API e não salva no backend.
+- Estado local ainda é perdido ao recarregar a página.
 
 ## Pendências atuais
 
@@ -73,8 +79,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - P-017 — Integrar frontend com API — Pendente.
 - P-018 — Conectar o layout aos dados reais da API — Pendente.
 - P-020 — Implementar salvamento real de páginas — Pendente.
-- P-021 — Implementar troca funcional entre páginas do editor — Pendente.
 - P-022 — Implementar controle funcional de fonte e tamanho — Pendente.
+- P-023 — Persistir estado local em armazenamento temporário ou backend, conforme estratégia futura — Pendente.
 
 ## Pendências resolvidas
 
@@ -87,17 +93,18 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - P-015 — Criar layout visual base do frontend — Concluído: primeira tela visual criada com dados mockados, sem integração com API.
 - P-016 — Prototipar editor A4 visual — Concluído: toolbar, navegação e área editável visual criadas com duas páginas mockadas.
 - P-019 — Instalar e integrar Tiptap — Concluído: editor A4 usa Tiptap com edição local rich text.
+- P-021 — Implementar troca funcional entre páginas do editor — Concluído: seleção, edição por página e criação local de página foram implementadas.
 
 ## Próxima tarefa
 
-Implementar troca funcional entre páginas do editor.
+Implementar salvamento local temporário por página usando `localStorage`, ainda sem API.
 
 A próxima tarefa deve incluir:
 
-- Permitir selecionar páginas no `PageNavigator`.
-- Manter conteúdo local separado por página durante a sessão.
-- Preservar dimensões A4 e toolbar Tiptap.
-- Manter salvamento real e integração com API para tarefas posteriores.
+- Persistir temporariamente o conteúdo HTML por página no navegador.
+- Restaurar o rascunho local ao recarregar a tela.
+- Manter integração com API para tarefa posterior.
+- Manter salvamento real no backend para tarefa posterior.
 - Manter exportação PDF fora do escopo.
 
 ## Histórico de validações
@@ -123,7 +130,8 @@ A próxima tarefa deve incluir:
 - M3 aprovada — Commit 6b817b4.
 - Etapa 12 aprovada — Commit de7dba3.
 - Etapa 13 aprovada — Commit b1edd01.
-- Etapa 14 em validação: Tiptap instalado e integrado ao protótipo A4 com edição local e comandos básicos de toolbar.
+- Etapa 14 aprovada — Commit 07f0c12.
+- Etapa 15 em validação: PageNavigator passou a selecionar páginas, preservar conteúdo local por página e criar nova página mockada.
 
 ## Observações
 
@@ -133,5 +141,6 @@ A próxima tarefa deve incluir:
 - O CI do frontend foi introduzido no commit 716e248; a manutenção M3 foi aprovada no commit 6b817b4.
 - O layout visual base da Etapa 12 foi aprovado no commit de7dba3.
 - O editor da Etapa 14 ainda é um protótipo local: alterações não são salvas no backend.
+- A Etapa 15 mantém alterações apenas na memória da sessão; recarregar a página ainda descarta os rascunhos.
 - Os status de salvamento exibidos são mockados e não representam persistência real.
 - Ainda não há integração com API, Tailwind, rotas, chamadas HTTP, salvamento real, paginação automática, exportação PDF ou autenticação.

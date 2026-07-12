@@ -32,7 +32,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Etapa 14 — Integração inicial com Tiptap — Aprovado — Commit 07f0c12
 - Etapa 15 — Troca funcional entre páginas do editor — Aprovado — Commit dd739fa
 - Etapa 16 — Salvamento local temporário com localStorage — Aprovado — Commit f63fc78
-- Etapa 17 — Integração inicial com API para matérias — Em validação
+- Etapa 17 — Integração inicial com API para matérias — Aprovado — Commit df82188
+- Etapa 18 — Integração com API para módulos — Em validação
 
 ## Decisões técnicas aprovadas
 
@@ -75,10 +76,16 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Salvamento local é temporário e por navegador.
 - Frontend consome `GET /api/subjects` para listar matérias reais na sidebar.
 - Vite usa proxy de desenvolvimento de `/api` para `http://localhost:5037`.
-- Sidebar exibe estado discreto de API: carregando, conectada ou indisponível.
+- Sidebar exibe estado discreto de matérias: carregando, API conectada ou API indisponível.
 - Quando `GET /api/subjects` falha, a sidebar mantém fallback com dados mockados.
 - Quando `GET /api/subjects` retorna lista vazia, a sidebar informa que não há matérias cadastradas.
-- Módulos, anotações e páginas continuam mockados no frontend.
+- Frontend consome `GET /api/subjects/{subjectId}/modules` para listar módulos da matéria real selecionada.
+- A primeira matéria real é selecionada por padrão quando a API de matérias retorna lista não vazia.
+- A seleção de matéria real controla a busca de módulos reais.
+- A seleção de módulo real fica local na sidebar e não dispara busca de anotações nesta etapa.
+- Sidebar exibe estado discreto de módulos: aguardando matéria, carregando, API conectada ou API indisponível.
+- Quando `GET /api/subjects/{subjectId}/modules` retorna lista vazia, a sidebar informa que não há módulos cadastrados.
+- Anotações, páginas e editor continuam mockados/locais no frontend.
 - Editor A4 e rascunho em `localStorage` continuam locais.
 - Backend de desenvolvimento cria o schema SQLite com `EnsureCreated` em ambiente Development, sem migrations e sem seed obrigatório.
 
@@ -86,13 +93,13 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 
 - P-009 — Implementar sanitização real do HTML — Pendente.
 - P-010 — Implementar exportação PDF A4 real — Pendente.
-- P-017 — Integrar frontend com API — Parcialmente concluída: `GET /api/subjects` foi integrado; demais áreas seguem pendentes.
-- P-018 — Conectar o layout aos dados reais da API — Parcialmente concluída: sidebar usa matérias reais quando a API responde; módulos, anotações e páginas seguem mockados.
+- P-017 — Integrar frontend com API — Parcialmente concluída: matérias e módulos foram integrados; anotações e páginas seguem pendentes.
+- P-018 — Conectar o layout aos dados reais da API — Parcialmente concluída: sidebar usa matérias e módulos reais quando a API responde; anotações e páginas seguem mockadas.
 - P-020 — Implementar salvamento real de páginas — Pendente.
 - P-022 — Implementar controle funcional de fonte e tamanho — Pendente.
 - P-024 — Definir estratégia de sincronização entre localStorage e backend — Pendente.
-- P-025 — Integrar módulos com API — Pendente.
 - P-026 — Integrar anotações com API — Pendente.
+- P-027 — Criar fluxo de criação de matéria/módulo pelo frontend — Pendente.
 
 ## Pendências resolvidas
 
@@ -107,17 +114,18 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - P-019 — Instalar e integrar Tiptap — Concluído: editor A4 usa Tiptap com edição local rich text.
 - P-021 — Implementar troca funcional entre páginas do editor — Concluído: seleção, edição por página e criação local de página foram implementadas.
 - P-023 — Persistir estado local em armazenamento temporário ou backend, conforme estratégia futura — Concluído: rascunho local temporário implementado com `localStorage`.
+- P-025 — Integrar módulos com API — Concluído: sidebar consome `GET /api/subjects/{subjectId}/modules` para a matéria real selecionada.
 
 ## Próxima tarefa
 
-Integrar módulos com API.
+Integrar anotações com API.
 
 A próxima tarefa deve incluir:
 
-- Consumir a API de módulos no frontend.
-- Exibir módulos reais da matéria selecionada.
-- Definir como a seleção de matéria real afeta o restante da sidebar.
-- Manter anotações, páginas e editor A4 fora do escopo, salvo decisão explícita.
+- Consumir a API de anotações no frontend.
+- Exibir anotações reais do módulo selecionado.
+- Definir como a seleção de módulo real afeta a área central do app.
+- Manter páginas e editor A4 fora do escopo, salvo decisão explícita.
 - Manter salvamento real de páginas para tarefa posterior.
 - Manter autenticação fora do escopo.
 - Manter exportação PDF fora do escopo.
@@ -148,7 +156,8 @@ A próxima tarefa deve incluir:
 - Etapa 14 aprovada — Commit 07f0c12.
 - Etapa 15 aprovada — Commit dd739fa.
 - Etapa 16 aprovada — Commit f63fc78.
-- Etapa 17 em validação: frontend passou a consumir `GET /api/subjects` e a sidebar recebeu fallback mockado quando a API fica indisponível.
+- Etapa 17 aprovada — Commit df82188.
+- Etapa 18 em validação: frontend passou a consumir `GET /api/subjects/{subjectId}/modules`, com seleção real de matéria controlando a busca de módulos.
 
 ## Observações
 
@@ -157,11 +166,12 @@ A próxima tarefa deve incluir:
 - O documento `docs/05-planejamento-frontend-editor-a4.md` registra o planejamento do frontend/editor A4.
 - O CI do frontend foi introduzido no commit 716e248; a manutenção M3 foi aprovada no commit 6b817b4.
 - O layout visual base da Etapa 12 foi aprovado no commit de7dba3.
-- A Etapa 17 integra apenas a listagem de matérias.
+- A Etapa 17 integrou apenas a listagem de matérias.
+- A Etapa 18 integra apenas a listagem de módulos por matéria.
 - O proxy do Vite vale apenas para desenvolvimento local.
 - A criação automática do schema SQLite ocorre apenas em `Development` e não cria dados falsos.
-- Módulos, anotações e páginas continuam mockados no frontend.
+- Anotações e páginas continuam mockadas no frontend.
 - O editor A4 continua local e não salva no backend.
 - O rascunho em `localStorage` não tem sincronização com backend.
 - Os status de salvamento exibidos continuam locais/mockados.
-- Ainda não há integração de módulos, integração de anotações, salvamento real de páginas, autenticação, paginação automática, exportação PDF ou frontend em produção.
+- Ainda não há integração de anotações, integração de páginas, salvamento real de páginas, autenticação, paginação automática, exportação PDF ou frontend em produção.

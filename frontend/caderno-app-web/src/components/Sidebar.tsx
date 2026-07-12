@@ -1,6 +1,10 @@
 import type { Subject } from '../types/notebook'
 
+export type SidebarApiStatus = 'loading' | 'connected' | 'unavailable'
+
 interface SidebarProps {
+  apiError: string | null
+  apiStatus: SidebarApiStatus
   ownerName: string
   workspaceName: string
   subjects: Subject[]
@@ -9,7 +13,15 @@ interface SidebarProps {
   selectedNoteId: string
 }
 
+const apiStatusLabel: Record<SidebarApiStatus, string> = {
+  connected: 'API conectada',
+  loading: 'Carregando matérias',
+  unavailable: 'API indisponível',
+}
+
 export function Sidebar({
+  apiError,
+  apiStatus,
   ownerName,
   workspaceName,
   subjects,
@@ -22,6 +34,9 @@ export function Sidebar({
     .slice(0, 2)
     .map((name) => name[0])
     .join('')
+  const isApiUnavailable = apiStatus === 'unavailable'
+  const isApiConnected = apiStatus === 'connected'
+  const hasSubjects = subjects.length > 0
 
   return (
     <aside className="sidebar" aria-label="Navegação do fichário">
@@ -52,20 +67,35 @@ export function Sidebar({
             <h2 id="subjects-title">Matérias</h2>
             <span>{subjects.length}</span>
           </div>
+          <div className={`sidebar-api-status sidebar-api-status--${apiStatus}`} role="status">
+            <span className="sidebar-api-status__dot" aria-hidden="true" />
+            <span>{apiStatusLabel[apiStatus]}</span>
+          </div>
+          {isApiUnavailable && (
+            <p className="sidebar-api-message" title={apiError ?? undefined}>
+              API indisponível — exibindo dados mockados
+            </p>
+          )}
           <ul className="subject-list">
-            {subjects.map((subject) => (
-              <li
-                className={subject.id === selectedSubject.id ? 'subject-item subject-item--active' : 'subject-item'}
-                key={subject.id}
-                aria-current={subject.id === selectedSubject.id ? 'true' : undefined}
-              >
-                <span className={`subject-badge subject-badge--${subject.color}`} aria-hidden="true">
-                  {subject.shortLabel}
-                </span>
-                <span>{subject.title}</span>
-                <span className="subject-item__count">{subject.modules.length}</span>
-              </li>
-            ))}
+            {hasSubjects ? (
+              subjects.map((subject) => (
+                <li
+                  className={subject.id === selectedSubject.id ? 'subject-item subject-item--active' : 'subject-item'}
+                  key={subject.id}
+                  aria-current={subject.id === selectedSubject.id ? 'true' : undefined}
+                >
+                  <span className={`subject-badge subject-badge--${subject.color}`} aria-hidden="true">
+                    {subject.shortLabel}
+                  </span>
+                  <span>{subject.title}</span>
+                  <span className="subject-item__count">{subject.modules.length}</span>
+                </li>
+              ))
+            ) : (
+              isApiConnected && (
+                <li className="subject-list__empty">Nenhuma matéria cadastrada ainda</li>
+              )
+            )}
           </ul>
         </section>
 

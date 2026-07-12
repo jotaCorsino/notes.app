@@ -171,6 +171,48 @@
   font-weight: 700;
 }
 
+.sidebar-api-status {
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  margin: 0 0.55rem 0.55rem;
+  color: #9fb7ad;
+  font-size: 0.64rem;
+  font-weight: 750;
+}
+
+.sidebar-api-status__dot {
+  width: 0.46rem;
+  height: 0.46rem;
+  border-radius: 50%;
+  background: #9fb7ad;
+}
+
+.sidebar-api-status--connected .sidebar-api-status__dot {
+  background: #8fc49d;
+}
+
+.sidebar-api-status--loading .sidebar-api-status__dot {
+  background: #d6b16d;
+}
+
+.sidebar-api-status--unavailable .sidebar-api-status__dot {
+  background: #dc8f78;
+}
+
+.sidebar-api-message,
+.subject-list__empty {
+  margin: 0 0.55rem 0.65rem;
+  color: #d2c2a8;
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+
+.subject-list__empty {
+  padding: 0.65rem 0;
+  color: #91aa9f;
+}
+
 .subject-list,
 .module-list,
 .note-list,

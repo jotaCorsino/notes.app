@@ -31,7 +31,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Etapa 13 — Protótipo visual do editor A4 — Aprovado — Commit b1edd01
 - Etapa 14 — Integração inicial com Tiptap — Aprovado — Commit 07f0c12
 - Etapa 15 — Troca funcional entre páginas do editor — Aprovado — Commit dd739fa
-- Etapa 16 — Salvamento local temporário com localStorage — Em validação
+- Etapa 16 — Salvamento local temporário com localStorage — Aprovado — Commit f63fc78
+- Etapa 17 — Integração inicial com API para matérias — Em validação
 
 ## Decisões técnicas aprovadas
 
@@ -58,34 +59,40 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - CI separado em dois jobs: backend e frontend.
 - Layout visual base criado com sidebar, topbar, área central e página A4 simulada.
 - Primeira tela visual criada com dados mockados de matérias, módulos, anotações, tags, favorito e conteúdo.
-- A Etapa 12 mantém o frontend sem integração com API, Tiptap, editor A4 funcional ou exportação PDF.
 - Protótipo visual do editor A4 criado com toolbar de formatação, navegação de páginas e área que simula edição.
 - Anotação selecionada evoluída para duas páginas mockadas com numeração, dimensões A4 e `ContentFormat` controlado.
 - Editor A4 inicial integrado com Tiptap para edição rich text local.
 - Pacotes Tiptap instalados: `@tiptap/react`, `@tiptap/pm`, `@tiptap/starter-kit`, `@tiptap/extension-underline`, `@tiptap/extension-highlight` e `@tiptap/extension-text-align`.
 - Toolbar executa comandos iniciais de negrito, itálico, sublinhado, lista com marcadores, lista numerada, marca-texto e alinhamento à esquerda, centralizado e à direita.
 - Seletores de fonte e tamanho permanecem visuais/desabilitados nesta etapa.
-- Edição local ainda não persiste no backend.
-- Ainda não há integração com API, paginação automática, salvamento real ou PDF.
 - PageNavigator permite selecionar páginas da anotação ativa localmente.
-- Conteúdo editado com Tiptap é mantido separadamente por página durante a sessão.
+- Conteúdo editado com Tiptap é mantido separadamente por página.
 - Botão `+ Página` cria página local mockada com tamanho A4 e conteúdo HTML inicial simples.
-- Troca de páginas não chama API e não salva no backend.
 - Rascunho temporário do editor salvo no `localStorage` com a chave `caderno-app:active-note-pages`.
 - Páginas editadas persistem no navegador após recarregar a tela.
 - Páginas criadas localmente persistem no navegador após recarregar a tela.
 - Há opção para limpar o rascunho local e restaurar os mocks iniciais.
 - Salvamento local é temporário e por navegador.
+- Frontend consome `GET /api/subjects` para listar matérias reais na sidebar.
+- Vite usa proxy de desenvolvimento de `/api` para `http://localhost:5037`.
+- Sidebar exibe estado discreto de API: carregando, conectada ou indisponível.
+- Quando `GET /api/subjects` falha, a sidebar mantém fallback com dados mockados.
+- Quando `GET /api/subjects` retorna lista vazia, a sidebar informa que não há matérias cadastradas.
+- Módulos, anotações e páginas continuam mockados no frontend.
+- Editor A4 e rascunho em `localStorage` continuam locais.
+- Backend de desenvolvimento cria o schema SQLite com `EnsureCreated` em ambiente Development, sem migrations e sem seed obrigatório.
 
 ## Pendências atuais
 
 - P-009 — Implementar sanitização real do HTML — Pendente.
 - P-010 — Implementar exportação PDF A4 real — Pendente.
-- P-017 — Integrar frontend com API — Pendente.
-- P-018 — Conectar o layout aos dados reais da API — Pendente.
+- P-017 — Integrar frontend com API — Parcialmente concluída: `GET /api/subjects` foi integrado; demais áreas seguem pendentes.
+- P-018 — Conectar o layout aos dados reais da API — Parcialmente concluída: sidebar usa matérias reais quando a API responde; módulos, anotações e páginas seguem mockados.
 - P-020 — Implementar salvamento real de páginas — Pendente.
 - P-022 — Implementar controle funcional de fonte e tamanho — Pendente.
 - P-024 — Definir estratégia de sincronização entre localStorage e backend — Pendente.
+- P-025 — Integrar módulos com API — Pendente.
+- P-026 — Integrar anotações com API — Pendente.
 
 ## Pendências resolvidas
 
@@ -103,13 +110,15 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 
 ## Próxima tarefa
 
-Iniciar integração com API para listagem de matérias.
+Integrar módulos com API.
 
 A próxima tarefa deve incluir:
 
-- Consumir a API de matérias no frontend.
-- Substituir gradualmente mocks da sidebar por dados reais.
-- Manter editor, salvamento real de páginas e sincronização para tarefas posteriores.
+- Consumir a API de módulos no frontend.
+- Exibir módulos reais da matéria selecionada.
+- Definir como a seleção de matéria real afeta o restante da sidebar.
+- Manter anotações, páginas e editor A4 fora do escopo, salvo decisão explícita.
+- Manter salvamento real de páginas para tarefa posterior.
 - Manter autenticação fora do escopo.
 - Manter exportação PDF fora do escopo.
 
@@ -138,7 +147,8 @@ A próxima tarefa deve incluir:
 - Etapa 13 aprovada — Commit b1edd01.
 - Etapa 14 aprovada — Commit 07f0c12.
 - Etapa 15 aprovada — Commit dd739fa.
-- Etapa 16 em validação: rascunho local temporário salvo no navegador com localStorage.
+- Etapa 16 aprovada — Commit f63fc78.
+- Etapa 17 em validação: frontend passou a consumir `GET /api/subjects` e a sidebar recebeu fallback mockado quando a API fica indisponível.
 
 ## Observações
 
@@ -147,7 +157,11 @@ A próxima tarefa deve incluir:
 - O documento `docs/05-planejamento-frontend-editor-a4.md` registra o planejamento do frontend/editor A4.
 - O CI do frontend foi introduzido no commit 716e248; a manutenção M3 foi aprovada no commit 6b817b4.
 - O layout visual base da Etapa 12 foi aprovado no commit de7dba3.
-- O editor da Etapa 14 ainda é um protótipo local: alterações não são salvas no backend.
-- A Etapa 16 mantém alterações no navegador com `localStorage`, mas ainda não há sincronização com backend.
-- Os status de salvamento exibidos são mockados e não representam persistência real.
-- Ainda não há integração com API, Tailwind, rotas, chamadas HTTP, salvamento real no backend, paginação automática, exportação PDF ou autenticação.
+- A Etapa 17 integra apenas a listagem de matérias.
+- O proxy do Vite vale apenas para desenvolvimento local.
+- A criação automática do schema SQLite ocorre apenas em `Development` e não cria dados falsos.
+- Módulos, anotações e páginas continuam mockados no frontend.
+- O editor A4 continua local e não salva no backend.
+- O rascunho em `localStorage` não tem sincronização com backend.
+- Os status de salvamento exibidos continuam locais/mockados.
+- Ainda não há integração de módulos, integração de anotações, salvamento real de páginas, autenticação, paginação automática, exportação PDF ou frontend em produção.

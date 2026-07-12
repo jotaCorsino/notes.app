@@ -742,6 +742,28 @@
   font-weight: 650;
 }
 
+.clear-local-draft-button {
+  flex: none;
+  min-height: 1.85rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid #d9c4a1;
+  border-radius: 0.35rem;
+  color: #6c5940;
+  background: #fff9ec;
+  font-size: 0.6rem;
+  font-weight: 800;
+}
+
+.clear-local-draft-button:not(:disabled) {
+  cursor: pointer;
+}
+
+.clear-local-draft-button:not(:disabled):hover {
+  border-color: #bc8d55;
+  color: #4f3e2b;
+  background: #fff4d9;
+}
+
 .editor-canvas {
   display: grid;
   grid-template-columns: 9rem minmax(0, 49.625rem);

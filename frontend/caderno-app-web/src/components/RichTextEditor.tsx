@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Highlight from '@tiptap/extension-highlight'
 import TextAlign from '@tiptap/extension-text-align'
 import Underline from '@tiptap/extension-underline'
@@ -36,6 +36,12 @@ export function RichTextEditor({
   onEditorReady,
 }: RichTextEditorProps) {
   const [localContent, setLocalContent] = useState(initialContent)
+  const onContentChangeRef = useRef(onContentChange)
+
+  useEffect(() => {
+    onContentChangeRef.current = onContentChange
+  }, [onContentChange])
+
   const editor = useEditor({
     extensions: editorExtensions,
     content: initialContent,
@@ -50,7 +56,7 @@ export function RichTextEditor({
     onUpdate: ({ editor: updatedEditor }) => {
       const nextContent = updatedEditor.getHTML()
       setLocalContent(nextContent)
-      onContentChange?.(nextContent)
+      onContentChangeRef.current?.(nextContent)
     },
   })
 

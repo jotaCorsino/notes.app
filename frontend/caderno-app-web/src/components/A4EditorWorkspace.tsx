@@ -1,17 +1,43 @@
 import { useCallback, useState } from 'react'
 import type { Editor } from '@tiptap/react'
 import type { NotebookPage, NotePageContent } from '../types/notebook'
+import {
+  clearLocalDraft,
+  loadLocalDraft,
+  saveLocalDraft,
+  type LocalDraftPage,
+} from '../utils/localDraftStorage'
 import { A4EditorPage } from './A4EditorPage'
 import { EditorToolbar } from './EditorToolbar'
 import { PageNavigator } from './PageNavigator'
 
-interface LocalNotebookPage extends NotebookPage {
-  contentHtml: string
-}
-
 interface A4EditorWorkspaceProps {
   pages: NotebookPage[]
   activePage: NotebookPage
+}
+
+type DraftStatus = 'cleared' | 'loaded' | 'memory' | 'saved' | 'unavailable'
+
+interface DraftEditorState {
+  activePageId: string
+  localPages: LocalDraftPage[]
+  status: DraftStatus
+}
+
+const draftStatusLabel: Record<DraftStatus, string> = {
+  cleared: 'Mocks restaurados',
+  loaded: 'Rascunho no navegador',
+  memory: 'Rascunho em memória',
+  saved: 'Salvo localmente',
+  unavailable: 'LocalStorage indisponível',
+}
+
+const draftStatusDetail: Record<DraftStatus, string> = {
+  cleared: 'Mocks restaurados nesta sessão',
+  loaded: 'Rascunho carregado do navegador',
+  memory: 'Aguardando primeira alteração',
+  saved: 'Rascunho salvo neste navegador',
+  unavailable: 'Usando memória da sessão',
 }
 
 const escapeHtml = (value: string) =>
@@ -47,7 +73,7 @@ const createEditorHtml = (content: NotePageContent) => {
   `
 }
 
-const createLocalPage = (page: NotebookPage): LocalNotebookPage => ({
+const createLocalPage = (page: NotebookPage): LocalDraftPage => ({
   ...page,
   contentHtml: createEditorHtml(page.content),
 })
@@ -55,18 +81,18 @@ const createLocalPage = (page: NotebookPage): LocalNotebookPage => ({
 const createBlankPageContent = (pageNumber: number): NotePageContent => ({
   eyebrow: 'Rascunho local',
   title: `Nova página ${pageNumber}`,
-  subtitle: 'Página A4 criada nesta sessão',
+  subtitle: 'Página A4 criada neste navegador',
   introduction: 'Comece suas anotações aqui.',
-  highlight: 'Esta página existe apenas localmente enquanto a sessão estiver aberta.',
+  highlight: 'Esta página existe apenas localmente neste navegador.',
   sectionTitle: 'Primeiro tópico',
   sectionBody: 'Adicione definições, exemplos e lembretes importantes.',
   layers: [],
   takeawayTitle: 'Para lembrar',
   takeawayBody: 'O conteúdo ainda não é salvo no backend.',
-  nextStudy: 'Próximo passo: organizar esta página antes de sair da sessão.',
+  nextStudy: 'Próximo passo: organizar esta página antes da integração com o backend.',
 })
 
-const createBlankLocalPage = (pageNumber: number): LocalNotebookPage => {
+const createBlankLocalPage = (pageNumber: number): LocalDraftPage => {
   const content = createBlankPageContent(pageNumber)
 
   return {
@@ -80,36 +106,92 @@ const createBlankLocalPage = (pageNumber: number): LocalNotebookPage => {
   }
 }
 
+const createInitialDraftState = (pages: NotebookPage[], activePage: NotebookPage): DraftEditorState => {
+  const localDraft = loadLocalDraft()
+
+  if (localDraft) {
+    const activeDraftPage = localDraft.pages.some((page) => page.id === localDraft.activePageId)
+      ? localDraft.activePageId
+      : localDraft.pages[0].id
+
+    return {
+      activePageId: activeDraftPage,
+      localPages: localDraft.pages,
+      status: 'loaded',
+    }
+  }
+
+  return {
+    activePageId: activePage.id,
+    localPages: pages.map(createLocalPage),
+    status: 'memory',
+  }
+}
+
+const persistDraft = (pages: LocalDraftPage[], activePageId: string): DraftStatus =>
+  saveLocalDraft(pages, activePageId) ? 'saved' : 'unavailable'
+
 export function A4EditorWorkspace({ pages, activePage }: A4EditorWorkspaceProps) {
   const [editor, setEditor] = useState<Editor | null>(null)
-  const [localPages, setLocalPages] = useState<LocalNotebookPage[]>(() => pages.map(createLocalPage))
-  const [activePageId, setActivePageId] = useState(activePage.id)
+  const [draftState, setDraftState] = useState<DraftEditorState>(() =>
+    createInitialDraftState(pages, activePage),
+  )
+  const { activePageId, localPages, status } = draftState
   const activeLocalPage =
     localPages.find((page) => page.id === activePageId) ?? localPages[0] ?? createLocalPage(activePage)
 
-  const handleContentChange = useCallback(
-    (contentHtml: string) => {
-      setLocalPages((currentPages) =>
-        currentPages.map((page) =>
-          page.id === activePageId
-            ? {
-                ...page,
-                contentHtml,
-              }
-            : page,
-        ),
+  const handleContentChange = useCallback((pageId: string, contentHtml: string) => {
+    setDraftState((currentState) => {
+      const nextPages = currentState.localPages.map((page) =>
+        page.id === pageId
+          ? {
+              ...page,
+              contentHtml,
+            }
+          : page,
       )
-    },
-    [activePageId],
-  )
+
+      return {
+        ...currentState,
+        localPages: nextPages,
+        status: persistDraft(nextPages, currentState.activePageId),
+      }
+    })
+  }, [])
 
   const handleAddPage = useCallback(() => {
-    const nextPageNumber = Math.max(...localPages.map((page) => page.pageNumber), 0) + 1
-    const nextPage = createBlankLocalPage(nextPageNumber)
+    setDraftState((currentState) => {
+      const nextPageNumber = Math.max(...currentState.localPages.map((page) => page.pageNumber), 0) + 1
+      const nextPage = createBlankLocalPage(nextPageNumber)
+      const nextPages = [...currentState.localPages, nextPage]
 
-    setLocalPages((currentPages) => [...currentPages, nextPage])
-    setActivePageId(nextPage.id)
-  }, [localPages])
+      return {
+        activePageId: nextPage.id,
+        localPages: nextPages,
+        status: persistDraft(nextPages, nextPage.id),
+      }
+    })
+  }, [])
+
+  const handleSelectPage = useCallback((pageId: string) => {
+    setDraftState((currentState) => ({
+      ...currentState,
+      activePageId: pageId,
+      status: persistDraft(currentState.localPages, pageId),
+    }))
+  }, [])
+
+  const handleClearDraft = useCallback(() => {
+    const cleared = clearLocalDraft()
+    const resetPages = pages.map(createLocalPage)
+    const nextActivePageId = resetPages[0]?.id ?? activePage.id
+
+    setDraftState({
+      activePageId: nextActivePageId,
+      localPages: resetPages,
+      status: cleared ? 'cleared' : 'memory',
+    })
+  }, [activePage.id, pages])
 
   return (
     <section className="editor-workspace" aria-label="Protótipo local do editor A4">
@@ -118,15 +200,18 @@ export function A4EditorWorkspace({ pages, activePage }: A4EditorWorkspaceProps)
         <div className="prototype-banner" role="note">
           <div>
             <span className="prototype-banner__badge">Protótipo local</span>
-            <strong>Ainda sem salvamento real</strong>
+            <strong>{draftStatusLabel[status]}</strong>
           </div>
           <div className="prototype-banner__details">
-            <span>Alterações mantidas apenas nesta sessão</span>
+            <span>{draftStatusDetail[status]}</span>
             <span aria-hidden="true">·</span>
-            <span>Sem integração com API</span>
+            <span>Sem sincronização com API</span>
             <span aria-hidden="true">·</span>
             <span>{activeLocalPage.contentFormat.toUpperCase()} controlado</span>
           </div>
+          <button className="clear-local-draft-button" type="button" onClick={handleClearDraft}>
+            Limpar rascunho local
+          </button>
         </div>
       </div>
 
@@ -135,7 +220,7 @@ export function A4EditorWorkspace({ pages, activePage }: A4EditorWorkspaceProps)
           pages={localPages}
           activePageId={activeLocalPage.id}
           onAddPage={handleAddPage}
-          onSelectPage={setActivePageId}
+          onSelectPage={handleSelectPage}
         />
         <div className="editor-page-area">
           <div className="editor-page-area__status">
@@ -147,7 +232,7 @@ export function A4EditorWorkspace({ pages, activePage }: A4EditorWorkspaceProps)
           <A4EditorPage
             contentHtml={activeLocalPage.contentHtml}
             page={activeLocalPage}
-            onContentChange={handleContentChange}
+            onContentChange={(contentHtml) => handleContentChange(activeLocalPage.id, contentHtml)}
             onEditorReady={setEditor}
           />
         </div>

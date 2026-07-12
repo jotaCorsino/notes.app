@@ -30,7 +30,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Etapa 12 — Layout visual base do frontend — Aprovado — Commit de7dba3
 - Etapa 13 — Protótipo visual do editor A4 — Aprovado — Commit b1edd01
 - Etapa 14 — Integração inicial com Tiptap — Aprovado — Commit 07f0c12
-- Etapa 15 — Troca funcional entre páginas do editor — Em validação
+- Etapa 15 — Troca funcional entre páginas do editor — Aprovado — Commit dd739fa
+- Etapa 16 — Salvamento local temporário com localStorage — Em validação
 
 ## Decisões técnicas aprovadas
 
@@ -70,7 +71,11 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Conteúdo editado com Tiptap é mantido separadamente por página durante a sessão.
 - Botão `+ Página` cria página local mockada com tamanho A4 e conteúdo HTML inicial simples.
 - Troca de páginas não chama API e não salva no backend.
-- Estado local ainda é perdido ao recarregar a página.
+- Rascunho temporário do editor salvo no `localStorage` com a chave `caderno-app:active-note-pages`.
+- Páginas editadas persistem no navegador após recarregar a tela.
+- Páginas criadas localmente persistem no navegador após recarregar a tela.
+- Há opção para limpar o rascunho local e restaurar os mocks iniciais.
+- Salvamento local é temporário e por navegador.
 
 ## Pendências atuais
 
@@ -80,7 +85,7 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - P-018 — Conectar o layout aos dados reais da API — Pendente.
 - P-020 — Implementar salvamento real de páginas — Pendente.
 - P-022 — Implementar controle funcional de fonte e tamanho — Pendente.
-- P-023 — Persistir estado local em armazenamento temporário ou backend, conforme estratégia futura — Pendente.
+- P-024 — Definir estratégia de sincronização entre localStorage e backend — Pendente.
 
 ## Pendências resolvidas
 
@@ -94,17 +99,18 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - P-016 — Prototipar editor A4 visual — Concluído: toolbar, navegação e área editável visual criadas com duas páginas mockadas.
 - P-019 — Instalar e integrar Tiptap — Concluído: editor A4 usa Tiptap com edição local rich text.
 - P-021 — Implementar troca funcional entre páginas do editor — Concluído: seleção, edição por página e criação local de página foram implementadas.
+- P-023 — Persistir estado local em armazenamento temporário ou backend, conforme estratégia futura — Concluído: rascunho local temporário implementado com `localStorage`.
 
 ## Próxima tarefa
 
-Implementar salvamento local temporário por página usando `localStorage`, ainda sem API.
+Iniciar integração com API para listagem de matérias.
 
 A próxima tarefa deve incluir:
 
-- Persistir temporariamente o conteúdo HTML por página no navegador.
-- Restaurar o rascunho local ao recarregar a tela.
-- Manter integração com API para tarefa posterior.
-- Manter salvamento real no backend para tarefa posterior.
+- Consumir a API de matérias no frontend.
+- Substituir gradualmente mocks da sidebar por dados reais.
+- Manter editor, salvamento real de páginas e sincronização para tarefas posteriores.
+- Manter autenticação fora do escopo.
 - Manter exportação PDF fora do escopo.
 
 ## Histórico de validações
@@ -131,7 +137,8 @@ A próxima tarefa deve incluir:
 - Etapa 12 aprovada — Commit de7dba3.
 - Etapa 13 aprovada — Commit b1edd01.
 - Etapa 14 aprovada — Commit 07f0c12.
-- Etapa 15 em validação: PageNavigator passou a selecionar páginas, preservar conteúdo local por página e criar nova página mockada.
+- Etapa 15 aprovada — Commit dd739fa.
+- Etapa 16 em validação: rascunho local temporário salvo no navegador com localStorage.
 
 ## Observações
 
@@ -141,6 +148,6 @@ A próxima tarefa deve incluir:
 - O CI do frontend foi introduzido no commit 716e248; a manutenção M3 foi aprovada no commit 6b817b4.
 - O layout visual base da Etapa 12 foi aprovado no commit de7dba3.
 - O editor da Etapa 14 ainda é um protótipo local: alterações não são salvas no backend.
-- A Etapa 15 mantém alterações apenas na memória da sessão; recarregar a página ainda descarta os rascunhos.
+- A Etapa 16 mantém alterações no navegador com `localStorage`, mas ainda não há sincronização com backend.
 - Os status de salvamento exibidos são mockados e não representam persistência real.
-- Ainda não há integração com API, Tailwind, rotas, chamadas HTTP, salvamento real, paginação automática, exportação PDF ou autenticação.
+- Ainda não há integração com API, Tailwind, rotas, chamadas HTTP, salvamento real no backend, paginação automática, exportação PDF ou autenticação.

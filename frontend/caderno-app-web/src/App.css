@@ -259,7 +259,8 @@
 }
 
 .subject-item:disabled,
-.module-row:disabled {
+.module-row:disabled,
+.note-item:disabled {
   cursor: default;
 }
 
@@ -365,14 +366,29 @@
 .note-item {
   display: grid;
   grid-template-columns: 0.75rem minmax(0, 1fr) auto;
+  width: 100%;
   min-height: 2.15rem;
   align-items: center;
   gap: 0.4rem;
   padding: 0.25rem 0.45rem;
+  border: 0;
   border-radius: 0.4rem;
   color: #91a99f;
+  background: transparent;
+  text-align: left;
   font-size: 0.7rem;
+  font-family: inherit;
   line-height: 1.35;
+}
+
+.note-item:not(:disabled) {
+  cursor: pointer;
+}
+
+.note-item:not(:disabled):hover,
+.note-item:focus-visible {
+  color: #ffffff;
+  background: rgba(225, 161, 95, 0.09);
 }
 
 .note-item--active {
@@ -600,6 +616,13 @@
   font-size: clamp(1.7rem, 3vw, 2.55rem);
   font-weight: 600;
   letter-spacing: -0.025em;
+}
+
+.local-pages-notice {
+  margin: 0.62rem 0 0;
+  color: #6a776e;
+  font-size: 0.78rem;
+  font-weight: 650;
 }
 
 .tag-list {

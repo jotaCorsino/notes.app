@@ -1,14 +1,21 @@
 import './App.css'
 import { useEffect, useState } from 'react'
 import { A4EditorWorkspace } from './components/A4EditorWorkspace'
-import { Sidebar, type SidebarApiStatus, type SidebarModuleApiStatus } from './components/Sidebar'
+import {
+  Sidebar,
+  type SidebarApiStatus,
+  type SidebarModuleApiStatus,
+  type SidebarNoteApiStatus,
+} from './components/Sidebar'
 import { TagList } from './components/TagList'
 import { Topbar } from './components/Topbar'
 import { mockNotebook } from './data/mockNotebook'
+import { useNotes, type NotesStatus } from './hooks/useNotes'
 import { useStudyModules, type StudyModulesStatus } from './hooks/useStudyModules'
 import { useSubjects, type SubjectsStatus } from './hooks/useSubjects'
+import type { ApiNote } from './services/notesApi'
 import type { ApiStudyModule, ApiSubject } from './services/subjectsApi'
-import type { StudyModule, Subject } from './types/notebook'
+import type { NotebookNote, StudyModule, Subject } from './types/notebook'
 
 type SubjectColor = Subject['color']
 
@@ -29,10 +36,23 @@ const normalizeSubjectColor = (color: string | null, index: number): SubjectColo
     : subjectColors[index % subjectColors.length]
 }
 
-const mapApiModuleToSidebarModule = (module: ApiStudyModule): StudyModule => ({
+const mapApiNoteToSidebarNote = (note: ApiNote): NotebookNote => ({
+  id: note.id,
+  title: note.title,
+  tags: [],
+  isFavorite: false,
+  saveStatus: 'Páginas/editor: local',
+  activePageNumber: 1,
+  pages: [],
+})
+
+const mapApiModuleToSidebarModule = (
+  module: ApiStudyModule,
+  notes: NotebookNote[] = [],
+): StudyModule => ({
   id: module.id,
   title: module.title,
-  notes: [],
+  notes,
 })
 
 const mapApiSubjectToSidebarSubject = (
@@ -78,9 +98,29 @@ const getModulesApiStatus = (
   return 'unavailable'
 }
 
+const getNotesApiStatus = (
+  status: NotesStatus,
+  hasSelectedModule: boolean,
+): SidebarNoteApiStatus => {
+  if (!hasSelectedModule || status === 'idle') {
+    return 'idle'
+  }
+
+  if (status === 'loading') {
+    return 'loading'
+  }
+
+  if (status === 'success') {
+    return 'connected'
+  }
+
+  return 'unavailable'
+}
+
 function App() {
   const [selectedApiSubjectId, setSelectedApiSubjectId] = useState<string | null>(null)
   const [selectedApiModuleId, setSelectedApiModuleId] = useState<string | null>(null)
+  const [selectedApiNoteId, setSelectedApiNoteId] = useState<string | null>(null)
   const {
     subjects: apiSubjects,
     status: subjectsStatus,
@@ -95,10 +135,32 @@ function App() {
     status: modulesStatus,
     error: modulesError,
   } = useStudyModules(selectedApiSubject?.id ?? null)
+  const hasApiModules = modulesStatus === 'success' && apiModules.length > 0
+  const selectedApiModule = hasApiModules
+    ? apiModules.find((module) => module.id === selectedApiModuleId) ?? apiModules[0]
+    : null
+  const {
+    notes: apiNotes,
+    status: notesStatus,
+    error: notesError,
+  } = useNotes(selectedApiModule?.id ?? null)
+  const sidebarNotes =
+    notesStatus === 'success'
+      ? apiNotes.map(mapApiNoteToSidebarNote)
+      : []
   const sidebarModules =
     modulesStatus === 'success'
-      ? apiModules.map(mapApiModuleToSidebarModule)
+      ? apiModules.map((module) =>
+          mapApiModuleToSidebarModule(
+            module,
+            module.id === selectedApiModule?.id ? sidebarNotes : [],
+          ),
+        )
       : []
+  const selectedApiNote =
+    notesStatus === 'success' && apiNotes.length > 0
+      ? apiNotes.find((note) => note.id === selectedApiNoteId) ?? apiNotes[0]
+      : null
   const selectedMockSubject = mockNotebook.subjects.find(
     (subject) => subject.id === mockNotebook.selectedSubjectId,
   ) ?? mockNotebook.subjects[0]
@@ -118,6 +180,10 @@ function App() {
   const selectedPage =
     selectedNote.pages.find((page) => page.pageNumber === selectedNote.activePageNumber) ??
     selectedNote.pages[0]
+  const displaySubjectTitle = selectedApiSubject?.name ?? selectedMockSubject.title
+  const displayModuleTitle = selectedApiModule?.title ?? selectedModule.title
+  const displayNoteTitle = selectedApiNote?.title ?? selectedNote.title
+  const displaySaveStatus = selectedApiNote ? 'Páginas/editor: local' : selectedNote.saveStatus
   const sidebarSubjects =
     subjectsStatus === 'success'
       ? apiSubjects.map((subject, index) =>
@@ -129,8 +195,11 @@ function App() {
         )
       : mockNotebook.subjects
   const selectedSidebarModuleId = selectedApiSubject
-    ? selectedApiModuleId ?? ''
+    ? selectedApiModule?.id ?? ''
     : mockNotebook.selectedModuleId
+  const selectedSidebarNoteId = selectedApiNote
+    ? selectedApiNote.id
+    : mockNotebook.selectedNoteId
 
   useEffect(() => {
     if (subjectsStatus !== 'success') {
@@ -140,6 +209,7 @@ function App() {
     if (apiSubjects.length === 0) {
       setSelectedApiSubjectId(null)
       setSelectedApiModuleId(null)
+      setSelectedApiNoteId(null)
       return
     }
 
@@ -157,6 +227,7 @@ function App() {
 
     if (apiModules.length === 0) {
       setSelectedApiModuleId(null)
+      setSelectedApiNoteId(null)
       return
     }
 
@@ -167,6 +238,23 @@ function App() {
     )
   }, [apiModules, modulesStatus])
 
+  useEffect(() => {
+    if (notesStatus !== 'success') {
+      return
+    }
+
+    if (apiNotes.length === 0) {
+      setSelectedApiNoteId(null)
+      return
+    }
+
+    setSelectedApiNoteId((currentNoteId) =>
+      apiNotes.some((note) => note.id === currentNoteId)
+        ? currentNoteId
+        : apiNotes[0].id,
+    )
+  }, [apiNotes, notesStatus])
+
   const handleSelectSubject = (subjectId: string) => {
     if (!hasApiSubjects) {
       return
@@ -174,6 +262,7 @@ function App() {
 
     setSelectedApiSubjectId(subjectId)
     setSelectedApiModuleId(null)
+    setSelectedApiNoteId(null)
   }
 
   const handleSelectModule = (moduleId: string) => {
@@ -182,6 +271,15 @@ function App() {
     }
 
     setSelectedApiModuleId(moduleId)
+    setSelectedApiNoteId(null)
+  }
+
+  const handleSelectNote = (noteId: string) => {
+    if (!selectedApiModule) {
+      return
+    }
+
+    setSelectedApiNoteId(noteId)
   }
 
   return (
@@ -196,37 +294,46 @@ function App() {
         apiError={subjectsError}
         apiStatus={getSidebarApiStatus(subjectsStatus)}
         canSelectModules={Boolean(selectedApiSubject)}
+        canSelectNotes={Boolean(selectedApiModule)}
         canSelectSubjects={hasApiSubjects}
         moduleApiError={modulesError}
         moduleApiStatus={getModulesApiStatus(modulesStatus, Boolean(selectedApiSubject))}
+        noteApiError={notesError}
+        noteApiStatus={getNotesApiStatus(notesStatus, Boolean(selectedApiModule))}
         onSelectModule={handleSelectModule}
+        onSelectNote={handleSelectNote}
         onSelectSubject={handleSelectSubject}
         selectedSubject={selectedSidebarSubject}
         selectedModuleId={selectedSidebarModuleId}
-        selectedNoteId={mockNotebook.selectedNoteId}
-        showNotesMockNotice={Boolean(selectedApiSubject)}
+        selectedNoteId={selectedSidebarNoteId}
+        showPagesLocalNotice={Boolean(selectedApiNote)}
         subjects={sidebarSubjects}
       />
 
       <div className="app-workspace">
         <Topbar
-          noteTitle={selectedNote.title}
-          subjectTitle={selectedMockSubject.title}
-          saveStatus={selectedNote.saveStatus}
+          noteTitle={displayNoteTitle}
+          subjectTitle={displaySubjectTitle}
+          saveStatus={displaySaveStatus}
         />
 
         <main className="note-workspace" id="note-content">
           <header className="note-heading">
             <div>
               <p className="note-path">
-                {selectedMockSubject.title}
+                {displaySubjectTitle}
                 <span aria-hidden="true">/</span>
-                {selectedModule.title}
+                {displayModuleTitle}
               </p>
-              <h1>{selectedNote.title}</h1>
+              <h1>{displayNoteTitle}</h1>
+              {selectedApiNote && (
+                <p className="local-pages-notice">
+                  Páginas ainda locais — integração de conteúdo será feita em etapa futura.
+                </p>
+              )}
               <TagList tags={selectedNote.tags} />
             </div>
-            {selectedNote.isFavorite && (
+            {!selectedApiNote && selectedNote.isFavorite && (
               <span className="favorite-badge" aria-label="Anotação favorita">
                 <span aria-hidden="true">★</span>
                 Favorita

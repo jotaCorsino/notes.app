@@ -33,7 +33,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Etapa 15 — Troca funcional entre páginas do editor — Aprovado — Commit dd739fa
 - Etapa 16 — Salvamento local temporário com localStorage — Aprovado — Commit f63fc78
 - Etapa 17 — Integração inicial com API para matérias — Aprovado — Commit df82188
-- Etapa 18 — Integração com API para módulos — Em validação
+- Etapa 18 — Integração com API para módulos — Aprovado — Commit 7eefce7
+- Etapa 19 — Integração com API para anotações — Em validação
 
 ## Decisões técnicas aprovadas
 
@@ -82,10 +83,13 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Frontend consome `GET /api/subjects/{subjectId}/modules` para listar módulos da matéria real selecionada.
 - A primeira matéria real é selecionada por padrão quando a API de matérias retorna lista não vazia.
 - A seleção de matéria real controla a busca de módulos reais.
-- A seleção de módulo real fica local na sidebar e não dispara busca de anotações nesta etapa.
-- Sidebar exibe estado discreto de módulos: aguardando matéria, carregando, API conectada ou API indisponível.
-- Quando `GET /api/subjects/{subjectId}/modules` retorna lista vazia, a sidebar informa que não há módulos cadastrados.
-- Anotações, páginas e editor continuam mockados/locais no frontend.
+- Frontend consome `GET /api/modules/{moduleId}/notes` para listar anotações do módulo real selecionado.
+- A primeira anotação real é selecionada por padrão quando a API de anotações retorna lista não vazia.
+- A seleção de módulo real controla a busca de anotações reais.
+- A seleção de anotação real atualiza a sidebar, topbar e título central com metadados básicos.
+- Sidebar exibe estado discreto de anotações: aguardando módulo, carregando, API conectada ou API indisponível.
+- Quando `GET /api/modules/{moduleId}/notes` retorna lista vazia, a sidebar informa que não há anotações cadastradas.
+- Páginas, tags reais, favoritos reais e editor continuam mockados/locais no frontend.
 - Editor A4 e rascunho em `localStorage` continuam locais.
 - Backend de desenvolvimento cria o schema SQLite com `EnsureCreated` em ambiente Development, sem migrations e sem seed obrigatório.
 
@@ -93,13 +97,14 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 
 - P-009 — Implementar sanitização real do HTML — Pendente.
 - P-010 — Implementar exportação PDF A4 real — Pendente.
-- P-017 — Integrar frontend com API — Parcialmente concluída: matérias e módulos foram integrados; anotações e páginas seguem pendentes.
-- P-018 — Conectar o layout aos dados reais da API — Parcialmente concluída: sidebar usa matérias e módulos reais quando a API responde; anotações e páginas seguem mockadas.
+- P-017 — Integrar frontend com API — Parcialmente concluída: matérias, módulos e anotações foram integrados; páginas seguem pendentes.
+- P-018 — Conectar o layout aos dados reais da API — Parcialmente concluída: sidebar usa matérias, módulos e anotações reais quando a API responde; páginas seguem mockadas.
 - P-020 — Implementar salvamento real de páginas — Pendente.
 - P-022 — Implementar controle funcional de fonte e tamanho — Pendente.
 - P-024 — Definir estratégia de sincronização entre localStorage e backend — Pendente.
-- P-026 — Integrar anotações com API — Pendente.
 - P-027 — Criar fluxo de criação de matéria/módulo pelo frontend — Pendente.
+- P-028 — Integrar páginas reais da anotação com API — Pendente.
+- P-029 — Integrar tags/favoritos reais no frontend — Pendente.
 
 ## Pendências resolvidas
 
@@ -115,18 +120,19 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - P-021 — Implementar troca funcional entre páginas do editor — Concluído: seleção, edição por página e criação local de página foram implementadas.
 - P-023 — Persistir estado local em armazenamento temporário ou backend, conforme estratégia futura — Concluído: rascunho local temporário implementado com `localStorage`.
 - P-025 — Integrar módulos com API — Concluído: sidebar consome `GET /api/subjects/{subjectId}/modules` para a matéria real selecionada.
+- P-026 — Integrar anotações com API — Concluído: sidebar consome `GET /api/modules/{moduleId}/notes` para o módulo real selecionado.
 
 ## Próxima tarefa
 
-Integrar anotações com API.
+Integrar páginas reais da anotação com API.
 
 A próxima tarefa deve incluir:
 
-- Consumir a API de anotações no frontend.
-- Exibir anotações reais do módulo selecionado.
-- Definir como a seleção de módulo real afeta a área central do app.
-- Manter páginas e editor A4 fora do escopo, salvo decisão explícita.
-- Manter salvamento real de páginas para tarefa posterior.
+- Consumir a API de páginas ou detalhes da anotação no frontend.
+- Definir como o editor A4 carrega páginas reais sem perder o rascunho local.
+- Definir estratégia de sincronização entre backend e `localStorage`.
+- Manter salvamento real de páginas para tarefa posterior, se necessário.
+- Manter tags e favoritos reais fora do escopo, salvo decisão explícita.
 - Manter autenticação fora do escopo.
 - Manter exportação PDF fora do escopo.
 
@@ -157,7 +163,8 @@ A próxima tarefa deve incluir:
 - Etapa 15 aprovada — Commit dd739fa.
 - Etapa 16 aprovada — Commit f63fc78.
 - Etapa 17 aprovada — Commit df82188.
-- Etapa 18 em validação: frontend passou a consumir `GET /api/subjects/{subjectId}/modules`, com seleção real de matéria controlando a busca de módulos.
+- Etapa 18 aprovada — Commit 7eefce7.
+- Etapa 19 em validação: frontend passou a consumir `GET /api/modules/{moduleId}/notes`, com seleção real de módulo controlando a busca de anotações.
 
 ## Observações
 
@@ -167,11 +174,13 @@ A próxima tarefa deve incluir:
 - O CI do frontend foi introduzido no commit 716e248; a manutenção M3 foi aprovada no commit 6b817b4.
 - O layout visual base da Etapa 12 foi aprovado no commit de7dba3.
 - A Etapa 17 integrou apenas a listagem de matérias.
-- A Etapa 18 integra apenas a listagem de módulos por matéria.
+- A Etapa 18 integrou apenas a listagem de módulos por matéria.
+- A Etapa 19 integra apenas a listagem e seleção básica de anotações por módulo.
 - O proxy do Vite vale apenas para desenvolvimento local.
 - A criação automática do schema SQLite ocorre apenas em `Development` e não cria dados falsos.
-- Anotações e páginas continuam mockadas no frontend.
+- Páginas continuam mockadas no frontend.
+- Tags e favoritos reais ainda não são exibidos no frontend.
 - O editor A4 continua local e não salva no backend.
 - O rascunho em `localStorage` não tem sincronização com backend.
 - Os status de salvamento exibidos continuam locais/mockados.
-- Ainda não há integração de anotações, integração de páginas, salvamento real de páginas, autenticação, paginação automática, exportação PDF ou frontend em produção.
+- Ainda não há integração de páginas, salvamento real de páginas, autenticação, paginação automática, exportação PDF ou frontend em produção.

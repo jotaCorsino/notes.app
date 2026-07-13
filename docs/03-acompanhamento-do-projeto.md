@@ -40,7 +40,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Etapa 22 — Criação de página real no backend pelo frontend — Aprovado — Commit 184fb14
 - M4 — Normalização de line endings do frontend — Aprovado — Commit f312c1c
 - Etapa 23 — Refinamento da sincronização localStorage/backend — Aprovado — Commit aa78bb6
-- M5 — Ignorar arquivos SQLite locais — Aprovado — Commit a preencher após este commit
+- M5 — Ignorar arquivos SQLite locais — Aprovado — Commit 4e917b1
+- Etapa 24 — Indicador de alterações não salvas por página — Aprovado — Commit a preencher após este commit
 
 ## Decisões técnicas aprovadas
 
@@ -96,6 +97,11 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Tags reais, favoritos reais e sincronização completa entre rascunho local e backend ainda não foram integrados no frontend.
 - Backend de desenvolvimento cria o schema SQLite com `EnsureCreated` em ambiente Development, sem migrations e sem seed obrigatório.
 - Arquivos SQLite locais gerados em Development são ignorados pelo Git.
+- PageNavigator mostra status por página: salva, alterada ou local.
+- Workspace/editor mostra o status da página ativa perto das ações de salvamento.
+- Páginas reais da API ficam marcadas como alteradas ao editar e voltam para salvas após PUT bem-sucedido.
+- Falha no PUT mantém a página real marcada como alteração local.
+- Páginas locais continuam indicadas como locais ou ainda não enviadas ao backend.
 
 ## Pendências atuais
 
@@ -109,8 +115,7 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - P-027 — Criar fluxo de criação de matéria/módulo pelo frontend — Pendente.
 - P-028 — Integrar páginas reais da anotação com API — Parcialmente concluída: leitura por GET, criação por POST e salvamento de conteúdo por PUT implementados; refinamento de sincronização pendente.
 - P-029 — Integrar tags/favoritos reais no frontend — Pendente.
-- P-032 — Implementar indicador completo de alterações não salvas por página — Pendente.
-- P-034 — Implementar detecção mais precisa de alterações não salvas por página — Pendente.
+- P-035 — Implementar sincronização completa de páginas locais pendentes com backend — Pendente.
 
 ## Pendências resolvidas
 
@@ -129,19 +134,21 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - P-026 — Integrar anotações com API — Concluído: sidebar consome `GET /api/modules/{moduleId}/notes` para o módulo real selecionado.
 - P-030 — Implementar salvamento real do conteúdo da página via API — Concluído: frontend consome `PUT /api/notes/{noteId}/pages/{pageId}/content` para páginas reais existentes.
 - P-031 — Criar página real no backend pelo frontend — Concluído: botão `+ Página` consome `POST /api/notes/{noteId}/pages` quando a anotação ativa veio da API.
+- P-032 — Implementar indicador completo de alterações não salvas por página — Concluído: PageNavigator e workspace mostram status por página.
 - P-033 — Refinar estratégia de rascunho local versus dados da API — Concluído inicialmente: rascunho local ganhou metadados, status visual e ação de recarregar da API.
+- P-034 — Implementar detecção mais precisa de alterações não salvas por página — Concluído: páginas reais comparam conteúdo atual com a última versão salva.
 
 ## Próxima tarefa
 
-Melhorar indicador de alterações não salvas por página.
+Integrar tags/favoritos reais no frontend.
 
 A próxima tarefa deve incluir:
 
-- Comparar conteúdo atual da página com a última versão salva no rascunho ou backend.
-- Exibir indicação por página no navegador lateral.
-- Evitar falso positivo ao apenas trocar de página.
+- Consumir tags reais retornadas pela API.
+- Exibir favoritos reais no frontend.
+- Definir ação inicial para alternar favorito, se o endpoint já permitir.
 - Preservar fallback local quando o backend estiver desligado.
-- Manter tags e favoritos reais fora do escopo, salvo decisão explícita.
+- Manter sincronização completa de páginas locais pendentes como tarefa separada.
 - Manter autenticação fora do escopo.
 - Manter exportação PDF fora do escopo.
 
@@ -179,7 +186,8 @@ A próxima tarefa deve incluir:
 - Etapa 22 aprovada — Commit 184fb14.
 - M4 aprovada — Commit f312c1c.
 - Etapa 23 aprovada — Commit aa78bb6.
-- M5 aprovada — Commit a preencher após este commit.
+- M5 aprovada — Commit 4e917b1.
+- Etapa 24 aprovada — Commit a preencher após este commit.
 
 ## Observações
 
@@ -197,8 +205,9 @@ A próxima tarefa deve incluir:
 - A M4 normalizou line endings dos arquivos de frontend e acompanhamento.
 - A Etapa 23 refina a experiência de rascunho local, mas não implementa merge automático.
 - A M5 ignora arquivos SQLite locais de desenvolvimento sem apagar os arquivos existentes.
+- A Etapa 24 adiciona indicador visual de alterações por página, sem autosave, merge automático ou resolução de conflitos.
 - O proxy do Vite vale apenas para desenvolvimento local.
 - A criação automática do schema SQLite ocorre apenas em `Development` e não cria dados falsos.
 - O editor A4 continua local para edição e salva no backend somente por ação explícita em página real.
 - O rascunho em `localStorage` é temporário, por navegador, separado por anotação e mantido como segurança após criação ou salvamento manual.
-- Ainda não há autosave no backend, merge automático, resolução de conflito, tags/favoritos reais no frontend, autenticação, paginação automática, exportação PDF ou frontend em produção.
+- Ainda não há autosave no backend, merge automático, resolução de conflito, sincronização completa de páginas locais pendentes, tags/favoritos reais no frontend, autenticação, paginação automática, exportação PDF ou frontend em produção.

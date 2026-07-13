@@ -9,6 +9,8 @@ export type LocalDraftBaseSource = 'api' | 'fallback' | 'local' | 'mock'
 export interface LocalDraftPage extends NotebookPage {
   apiUpdatedAt?: string | null
   contentHtml: string
+  hasUnsavedChanges?: boolean
+  lastSavedContentHtml?: string
 }
 
 export interface LocalDraft {

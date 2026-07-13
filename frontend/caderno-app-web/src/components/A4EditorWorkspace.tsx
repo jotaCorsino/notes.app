@@ -12,7 +12,7 @@ import {
 } from '../utils/localDraftStorage'
 import { A4EditorPage } from './A4EditorPage'
 import { EditorToolbar } from './EditorToolbar'
-import { PageNavigator } from './PageNavigator'
+import { PageNavigator, type PageNavigatorPageStatus } from './PageNavigator'
 
 export type EditorPageSourceStatus = 'api' | 'empty' | 'error' | 'loading' | 'mock'
 
@@ -102,18 +102,24 @@ const draftStatusDetail: Record<DraftStatus, string> = {
 
 const backendSaveStatusLabel: Record<BackendSaveStatus, string> = {
   error: 'Erro ao salvar',
-  localChanges: 'Alterações locais',
-  localOnly: 'Página local — não salva no backend',
-  saved: 'Salvo no backend e no rascunho local',
+  localChanges: 'Alterações locais não salvas',
+  localOnly: 'Página local — não enviada',
+  saved: 'Página salva no backend',
   saving: 'Salvando no backend...',
 }
 
 const backendSaveStatusDetail: Record<BackendSaveStatus, string> = {
   error: 'Conteúdo local preservado',
   localChanges: 'Use o botão para salvar esta página real',
-  localOnly: 'Criação no backend será feita em etapa futura',
-  saved: 'A página real foi criada ou atualizada pela API',
+  localOnly: 'Esta página ainda não existe no backend',
+  saved: 'A página ativa não tem alterações locais pendentes',
   saving: 'Enviando PUT /api/notes/{noteId}/pages/{pageId}/content',
+}
+
+const activePageSyncLabel: Record<PageNavigatorPageStatus, string> = {
+  local: 'Página local — ainda não existe no backend',
+  saved: 'Página salva no backend',
+  unsaved: 'Alterações locais não salvas',
 }
 
 const blankPageHtml = `<h1>Nova página</h1><p>Comece suas anotações aqui.</p>`
@@ -151,11 +157,20 @@ const createEditorHtml = (content: NotePageContent) => {
   `
 }
 
-const createLocalPage = (page: NotebookPage): LocalDraftPage => ({
-  ...page,
-  contentHtml: page.contentHtml ?? createEditorHtml(page.content),
-  source: page.source ?? 'local',
-})
+const getPageContentHtml = (page: NotebookPage) => page.contentHtml ?? createEditorHtml(page.content)
+
+const createLocalPage = (page: NotebookPage): LocalDraftPage => {
+  const contentHtml = getPageContentHtml(page)
+  const source = page.source ?? 'local'
+
+  return {
+    ...page,
+    contentHtml,
+    hasUnsavedChanges: false,
+    lastSavedContentHtml: source === 'api' ? contentHtml : undefined,
+    source,
+  }
+}
 
 const createBlankPageContent = (pageNumber: number): NotePageContent => ({
   eyebrow: 'Rascunho local',
@@ -196,6 +211,7 @@ const createBlankLocalPage = (pageNumber: number): LocalDraftPage => {
     contentFormat: 'html',
     content,
     contentHtml: blankPageHtml,
+    hasUnsavedChanges: false,
     source: 'local',
   }
 }
@@ -214,6 +230,7 @@ const getApiPageContentHtml = (page: ApiNotePage) => {
 
 const createApiLocalPage = (page: ApiNotePage): LocalDraftPage => {
   const pageNumber = Number(page.pageNumber) || 1
+  const contentHtml = getApiPageContentHtml(page)
 
   return {
     apiUpdatedAt: page.updatedAt,
@@ -223,7 +240,9 @@ const createApiLocalPage = (page: ApiNotePage): LocalDraftPage => {
     heightMm: Number(page.heightMm) || 297,
     contentFormat: 'html',
     content: createApiPageContent(pageNumber),
-    contentHtml: getApiPageContentHtml(page),
+    contentHtml,
+    hasUnsavedChanges: false,
+    lastSavedContentHtml: contentHtml,
     source: 'api',
   }
 }
@@ -266,24 +285,53 @@ const getLocalDraftStatus = (draft: LocalDraft): DraftStatus => {
     : 'loaded'
 }
 
+const getPageSyncStatus = (page: LocalDraftPage | undefined): PageNavigatorPageStatus => {
+  if (!page || page.source !== 'api') {
+    return 'local'
+  }
+
+  return page.hasUnsavedChanges ? 'unsaved' : 'saved'
+}
+
 const hydrateDraftPagesWithSources = (
   draftPages: LocalDraftPage[],
   sourcePages: NotebookPage[],
 ): LocalDraftPage[] =>
   draftPages.map((draftPage) => {
     const sourcePage = sourcePages.find((page) => page.id === draftPage.id)
+    const source = sourcePage?.source ?? draftPage.source ?? 'local'
+    const sourceContentHtml = sourcePage ? getPageContentHtml(sourcePage) : undefined
+    const lastSavedContentHtml = source === 'api'
+      ? draftPage.lastSavedContentHtml ?? sourceContentHtml
+      : undefined
+    const hasUnsavedChanges = source === 'api'
+      ? typeof draftPage.hasUnsavedChanges === 'boolean'
+        ? draftPage.hasUnsavedChanges
+        : lastSavedContentHtml
+          ? draftPage.contentHtml !== lastSavedContentHtml
+          : true
+      : false
 
     return {
       ...draftPage,
-      source: sourcePage?.source ?? draftPage.source ?? 'local',
+      hasUnsavedChanges,
+      lastSavedContentHtml,
+      source,
     }
   })
 
 const getActivePageFromState = (state: DraftEditorState) =>
   state.localPages.find((page) => page.id === state.activePageId) ?? state.localPages[0]
 
-const getBackendSaveStatusForPage = (page: LocalDraftPage | undefined): BackendSaveStatus =>
-  page?.source === 'api' ? 'localChanges' : 'localOnly'
+const getBackendSaveStatusForPage = (page: LocalDraftPage | undefined): BackendSaveStatus => {
+  const pageSyncStatus = getPageSyncStatus(page)
+
+  if (pageSyncStatus === 'local') {
+    return 'localOnly'
+  }
+
+  return pageSyncStatus === 'unsaved' ? 'localChanges' : 'saved'
+}
 
 const createInitialDraftState = (
   draftNoteId: string,
@@ -360,7 +408,15 @@ export function A4EditorWorkspace({
   const { activePageId, localPages, status } = draftState
   const activeLocalPage =
     localPages.find((page) => page.id === activePageId) ?? localPages[0] ?? createLocalPage(activePage)
-  const canSaveActivePage = activeLocalPage.source === 'api' && backendSaveStatus !== 'saving'
+  const activePageSyncStatus = getPageSyncStatus(activeLocalPage)
+  const canSaveActivePage = activePageSyncStatus === 'unsaved' && backendSaveStatus !== 'saving'
+  const pageStatusById = useMemo<Record<string, PageNavigatorPageStatus>>(
+    () =>
+      Object.fromEntries(
+        localPages.map((page) => [page.id, getPageSyncStatus(page)]),
+      ),
+    [localPages],
+  )
   const canCreateBackendPage =
     pageSourceStatus === 'api' ||
     pageSourceStatus === 'empty' ||
@@ -388,6 +444,9 @@ export function A4EditorWorkspace({
           ? {
               ...page,
               contentHtml,
+              hasUnsavedChanges: page.source === 'api'
+                ? contentHtml !== (page.lastSavedContentHtml ?? page.contentHtml)
+                : false,
             }
           : page,
       )
@@ -405,9 +464,19 @@ export function A4EditorWorkspace({
         ),
       }
     })
-    setBackendSaveStatus((currentStatus) =>
-      currentStatus === 'saving' ? currentStatus : getBackendSaveStatusForPage(activeLocalPage),
-    )
+    setBackendSaveStatus((currentStatus) => {
+      if (currentStatus === 'saving') {
+        return currentStatus
+      }
+
+      if (activeLocalPage.source !== 'api') {
+        return 'localOnly'
+      }
+
+      return contentHtml !== (activeLocalPage.lastSavedContentHtml ?? activeLocalPage.contentHtml)
+        ? 'localChanges'
+        : 'saved'
+    })
     setBackendSaveError(null)
   }, [activeLocalPage, draftNoteId, pageSourceStatus])
 
@@ -578,7 +647,9 @@ export function A4EditorWorkspace({
                 ...page,
                 contentFormat: 'html' as const,
                 contentHtml: updatedContentHtml,
+                hasUnsavedChanges: false,
                 heightMm: Number(updatedPage.heightMm) || page.heightMm,
+                lastSavedContentHtml: updatedContentHtml,
                 pageNumber: Number(updatedPage.pageNumber) || page.pageNumber,
                 source: 'api' as const,
                 apiUpdatedAt: updatedPage.updatedAt,
@@ -631,6 +702,10 @@ export function A4EditorWorkspace({
             <span aria-hidden="true">·</span>
             <span>{localPageSummary}</span>
             <span aria-hidden="true">·</span>
+            <span className={`active-page-sync active-page-sync--${activePageSyncStatus}`}>
+              {activePageSyncLabel[activePageSyncStatus]}
+            </span>
+            <span aria-hidden="true">·</span>
             <span>{activeLocalPage.contentFormat.toUpperCase()} controlado</span>
           </div>
           <div className="prototype-banner__actions">
@@ -670,6 +745,7 @@ export function A4EditorWorkspace({
           pages={localPages}
           activePageId={activeLocalPage.id}
           isAddingPage={isCreatingPage}
+          pageStatusById={pageStatusById}
           onAddPage={handleAddPage}
           onSelectPage={handleSelectPage}
         />
@@ -679,9 +755,7 @@ export function A4EditorWorkspace({
               Página {activeLocalPage.pageNumber} de {localPages.length}
             </span>
             <span>
-              {activeLocalPage.source === 'api'
-                ? 'Página real · salvar no backend por botão'
-                : 'Página local · criação no backend futura'}
+              {activePageSyncLabel[activePageSyncStatus]}
             </span>
           </div>
           <A4EditorPage

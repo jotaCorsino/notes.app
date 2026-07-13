@@ -892,6 +892,7 @@
 }
 
 .save-page-button,
+.reload-api-button,
 .clear-local-draft-button {
   flex: none;
   min-height: 1.85rem;
@@ -910,6 +911,12 @@
   background: #345f53;
 }
 
+.reload-api-button {
+  border-color: #c7b48e;
+  color: #5f503a;
+  background: #fffaf0;
+}
+
 .save-page-button:disabled {
   border-color: #d4c8b6;
   color: #827765;
@@ -923,6 +930,15 @@
 .save-page-button:not(:disabled):hover {
   border-color: #789a8b;
   background: #284f44;
+}
+
+.reload-api-button:not(:disabled) {
+  cursor: pointer;
+}
+
+.reload-api-button:not(:disabled):hover {
+  border-color: #b28b50;
+  background: #fff3d9;
 }
 
 .clear-local-draft-button:not(:disabled) {

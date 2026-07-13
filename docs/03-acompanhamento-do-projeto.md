@@ -38,6 +38,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Etapa 20 — Integração inicial de páginas reais da anotação — Aprovado — Commit c8ec94a
 - Etapa 21 — Salvamento de conteúdo de páginas existentes via API — Aprovado — Commit 9b098e9
 - Etapa 22 — Criação de página real no backend pelo frontend — Aprovado — Commit 184fb14
+- M4 — Normalização de line endings do frontend — Aprovado — Commit f312c1c
+- Etapa 23 — Refinamento da sincronização localStorage/backend — Aprovado — Commit a preencher após este commit
 
 ## Decisões técnicas aprovadas
 
@@ -83,9 +85,12 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - A edição de conteúdo continua local com Tiptap.
 - Nova página criada no editor continua apenas local.
 - `localStorage` passou a ser separado por anotação com chaves no formato `caderno-app:note-draft:{noteId}`.
+- O rascunho local armazena metadados simples: `schemaVersion`, `noteId`, `baseSource`, `savedAt`, `updatedAt` e referência de atualização da API quando disponível.
 - Para o fluxo mockado/fallback, o rascunho usa a chave `caderno-app:note-draft:mock-active-note`.
 - Ao abrir uma anotação, a prioridade é: rascunho local da anotação, páginas da API, fallback local.
 - O botão de limpar rascunho remove apenas o rascunho da anotação ativa.
+- A UI indica quando o editor usa API, rascunho local, fallback ou página local pendente.
+- Há opção explícita para descartar rascunho local e recarregar a base da API ou fallback disponível.
 - O rascunho local continua como camada de segurança por navegador após salvamento manual.
 - Tags reais, favoritos reais e sincronização completa entre rascunho local e backend ainda não foram integrados no frontend.
 - Backend de desenvolvimento cria o schema SQLite com `EnsureCreated` em ambiente Development, sem migrations e sem seed obrigatório.
@@ -98,12 +103,12 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - P-018 — Conectar o layout aos dados reais da API — Parcialmente concluída: sidebar usa matérias, módulos e anotações reais; editor lê, cria e salva conteúdo de páginas reais.
 - P-020 — Implementar salvamento real de páginas — Parcialmente concluída: página real pode ser criada via POST e conteúdo de páginas existentes pode ser salvo via PUT; sincronização completa segue pendente.
 - P-022 — Implementar controle funcional de fonte e tamanho — Pendente.
-- P-024 — Definir estratégia de sincronização entre localStorage e backend — Parcialmente concluída: rascunho separado por anotação e atualizado após POST/PUT; sincronização completa ainda pendente.
+- P-024 — Definir estratégia de sincronização entre localStorage e backend — Concluída inicial: rascunho tem metadados, status visual e opção de recarregar da API; merge automático segue fora do escopo.
 - P-027 — Criar fluxo de criação de matéria/módulo pelo frontend — Pendente.
 - P-028 — Integrar páginas reais da anotação com API — Parcialmente concluída: leitura por GET, criação por POST e salvamento de conteúdo por PUT implementados; refinamento de sincronização pendente.
 - P-029 — Integrar tags/favoritos reais no frontend — Pendente.
 - P-032 — Implementar indicador completo de alterações não salvas por página — Pendente.
-- P-033 — Refinar estratégia de rascunho local versus dados da API — Pendente.
+- P-034 — Implementar detecção mais precisa de alterações não salvas por página — Pendente.
 
 ## Pendências resolvidas
 
@@ -122,16 +127,17 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - P-026 — Integrar anotações com API — Concluído: sidebar consome `GET /api/modules/{moduleId}/notes` para o módulo real selecionado.
 - P-030 — Implementar salvamento real do conteúdo da página via API — Concluído: frontend consome `PUT /api/notes/{noteId}/pages/{pageId}/content` para páginas reais existentes.
 - P-031 — Criar página real no backend pelo frontend — Concluído: botão `+ Página` consome `POST /api/notes/{noteId}/pages` quando a anotação ativa veio da API.
+- P-033 — Refinar estratégia de rascunho local versus dados da API — Concluído inicialmente: rascunho local ganhou metadados, status visual e ação de recarregar da API.
 
 ## Próxima tarefa
 
-Refinar sincronização entre `localStorage` e backend.
+Melhorar indicador de alterações não salvas por página.
 
 A próxima tarefa deve incluir:
 
-- Definir quando o rascunho local deve prevalecer sobre dados recém-carregados da API.
-- Evitar rascunho desatualizado sobrescrevendo página recém-criada ou recém-salva.
-- Exibir indicação mais completa de alterações não salvas por página.
+- Comparar conteúdo atual da página com a última versão salva no rascunho ou backend.
+- Exibir indicação por página no navegador lateral.
+- Evitar falso positivo ao apenas trocar de página.
 - Preservar fallback local quando o backend estiver desligado.
 - Manter tags e favoritos reais fora do escopo, salvo decisão explícita.
 - Manter autenticação fora do escopo.
@@ -169,6 +175,8 @@ A próxima tarefa deve incluir:
 - Etapa 20 aprovada — Commit c8ec94a.
 - Etapa 21 aprovada — Commit 9b098e9.
 - Etapa 22 aprovada — Commit 184fb14.
+- M4 aprovada — Commit f312c1c.
+- Etapa 23 aprovada — Commit a preencher após este commit.
 
 ## Observações
 
@@ -183,8 +191,10 @@ A próxima tarefa deve incluir:
 - A Etapa 20 integrou leitura de páginas reais, mas não implementou escrita.
 - A Etapa 21 integra escrita manual de conteúdo apenas para páginas reais já existentes.
 - A Etapa 22 integra criação manual de página real para anotações vindas da API.
+- A M4 normalizou line endings dos arquivos de frontend e acompanhamento.
+- A Etapa 23 refina a experiência de rascunho local, mas não implementa merge automático.
 - O proxy do Vite vale apenas para desenvolvimento local.
 - A criação automática do schema SQLite ocorre apenas em `Development` e não cria dados falsos.
 - O editor A4 continua local para edição e salva no backend somente por ação explícita em página real.
 - O rascunho em `localStorage` é temporário, por navegador, separado por anotação e mantido como segurança após criação ou salvamento manual.
-- Ainda não há autosave no backend, sincronização completa `localStorage`/backend, tags/favoritos reais no frontend, autenticação, paginação automática, exportação PDF ou frontend em produção.
+- Ainda não há autosave no backend, merge automático, resolução de conflito, tags/favoritos reais no frontend, autenticação, paginação automática, exportação PDF ou frontend em produção.

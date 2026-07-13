@@ -6,6 +6,8 @@ import {
   clearLocalDraft,
   loadLocalDraft,
   saveLocalDraft,
+  type LocalDraft,
+  type LocalDraftBaseSource,
   type LocalDraftPage,
 } from '../utils/localDraftStorage'
 import { A4EditorPage } from './A4EditorPage'
@@ -24,11 +26,15 @@ interface A4EditorWorkspaceProps {
 type DraftStatus =
   | 'api'
   | 'backendPageCreated'
+  | 'backendAndLocalSaved'
   | 'cleared'
   | 'creatingPage'
+  | 'draftReloadedFromApi'
   | 'empty'
   | 'error'
   | 'loaded'
+  | 'localDraftNewer'
+  | 'localDraftPossiblyStale'
   | 'loading'
   | 'localPageCreated'
   | 'mock'
@@ -40,6 +46,8 @@ type BackendSaveStatus = 'error' | 'localChanges' | 'localOnly' | 'saved' | 'sav
 
 interface DraftEditorState {
   activePageId: string
+  draftMetadata: LocalDraft | null
+  isLocalDraftActive: boolean
   localPages: LocalDraftPage[]
   status: DraftStatus
 }
@@ -55,11 +63,15 @@ const sourceStatusToDraftStatus: Record<EditorPageSourceStatus, DraftStatus> = {
 const draftStatusLabel: Record<DraftStatus, string> = {
   api: 'Páginas carregadas da API',
   backendPageCreated: 'Página criada no backend',
+  backendAndLocalSaved: 'Salvo no backend e no rascunho local',
   cleared: 'Rascunho limpo',
   creatingPage: 'Criando página...',
+  draftReloadedFromApi: 'Páginas recarregadas da API',
   empty: 'Sem páginas reais',
   error: 'Erro ao carregar páginas',
   loaded: 'Rascunho local carregado',
+  localDraftNewer: 'Rascunho local mais recente que a API',
+  localDraftPossiblyStale: 'Rascunho local possivelmente desatualizado',
   loading: 'Carregando páginas',
   localPageCreated: 'Página local criada',
   mock: 'Páginas mockadas',
@@ -71,11 +83,15 @@ const draftStatusLabel: Record<DraftStatus, string> = {
 const draftStatusDetail: Record<DraftStatus, string> = {
   api: 'Base carregada de GET /api/notes/{id}',
   backendPageCreated: 'A nova página real foi adicionada ao editor',
+  backendAndLocalSaved: 'Conteúdo confirmado no backend e preservado localmente',
   cleared: 'Rascunho da anotação ativa foi removido',
   creatingPage: 'Enviando POST /api/notes/{noteId}/pages',
+  draftReloadedFromApi: 'Rascunho descartado; base atual veio da API ou fallback',
   empty: 'Usando página local inicial',
   error: 'Usando fallback local para manter o editor disponível',
   loaded: 'Rascunho local desta anotação foi encontrado',
+  localDraftNewer: 'O rascunho local tem alteração posterior à referência salva',
+  localDraftPossiblyStale: 'Sem referência suficiente para comparar com a API',
   loading: 'Aguardando detalhes da anotação',
   localPageCreated: 'Sem chamada de API para mock ou fallback',
   mock: 'Usando dados mockados do protótipo',
@@ -88,7 +104,7 @@ const backendSaveStatusLabel: Record<BackendSaveStatus, string> = {
   error: 'Erro ao salvar',
   localChanges: 'Alterações locais',
   localOnly: 'Página local — não salva no backend',
-  saved: 'Salvo no backend',
+  saved: 'Salvo no backend e no rascunho local',
   saving: 'Salvando no backend...',
 }
 
@@ -200,6 +216,7 @@ const createApiLocalPage = (page: ApiNotePage): LocalDraftPage => {
   const pageNumber = Number(page.pageNumber) || 1
 
   return {
+    apiUpdatedAt: page.updatedAt,
     id: page.id,
     pageNumber,
     widthMm: Number(page.widthMm) || 210,
@@ -209,6 +226,44 @@ const createApiLocalPage = (page: ApiNotePage): LocalDraftPage => {
     contentHtml: getApiPageContentHtml(page),
     source: 'api',
   }
+}
+
+const getLatestPageApiUpdatedAt = (pages: LocalDraftPage[]) =>
+  pages
+    .map((page) => page.apiUpdatedAt)
+    .filter((updatedAt): updatedAt is string => typeof updatedAt === 'string' && updatedAt.length > 0)
+    .sort()
+    .at(-1) ?? null
+
+const getDraftBaseSource = (
+  pageSourceStatus: EditorPageSourceStatus,
+  pages: LocalDraftPage[],
+): LocalDraftBaseSource => {
+  if (pageSourceStatus === 'mock') {
+    return 'mock'
+  }
+
+  if (pageSourceStatus === 'api' || pages.some((page) => page.source === 'api')) {
+    return 'api'
+  }
+
+  return pageSourceStatus === 'empty' || pageSourceStatus === 'error'
+    ? 'fallback'
+    : 'local'
+}
+
+const getLocalDraftStatus = (draft: LocalDraft): DraftStatus => {
+  if (draft.baseSource !== 'api') {
+    return 'loaded'
+  }
+
+  if (!draft.apiUpdatedAt) {
+    return 'localDraftPossiblyStale'
+  }
+
+  return Date.parse(draft.updatedAt) >= Date.parse(draft.apiUpdatedAt)
+    ? 'localDraftNewer'
+    : 'loaded'
 }
 
 const hydrateDraftPagesWithSources = (
@@ -246,13 +301,17 @@ const createInitialDraftState = (
 
     return {
       activePageId: activeDraftPage,
+      draftMetadata: localDraft,
+      isLocalDraftActive: true,
       localPages: hydratedPages,
-      status: 'loaded',
+      status: getLocalDraftStatus(localDraft),
     }
   }
 
   return {
     activePageId: activePage.id,
+    draftMetadata: null,
+    isLocalDraftActive: false,
     localPages: pages.map(createLocalPage),
     status: sourceStatusToDraftStatus[pageSourceStatus],
   }
@@ -262,7 +321,14 @@ const persistDraft = (
   draftNoteId: string,
   pages: LocalDraftPage[],
   activePageId: string,
-): DraftStatus => (saveLocalDraft(draftNoteId, pages, activePageId) ? 'saved' : 'unavailable')
+  baseSource: LocalDraftBaseSource,
+): DraftStatus =>
+  saveLocalDraft(draftNoteId, pages, activePageId, {
+    apiUpdatedAt: getLatestPageApiUpdatedAt(pages),
+    baseSource,
+  })
+    ? 'saved'
+    : 'unavailable'
 
 const createPagesSignature = (pages: NotebookPage[]) =>
   pages
@@ -300,6 +366,12 @@ export function A4EditorWorkspace({
     pageSourceStatus === 'empty' ||
     pageSourceStatus === 'error'
   const isCreatingPage = status === 'creatingPage'
+  const localOnlyPageCount = localPages.filter((page) => page.source !== 'api').length
+  const hasLocalOnlyPages = localOnlyPageCount > 0
+  const canReloadFromApi =
+    draftState.isLocalDraftActive &&
+    pageSourceStatus !== 'loading' &&
+    pageSourceStatus !== 'mock'
 
   useEffect(() => {
     const nextState = createInitialDraftState(draftNoteId, pages, activePage, pageSourceStatus)
@@ -322,20 +394,29 @@ export function A4EditorWorkspace({
 
       return {
         ...currentState,
+        draftMetadata: null,
+        isLocalDraftActive: true,
         localPages: nextPages,
-        status: persistDraft(draftNoteId, nextPages, currentState.activePageId),
+        status: persistDraft(
+          draftNoteId,
+          nextPages,
+          currentState.activePageId,
+          getDraftBaseSource(pageSourceStatus, nextPages),
+        ),
       }
     })
     setBackendSaveStatus((currentStatus) =>
       currentStatus === 'saving' ? currentStatus : getBackendSaveStatusForPage(activeLocalPage),
     )
     setBackendSaveError(null)
-  }, [activeLocalPage, draftNoteId])
+  }, [activeLocalPage, draftNoteId, pageSourceStatus])
 
   const handleAddPage = useCallback(async () => {
     if (canCreateBackendPage) {
       setDraftState((currentState) => ({
         ...currentState,
+        draftMetadata: null,
+        isLocalDraftActive: true,
         status: 'creatingPage',
       }))
       setBackendSaveError(null)
@@ -349,10 +430,15 @@ export function A4EditorWorkspace({
           const nextPages = hasCreatedPage
             ? currentState.localPages.map((page) => (page.id === nextPage.id ? nextPage : page))
             : [...currentState.localPages, nextPage]
-          const persisted = saveLocalDraft(draftNoteId, nextPages, nextPage.id)
+          const persisted = saveLocalDraft(draftNoteId, nextPages, nextPage.id, {
+            apiUpdatedAt: getLatestPageApiUpdatedAt(nextPages),
+            baseSource: 'api',
+          })
 
           return {
             activePageId: nextPage.id,
+            draftMetadata: null,
+            isLocalDraftActive: true,
             localPages: nextPages,
             status: persisted ? 'backendPageCreated' : 'unavailable',
           }
@@ -369,10 +455,15 @@ export function A4EditorWorkspace({
             Math.max(...currentState.localPages.map((page) => page.pageNumber), 0) + 1
           const nextPage = createBlankLocalPage(nextPageNumber)
           const nextPages = [...currentState.localPages, nextPage]
-          const persisted = saveLocalDraft(draftNoteId, nextPages, nextPage.id)
+          const persisted = saveLocalDraft(draftNoteId, nextPages, nextPage.id, {
+            apiUpdatedAt: getLatestPageApiUpdatedAt(nextPages),
+            baseSource: getDraftBaseSource(pageSourceStatus, nextPages),
+          })
 
           return {
             activePageId: nextPage.id,
+            draftMetadata: null,
+            isLocalDraftActive: true,
             localPages: nextPages,
             status: persisted ? 'pageCreateError' : 'unavailable',
           }
@@ -388,15 +479,22 @@ export function A4EditorWorkspace({
 
       return {
         activePageId: nextPage.id,
+        draftMetadata: null,
+        isLocalDraftActive: true,
         localPages: nextPages,
-        status: persistDraft(draftNoteId, nextPages, nextPage.id) === 'saved'
+        status: persistDraft(
+          draftNoteId,
+          nextPages,
+          nextPage.id,
+          getDraftBaseSource(pageSourceStatus, nextPages),
+        ) === 'saved'
           ? 'localPageCreated'
           : 'unavailable',
       }
     })
     setBackendSaveStatus('localOnly')
     setBackendSaveError(null)
-  }, [canCreateBackendPage, draftNoteId])
+  }, [canCreateBackendPage, draftNoteId, pageSourceStatus])
 
   const handleSelectPage = useCallback((pageId: string) => {
     const selectedPage = localPages.find((page) => page.id === pageId)
@@ -405,10 +503,17 @@ export function A4EditorWorkspace({
     setBackendSaveError(null)
     setDraftState((currentState) => ({
       ...currentState,
+      draftMetadata: null,
       activePageId: pageId,
-      status: persistDraft(draftNoteId, currentState.localPages, pageId),
+      isLocalDraftActive: true,
+      status: persistDraft(
+        draftNoteId,
+        currentState.localPages,
+        pageId,
+        getDraftBaseSource(pageSourceStatus, currentState.localPages),
+      ),
     }))
-  }, [draftNoteId, localPages])
+  }, [draftNoteId, localPages, pageSourceStatus])
 
   const handleClearDraft = useCallback(() => {
     const cleared = clearLocalDraft(draftNoteId)
@@ -417,8 +522,29 @@ export function A4EditorWorkspace({
 
     setDraftState({
       activePageId: nextActivePageId,
+      draftMetadata: null,
+      isLocalDraftActive: false,
       localPages: resetPages,
       status: cleared ? 'cleared' : sourceStatusToDraftStatus[pageSourceStatus],
+    })
+    setBackendSaveStatus(getBackendSaveStatusForPage(resetPages[0]))
+    setBackendSaveError(null)
+  }, [activePage.id, draftNoteId, pageSourceStatus, pages])
+
+  const handleReloadFromApi = useCallback(() => {
+    clearLocalDraft(draftNoteId)
+
+    const resetPages = pages.map(createLocalPage)
+    const nextActivePageId = resetPages[0]?.id ?? activePage.id
+
+    setDraftState({
+      activePageId: nextActivePageId,
+      draftMetadata: null,
+      isLocalDraftActive: false,
+      localPages: resetPages,
+      status: pageSourceStatus === 'api'
+        ? 'draftReloadedFromApi'
+        : sourceStatusToDraftStatus[pageSourceStatus],
     })
     setBackendSaveStatus(getBackendSaveStatusForPage(resetPages[0]))
     setBackendSaveError(null)
@@ -455,16 +581,22 @@ export function A4EditorWorkspace({
                 heightMm: Number(updatedPage.heightMm) || page.heightMm,
                 pageNumber: Number(updatedPage.pageNumber) || page.pageNumber,
                 source: 'api' as const,
+                apiUpdatedAt: updatedPage.updatedAt,
                 widthMm: Number(updatedPage.widthMm) || page.widthMm,
               }
             : page,
         )
-        const persisted = saveLocalDraft(draftNoteId, nextPages, currentState.activePageId)
+        const persisted = saveLocalDraft(draftNoteId, nextPages, currentState.activePageId, {
+          apiUpdatedAt: getLatestPageApiUpdatedAt(nextPages),
+          baseSource: 'api',
+        })
 
         return {
           ...currentState,
+          draftMetadata: null,
+          isLocalDraftActive: true,
           localPages: nextPages,
-          status: persisted ? 'saved' : 'unavailable',
+          status: persisted ? 'backendAndLocalSaved' : 'unavailable',
         }
       })
       setBackendSaveStatus('saved')
@@ -476,6 +608,12 @@ export function A4EditorWorkspace({
 
   const backendSaveDescription = backendSaveError ?? backendSaveStatusDetail[backendSaveStatus]
   const saveButtonLabel = backendSaveStatus === 'saving' ? 'Salvando...' : 'Salvar página'
+  const localPageSummary = hasLocalOnlyPages
+    ? `${localOnlyPageCount} página${localOnlyPageCount === 1 ? '' : 's'} local${localOnlyPageCount === 1 ? '' : 'is'} pendente${localOnlyPageCount === 1 ? '' : 's'}`
+    : 'Sem páginas locais pendentes'
+  const draftMetadataSummary = draftState.draftMetadata
+    ? `Rascunho salvo em ${new Date(draftState.draftMetadata.savedAt).toLocaleString()}`
+    : 'Rascunho monitorado por anotação'
 
   return (
     <section className="editor-workspace" aria-label="Editor A4 local">
@@ -489,7 +627,9 @@ export function A4EditorWorkspace({
           <div className="prototype-banner__details">
             <span>{draftStatusDetail[status]}</span>
             <span aria-hidden="true">·</span>
-            <span>Sem salvamento no backend</span>
+            <span>{draftMetadataSummary}</span>
+            <span aria-hidden="true">·</span>
+            <span>{localPageSummary}</span>
             <span aria-hidden="true">·</span>
             <span>{activeLocalPage.contentFormat.toUpperCase()} controlado</span>
           </div>
@@ -509,6 +649,15 @@ export function A4EditorWorkspace({
             >
               {saveButtonLabel}
             </button>
+            {canReloadFromApi && (
+              <button
+                className="reload-api-button"
+                type="button"
+                onClick={handleReloadFromApi}
+              >
+                Recarregar da API
+              </button>
+            )}
             <button className="clear-local-draft-button" type="button" onClick={handleClearDraft}>
               Limpar rascunho local
             </button>

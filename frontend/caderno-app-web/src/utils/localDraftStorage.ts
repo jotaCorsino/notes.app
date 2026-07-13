@@ -2,15 +2,29 @@ import type { NotebookPage } from '../types/notebook'
 
 export const LOCAL_DRAFT_STORAGE_PREFIX = 'caderno-app:note-draft:'
 export const MOCK_DRAFT_NOTE_ID = 'mock-active-note'
+export const LOCAL_DRAFT_SCHEMA_VERSION = 2
+
+export type LocalDraftBaseSource = 'api' | 'fallback' | 'local' | 'mock'
 
 export interface LocalDraftPage extends NotebookPage {
+  apiUpdatedAt?: string | null
   contentHtml: string
 }
 
 export interface LocalDraft {
   activePageId: string
+  apiUpdatedAt?: string | null
+  baseSource: LocalDraftBaseSource
+  noteId: string
   pages: LocalDraftPage[]
+  savedAt: string
+  schemaVersion: number
   updatedAt: string
+}
+
+export interface SaveLocalDraftOptions {
+  apiUpdatedAt?: string | null
+  baseSource?: LocalDraftBaseSource
 }
 
 const canUseLocalStorage = () => {
@@ -27,6 +41,9 @@ const canUseLocalStorage = () => {
 
 export const getLocalDraftStorageKey = (noteId: string) =>
   `${LOCAL_DRAFT_STORAGE_PREFIX}${noteId || MOCK_DRAFT_NOTE_ID}`
+
+const isLocalDraftBaseSource = (value: unknown): value is LocalDraftBaseSource =>
+  value === 'api' || value === 'fallback' || value === 'local' || value === 'mock'
 
 const isLocalDraftPage = (value: unknown): value is LocalDraftPage => {
   if (!value || typeof value !== 'object') {
@@ -45,6 +62,16 @@ const isLocalDraftPage = (value: unknown): value is LocalDraftPage => {
     Boolean(page.content)
   )
 }
+
+const getLatestApiUpdatedAt = (pages: LocalDraftPage[]) =>
+  pages
+    .map((page) => page.apiUpdatedAt)
+    .filter((updatedAt): updatedAt is string => typeof updatedAt === 'string' && updatedAt.length > 0)
+    .sort()
+    .at(-1) ?? null
+
+const inferBaseSource = (pages: LocalDraftPage[]): LocalDraftBaseSource =>
+  pages.some((page) => page.source === 'api') ? 'api' : 'local'
 
 export function loadLocalDraft(noteId: string): LocalDraft | null {
   if (!canUseLocalStorage()) {
@@ -70,10 +97,26 @@ export function loadLocalDraft(noteId: string): LocalDraft | null {
       return null
     }
 
+    const updatedAt = typeof parsedDraft.updatedAt === 'string'
+      ? parsedDraft.updatedAt
+      : new Date().toISOString()
+    const pages = parsedDraft.pages
+
     return {
       activePageId: parsedDraft.activePageId,
-      pages: parsedDraft.pages,
-      updatedAt: parsedDraft.updatedAt,
+      apiUpdatedAt: typeof parsedDraft.apiUpdatedAt === 'string'
+        ? parsedDraft.apiUpdatedAt
+        : getLatestApiUpdatedAt(pages),
+      baseSource: isLocalDraftBaseSource(parsedDraft.baseSource)
+        ? parsedDraft.baseSource
+        : inferBaseSource(pages),
+      noteId: typeof parsedDraft.noteId === 'string' ? parsedDraft.noteId : noteId,
+      pages,
+      savedAt: typeof parsedDraft.savedAt === 'string' ? parsedDraft.savedAt : updatedAt,
+      schemaVersion: typeof parsedDraft.schemaVersion === 'number'
+        ? parsedDraft.schemaVersion
+        : 1,
+      updatedAt,
     }
   } catch {
     return null
@@ -84,16 +127,23 @@ export function saveLocalDraft(
   noteId: string,
   pages: LocalDraftPage[],
   activePageId: string,
+  options: SaveLocalDraftOptions = {},
 ): boolean {
   if (!canUseLocalStorage()) {
     return false
   }
 
   try {
+    const savedAt = new Date().toISOString()
     const draft: LocalDraft = {
       activePageId,
+      apiUpdatedAt: options.apiUpdatedAt ?? getLatestApiUpdatedAt(pages),
+      baseSource: options.baseSource ?? inferBaseSource(pages),
+      noteId: noteId || MOCK_DRAFT_NOTE_ID,
       pages,
-      updatedAt: new Date().toISOString(),
+      savedAt,
+      schemaVersion: LOCAL_DRAFT_SCHEMA_VERSION,
+      updatedAt: savedAt,
     }
 
     window.localStorage.setItem(getLocalDraftStorageKey(noteId), JSON.stringify(draft))

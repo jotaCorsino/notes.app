@@ -274,6 +274,13 @@ ServiceFabricBackup/
 *.ldf
 *.ndf
 
+# Local SQLite database files
+src/CadernoApp.Api/cadernoapp.db
+src/CadernoApp.Api/cadernoapp.db-shm
+src/CadernoApp.Api/cadernoapp.db-wal
+*.db-shm
+*.db-wal
+
 # Business Intelligence projects
 *.rdl.data
 *.bim.layout

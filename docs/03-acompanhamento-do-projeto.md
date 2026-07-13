@@ -39,7 +39,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Etapa 21 — Salvamento de conteúdo de páginas existentes via API — Aprovado — Commit 9b098e9
 - Etapa 22 — Criação de página real no backend pelo frontend — Aprovado — Commit 184fb14
 - M4 — Normalização de line endings do frontend — Aprovado — Commit f312c1c
-- Etapa 23 — Refinamento da sincronização localStorage/backend — Aprovado — Commit a preencher após este commit
+- Etapa 23 — Refinamento da sincronização localStorage/backend — Aprovado — Commit aa78bb6
+- M5 — Ignorar arquivos SQLite locais — Aprovado — Commit a preencher após este commit
 
 ## Decisões técnicas aprovadas
 
@@ -94,6 +95,7 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - O rascunho local continua como camada de segurança por navegador após salvamento manual.
 - Tags reais, favoritos reais e sincronização completa entre rascunho local e backend ainda não foram integrados no frontend.
 - Backend de desenvolvimento cria o schema SQLite com `EnsureCreated` em ambiente Development, sem migrations e sem seed obrigatório.
+- Arquivos SQLite locais gerados em Development são ignorados pelo Git.
 
 ## Pendências atuais
 
@@ -176,7 +178,8 @@ A próxima tarefa deve incluir:
 - Etapa 21 aprovada — Commit 9b098e9.
 - Etapa 22 aprovada — Commit 184fb14.
 - M4 aprovada — Commit f312c1c.
-- Etapa 23 aprovada — Commit a preencher após este commit.
+- Etapa 23 aprovada — Commit aa78bb6.
+- M5 aprovada — Commit a preencher após este commit.
 
 ## Observações
 
@@ -193,6 +196,7 @@ A próxima tarefa deve incluir:
 - A Etapa 22 integra criação manual de página real para anotações vindas da API.
 - A M4 normalizou line endings dos arquivos de frontend e acompanhamento.
 - A Etapa 23 refina a experiência de rascunho local, mas não implementa merge automático.
+- A M5 ignora arquivos SQLite locais de desenvolvimento sem apagar os arquivos existentes.
 - O proxy do Vite vale apenas para desenvolvimento local.
 - A criação automática do schema SQLite ocorre apenas em `Development` e não cria dados falsos.
 - O editor A4 continua local para edição e salva no backend somente por ação explícita em página real.

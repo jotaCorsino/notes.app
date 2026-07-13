@@ -1,3 +1,14 @@
+export interface ApiNoteSummary {
+  id: string
+  studyModuleId: string
+  title: string
+  isFavorite: boolean
+  createdAt: string
+  updatedAt: string
+  pageCount: number
+  tags: string[]
+}
+
 export interface ApiNotePage {
   id: string
   noteId: string
@@ -19,7 +30,7 @@ export interface ApiTag {
   updatedAt: string
 }
 
-export interface ApiNote {
+export interface ApiNoteDetails {
   id: string
   studyModuleId: string
   title: string
@@ -33,7 +44,7 @@ export interface ApiNote {
 export async function getNotesByModule(
   moduleId: string,
   signal?: AbortSignal,
-): Promise<ApiNote[]> {
+): Promise<ApiNoteSummary[]> {
   const response = await fetch(`/api/modules/${encodeURIComponent(moduleId)}/notes`, {
     headers: {
       Accept: 'application/json',
@@ -51,5 +62,33 @@ export async function getNotesByModule(
     throw new Error('GET /api/modules/{moduleId}/notes returned an unexpected payload')
   }
 
-  return notes as ApiNote[]
+  return notes as ApiNoteSummary[]
+}
+
+export async function getNoteById(
+  noteId: string,
+  signal?: AbortSignal,
+): Promise<ApiNoteDetails> {
+  const response = await fetch(`/api/notes/${encodeURIComponent(noteId)}`, {
+    headers: {
+      Accept: 'application/json',
+    },
+    signal,
+  })
+
+  if (!response.ok) {
+    throw new Error(`GET /api/notes/${noteId} failed with status ${response.status}`)
+  }
+
+  const note = (await response.json()) as Partial<ApiNoteDetails>
+
+  if (
+    typeof note.id !== 'string' ||
+    typeof note.title !== 'string' ||
+    !Array.isArray(note.pages)
+  ) {
+    throw new Error('GET /api/notes/{id} returned an unexpected payload')
+  }
+
+  return note as ApiNoteDetails
 }

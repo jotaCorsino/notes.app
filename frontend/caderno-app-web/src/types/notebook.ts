@@ -23,6 +23,7 @@ export interface NotebookPage {
   heightMm: number
   contentFormat: 'html'
   content: NotePageContent
+  contentHtml?: string
 }
 
 export interface NotebookNote {

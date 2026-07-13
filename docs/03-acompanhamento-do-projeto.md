@@ -34,7 +34,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Etapa 16 — Salvamento local temporário com localStorage — Aprovado — Commit f63fc78
 - Etapa 17 — Integração inicial com API para matérias — Aprovado — Commit df82188
 - Etapa 18 — Integração com API para módulos — Aprovado — Commit 7eefce7
-- Etapa 19 — Integração com API para anotações — Em validação
+- Etapa 19 — Integração com API para anotações — Aprovado — Commit bd741bd
+- Etapa 20 — Integração inicial de páginas reais da anotação — Em validação
 
 ## Decisões técnicas aprovadas
 
@@ -55,56 +56,44 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - PDF real ainda não implementado.
 - Frontend planejado com React, TypeScript e Vite.
 - Editor rich text recomendado: Tiptap.
-- CSS modularizado recomendado inicialmente.
-- Tailwind CSS mantido como possibilidade futura.
 - Estrutura inicial do frontend criada em `frontend/caderno-app-web`.
 - CI separado em dois jobs: backend e frontend.
 - Layout visual base criado com sidebar, topbar, área central e página A4 simulada.
-- Primeira tela visual criada com dados mockados de matérias, módulos, anotações, tags, favorito e conteúdo.
-- Protótipo visual do editor A4 criado com toolbar de formatação, navegação de páginas e área que simula edição.
-- Anotação selecionada evoluída para duas páginas mockadas com numeração, dimensões A4 e `ContentFormat` controlado.
 - Editor A4 inicial integrado com Tiptap para edição rich text local.
-- Pacotes Tiptap instalados: `@tiptap/react`, `@tiptap/pm`, `@tiptap/starter-kit`, `@tiptap/extension-underline`, `@tiptap/extension-highlight` e `@tiptap/extension-text-align`.
-- Toolbar executa comandos iniciais de negrito, itálico, sublinhado, lista com marcadores, lista numerada, marca-texto e alinhamento à esquerda, centralizado e à direita.
-- Seletores de fonte e tamanho permanecem visuais/desabilitados nesta etapa.
 - PageNavigator permite selecionar páginas da anotação ativa localmente.
 - Conteúdo editado com Tiptap é mantido separadamente por página.
 - Botão `+ Página` cria página local mockada com tamanho A4 e conteúdo HTML inicial simples.
-- Rascunho temporário do editor salvo no `localStorage` com a chave `caderno-app:active-note-pages`.
-- Páginas editadas persistem no navegador após recarregar a tela.
-- Páginas criadas localmente persistem no navegador após recarregar a tela.
-- Há opção para limpar o rascunho local e restaurar os mocks iniciais.
-- Salvamento local é temporário e por navegador.
 - Frontend consome `GET /api/subjects` para listar matérias reais na sidebar.
 - Vite usa proxy de desenvolvimento de `/api` para `http://localhost:5037`.
-- Sidebar exibe estado discreto de matérias: carregando, API conectada ou API indisponível.
-- Quando `GET /api/subjects` falha, a sidebar mantém fallback com dados mockados.
-- Quando `GET /api/subjects` retorna lista vazia, a sidebar informa que não há matérias cadastradas.
 - Frontend consome `GET /api/subjects/{subjectId}/modules` para listar módulos da matéria real selecionada.
-- A primeira matéria real é selecionada por padrão quando a API de matérias retorna lista não vazia.
-- A seleção de matéria real controla a busca de módulos reais.
 - Frontend consome `GET /api/modules/{moduleId}/notes` para listar anotações do módulo real selecionado.
-- A primeira anotação real é selecionada por padrão quando a API de anotações retorna lista não vazia.
-- A seleção de módulo real controla a busca de anotações reais.
-- A seleção de anotação real atualiza a sidebar, topbar e título central com metadados básicos.
-- Sidebar exibe estado discreto de anotações: aguardando módulo, carregando, API conectada ou API indisponível.
-- Quando `GET /api/modules/{moduleId}/notes` retorna lista vazia, a sidebar informa que não há anotações cadastradas.
-- Páginas, tags reais, favoritos reais e editor continuam mockados/locais no frontend.
-- Editor A4 e rascunho em `localStorage` continuam locais.
+- Frontend consome `GET /api/notes/{id}` para carregar detalhes da anotação selecionada.
+- Páginas reais retornadas em `GET /api/notes/{id}` são carregadas no editor A4 quando existem.
+- Se a anotação real não tem páginas, o editor usa uma página local inicial.
+- Se o carregamento de detalhes falhar, o editor usa fallback local.
+- A edição de conteúdo continua local com Tiptap.
+- Nova página criada no editor continua apenas local.
+- `localStorage` passou a ser separado por anotação com chaves no formato `caderno-app:note-draft:{noteId}`.
+- Para o fluxo mockado/fallback, o rascunho usa a chave `caderno-app:note-draft:mock-active-note`.
+- Ao abrir uma anotação, a prioridade é: rascunho local da anotação, páginas da API, fallback local.
+- O botão de limpar rascunho remove apenas o rascunho da anotação ativa.
+- Tags reais, favoritos reais e salvamento real de páginas ainda não foram integrados no frontend.
 - Backend de desenvolvimento cria o schema SQLite com `EnsureCreated` em ambiente Development, sem migrations e sem seed obrigatório.
 
 ## Pendências atuais
 
 - P-009 — Implementar sanitização real do HTML — Pendente.
 - P-010 — Implementar exportação PDF A4 real — Pendente.
-- P-017 — Integrar frontend com API — Parcialmente concluída: matérias, módulos e anotações foram integrados; páginas seguem pendentes.
-- P-018 — Conectar o layout aos dados reais da API — Parcialmente concluída: sidebar usa matérias, módulos e anotações reais quando a API responde; páginas seguem mockadas.
+- P-017 — Integrar frontend com API — Parcialmente concluída: matérias, módulos, anotações e leitura de páginas foram integrados; escrita de páginas segue pendente.
+- P-018 — Conectar o layout aos dados reais da API — Parcialmente concluída: sidebar usa matérias, módulos e anotações reais; editor lê páginas reais quando existem.
 - P-020 — Implementar salvamento real de páginas — Pendente.
 - P-022 — Implementar controle funcional de fonte e tamanho — Pendente.
-- P-024 — Definir estratégia de sincronização entre localStorage e backend — Pendente.
+- P-024 — Definir estratégia de sincronização entre localStorage e backend — Parcialmente concluída: rascunho separado por anotação; sincronização real ainda pendente.
 - P-027 — Criar fluxo de criação de matéria/módulo pelo frontend — Pendente.
-- P-028 — Integrar páginas reais da anotação com API — Pendente.
+- P-028 — Integrar páginas reais da anotação com API — Parcialmente concluída: leitura por `GET /api/notes/{id}` implementada; criação e salvamento reais pendentes.
 - P-029 — Integrar tags/favoritos reais no frontend — Pendente.
+- P-030 — Implementar salvamento real do conteúdo da página via API — Pendente.
+- P-031 — Criar página real no backend pelo frontend — Pendente.
 
 ## Pendências resolvidas
 
@@ -124,14 +113,13 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 
 ## Próxima tarefa
 
-Integrar páginas reais da anotação com API.
+Implementar salvamento real do conteúdo da página via API.
 
 A próxima tarefa deve incluir:
 
-- Consumir a API de páginas ou detalhes da anotação no frontend.
-- Definir como o editor A4 carrega páginas reais sem perder o rascunho local.
-- Definir estratégia de sincronização entre backend e `localStorage`.
-- Manter salvamento real de páginas para tarefa posterior, se necessário.
+- Consumir `PUT /api/notes/{noteId}/pages/{pageId}/content` no frontend.
+- Definir quando o rascunho local deve ser sincronizado com o backend.
+- Manter criação real de página para etapa posterior, se necessário.
 - Manter tags e favoritos reais fora do escopo, salvo decisão explícita.
 - Manter autenticação fora do escopo.
 - Manter exportação PDF fora do escopo.
@@ -164,7 +152,8 @@ A próxima tarefa deve incluir:
 - Etapa 16 aprovada — Commit f63fc78.
 - Etapa 17 aprovada — Commit df82188.
 - Etapa 18 aprovada — Commit 7eefce7.
-- Etapa 19 em validação: frontend passou a consumir `GET /api/modules/{moduleId}/notes`, com seleção real de módulo controlando a busca de anotações.
+- Etapa 19 aprovada — Commit bd741bd.
+- Etapa 20 em validação: frontend passou a consumir `GET /api/notes/{id}` e carregar páginas reais no editor quando existem.
 
 ## Observações
 
@@ -175,12 +164,10 @@ A próxima tarefa deve incluir:
 - O layout visual base da Etapa 12 foi aprovado no commit de7dba3.
 - A Etapa 17 integrou apenas a listagem de matérias.
 - A Etapa 18 integrou apenas a listagem de módulos por matéria.
-- A Etapa 19 integra apenas a listagem e seleção básica de anotações por módulo.
+- A Etapa 19 integrou apenas a listagem e seleção básica de anotações por módulo.
+- A Etapa 20 integra leitura de páginas reais, mas não implementa escrita.
 - O proxy do Vite vale apenas para desenvolvimento local.
 - A criação automática do schema SQLite ocorre apenas em `Development` e não cria dados falsos.
-- Páginas continuam mockadas no frontend.
-- Tags e favoritos reais ainda não são exibidos no frontend.
-- O editor A4 continua local e não salva no backend.
-- O rascunho em `localStorage` não tem sincronização com backend.
-- Os status de salvamento exibidos continuam locais/mockados.
-- Ainda não há integração de páginas, salvamento real de páginas, autenticação, paginação automática, exportação PDF ou frontend em produção.
+- O editor A4 continua local para edição e não salva no backend.
+- O rascunho em `localStorage` é temporário, por navegador e agora separado por anotação.
+- Ainda não há POST real de páginas, PUT real de conteúdo, tags/favoritos reais no frontend, autenticação, paginação automática, exportação PDF ou frontend em produção.

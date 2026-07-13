@@ -1,6 +1,7 @@
 import type { NotebookPage } from '../types/notebook'
 
-export const LOCAL_DRAFT_STORAGE_KEY = 'caderno-app:active-note-pages'
+export const LOCAL_DRAFT_STORAGE_PREFIX = 'caderno-app:note-draft:'
+export const MOCK_DRAFT_NOTE_ID = 'mock-active-note'
 
 export interface LocalDraftPage extends NotebookPage {
   contentHtml: string
@@ -24,6 +25,9 @@ const canUseLocalStorage = () => {
   }
 }
 
+export const getLocalDraftStorageKey = (noteId: string) =>
+  `${LOCAL_DRAFT_STORAGE_PREFIX}${noteId || MOCK_DRAFT_NOTE_ID}`
+
 const isLocalDraftPage = (value: unknown): value is LocalDraftPage => {
   if (!value || typeof value !== 'object') {
     return false
@@ -42,13 +46,13 @@ const isLocalDraftPage = (value: unknown): value is LocalDraftPage => {
   )
 }
 
-export function loadLocalDraft(): LocalDraft | null {
+export function loadLocalDraft(noteId: string): LocalDraft | null {
   if (!canUseLocalStorage()) {
     return null
   }
 
   try {
-    const rawDraft = window.localStorage.getItem(LOCAL_DRAFT_STORAGE_KEY)
+    const rawDraft = window.localStorage.getItem(getLocalDraftStorageKey(noteId))
 
     if (!rawDraft) {
       return null
@@ -76,7 +80,11 @@ export function loadLocalDraft(): LocalDraft | null {
   }
 }
 
-export function saveLocalDraft(pages: LocalDraftPage[], activePageId: string): boolean {
+export function saveLocalDraft(
+  noteId: string,
+  pages: LocalDraftPage[],
+  activePageId: string,
+): boolean {
   if (!canUseLocalStorage()) {
     return false
   }
@@ -88,20 +96,20 @@ export function saveLocalDraft(pages: LocalDraftPage[], activePageId: string): b
       updatedAt: new Date().toISOString(),
     }
 
-    window.localStorage.setItem(LOCAL_DRAFT_STORAGE_KEY, JSON.stringify(draft))
+    window.localStorage.setItem(getLocalDraftStorageKey(noteId), JSON.stringify(draft))
     return true
   } catch {
     return false
   }
 }
 
-export function clearLocalDraft(): boolean {
+export function clearLocalDraft(noteId: string): boolean {
   if (!canUseLocalStorage()) {
     return false
   }
 
   try {
-    window.localStorage.removeItem(LOCAL_DRAFT_STORAGE_KEY)
+    window.localStorage.removeItem(getLocalDraftStorageKey(noteId))
     return true
   } catch {
     return false

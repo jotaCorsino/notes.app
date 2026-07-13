@@ -1,75 +1,75 @@
 import { useCallback, useEffect, useState } from 'react'
-import { getNotesByModule, type ApiNoteSummary } from '../services/notesApi'
+import { getNoteById, type ApiNoteDetails } from '../services/notesApi'
 
-export type NotesStatus = 'idle' | 'loading' | 'success' | 'error'
+export type NoteDetailsStatus = 'idle' | 'loading' | 'success' | 'error'
 
-interface UseNotesResult {
-  notes: ApiNoteSummary[]
-  status: NotesStatus
+interface UseNoteDetailsResult {
+  note: ApiNoteDetails | null
+  status: NoteDetailsStatus
   error: string | null
   isLoading: boolean
   refetch: () => void
 }
 
 const getErrorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : 'Unable to load notes'
+  error instanceof Error ? error.message : 'Unable to load note details'
 
-export function useNotes(moduleId: string | null): UseNotesResult {
-  const [notes, setNotes] = useState<ApiNoteSummary[]>([])
-  const [status, setStatus] = useState<NotesStatus>('idle')
+export function useNoteDetails(noteId: string | null): UseNoteDetailsResult {
+  const [note, setNote] = useState<ApiNoteDetails | null>(null)
+  const [status, setStatus] = useState<NoteDetailsStatus>('idle')
   const [error, setError] = useState<string | null>(null)
 
-  const loadNotes = useCallback(
+  const loadNote = useCallback(
     async (signal?: AbortSignal) => {
-      if (!moduleId) {
-        setNotes([])
+      if (!noteId) {
+        setNote(null)
         setStatus('idle')
         setError(null)
         return
       }
 
-      setNotes([])
+      setNote(null)
       setStatus('loading')
       setError(null)
 
       try {
-        const nextNotes = await getNotesByModule(moduleId, signal)
+        const nextNote = await getNoteById(noteId, signal)
 
         if (signal?.aborted) {
           return
         }
 
-        setNotes(nextNotes)
+        setNote(nextNote)
         setStatus('success')
       } catch (loadError) {
         if (signal?.aborted) {
           return
         }
 
-        setNotes([])
+        setNote(null)
         setError(getErrorMessage(loadError))
         setStatus('error')
       }
     },
-    [moduleId],
+    [noteId],
   )
 
   useEffect(() => {
     const controller = new AbortController()
 
-    void loadNotes(controller.signal)
+    void loadNote(controller.signal)
 
     return () => {
       controller.abort()
     }
-  }, [loadNotes])
+  }, [loadNote])
 
   const refetch = useCallback(() => {
-    void loadNotes()
-  }, [loadNotes])
+    void loadNote()
+  }, [loadNote])
 
   return {
-    notes,
+    note,
     status,
     error,
     isLoading: status === 'loading',

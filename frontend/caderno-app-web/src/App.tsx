@@ -1,6 +1,6 @@
 import './App.css'
-import { useEffect, useState } from 'react'
-import { A4EditorWorkspace } from './components/A4EditorWorkspace'
+import { useEffect, useMemo, useState } from 'react'
+import { A4EditorWorkspace, type EditorPageSourceStatus } from './components/A4EditorWorkspace'
 import {
   Sidebar,
   type SidebarApiStatus,
@@ -10,12 +10,14 @@ import {
 import { TagList } from './components/TagList'
 import { Topbar } from './components/Topbar'
 import { mockNotebook } from './data/mockNotebook'
+import { useNoteDetails, type NoteDetailsStatus } from './hooks/useNoteDetails'
 import { useNotes, type NotesStatus } from './hooks/useNotes'
 import { useStudyModules, type StudyModulesStatus } from './hooks/useStudyModules'
 import { useSubjects, type SubjectsStatus } from './hooks/useSubjects'
-import type { ApiNote } from './services/notesApi'
+import type { ApiNotePage, ApiNoteSummary } from './services/notesApi'
 import type { ApiStudyModule, ApiSubject } from './services/subjectsApi'
-import type { NotebookNote, StudyModule, Subject } from './types/notebook'
+import type { NotebookNote, NotebookPage, NotePageContent, StudyModule, Subject } from './types/notebook'
+import { MOCK_DRAFT_NOTE_ID } from './utils/localDraftStorage'
 
 type SubjectColor = Subject['color']
 
@@ -36,7 +38,76 @@ const normalizeSubjectColor = (color: string | null, index: number): SubjectColo
     : subjectColors[index % subjectColors.length]
 }
 
-const mapApiNoteToSidebarNote = (note: ApiNote): NotebookNote => ({
+const escapeHtml = (value: string) =>
+  value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+
+const createPageContent = (
+  noteTitle: string,
+  pageNumber: number,
+  title: string,
+  introduction: string,
+): NotePageContent => ({
+  eyebrow: noteTitle,
+  title,
+  subtitle: `Página ${pageNumber} · editor A4`,
+  introduction,
+  highlight: 'As alterações desta página ainda são salvas apenas no navegador.',
+  sectionTitle: 'Conteúdo',
+  sectionBody: 'Use o editor para continuar o rascunho local desta anotação.',
+  layers: [],
+  takeawayTitle: 'Persistência',
+  takeawayBody: 'O backend ainda não recebe alterações de conteúdo nesta etapa.',
+  nextStudy: 'Próximo passo: implementar salvamento real do conteúdo da página via API.',
+})
+
+const createFallbackEditorPage = (
+  noteId: string,
+  noteTitle: string,
+  status: EditorPageSourceStatus,
+  title: string,
+  introduction: string,
+): NotebookPage => ({
+  id: `${noteId}-${status}-local-page`,
+  pageNumber: 1,
+  widthMm: 210,
+  heightMm: 297,
+  contentFormat: 'html',
+  content: createPageContent(noteTitle, 1, title, introduction),
+  contentHtml: `<h1>${escapeHtml(title)}</h1><p>${escapeHtml(introduction)}</p>`,
+})
+
+const mapApiPageToNotebookPage = (noteTitle: string, page: ApiNotePage): NotebookPage => {
+  const pageNumber = Number(page.pageNumber) || 1
+  const content = page.content?.trim()
+  const isHtml = page.contentFormat?.toLowerCase() === 'html'
+  const contentHtml = content
+    ? isHtml
+      ? content
+      : `<p>${escapeHtml(content)}</p>`
+    : '<p></p>'
+
+  return {
+    id: page.id,
+    pageNumber,
+    widthMm: Number(page.widthMm) || 210,
+    heightMm: Number(page.heightMm) || 297,
+    contentFormat: 'html',
+    content: createPageContent(
+      noteTitle,
+      pageNumber,
+      `${noteTitle} · página ${pageNumber}`,
+      'Página carregada da API para edição local no editor A4.',
+    ),
+    contentHtml,
+  }
+}
+
+const mapApiNoteToSidebarNote = (note: ApiNoteSummary): NotebookNote => ({
   id: note.id,
   title: note.title,
   tags: [],
@@ -117,6 +188,27 @@ const getNotesApiStatus = (
   return 'unavailable'
 }
 
+const getEditorSaveStatus = (
+  hasSelectedApiNote: boolean,
+  noteDetailsStatus: NoteDetailsStatus,
+  hasApiPages: boolean,
+  mockSaveStatus: string,
+) => {
+  if (!hasSelectedApiNote) {
+    return mockSaveStatus
+  }
+
+  if (noteDetailsStatus === 'loading' || noteDetailsStatus === 'idle') {
+    return 'Carregando páginas'
+  }
+
+  if (noteDetailsStatus === 'error') {
+    return 'Fallback local'
+  }
+
+  return hasApiPages ? 'Páginas da API · edição local' : 'Sem páginas reais · local'
+}
+
 function App() {
   const [selectedApiSubjectId, setSelectedApiSubjectId] = useState<string | null>(null)
   const [selectedApiModuleId, setSelectedApiModuleId] = useState<string | null>(null)
@@ -161,6 +253,17 @@ function App() {
     notesStatus === 'success' && apiNotes.length > 0
       ? apiNotes.find((note) => note.id === selectedApiNoteId) ?? apiNotes[0]
       : null
+  const {
+    note: selectedApiNoteDetails,
+    status: noteDetailsStatus,
+    error: noteDetailsError,
+  } = useNoteDetails(selectedApiNote?.id ?? null)
+  const activeApiNoteDetails =
+    selectedApiNoteDetails?.id === selectedApiNote?.id ? selectedApiNoteDetails : null
+  const activeNoteDetailsStatus: NoteDetailsStatus =
+    selectedApiNote && noteDetailsStatus === 'success' && !activeApiNoteDetails
+      ? 'loading'
+      : noteDetailsStatus
   const selectedMockSubject = mockNotebook.subjects.find(
     (subject) => subject.id === mockNotebook.selectedSubjectId,
   ) ?? mockNotebook.subjects[0]
@@ -180,10 +283,17 @@ function App() {
   const selectedPage =
     selectedNote.pages.find((page) => page.pageNumber === selectedNote.activePageNumber) ??
     selectedNote.pages[0]
+  const apiNoteTitle = activeApiNoteDetails?.title ?? selectedApiNote?.title
+  const hasApiPages = Boolean(activeApiNoteDetails?.pages.length)
   const displaySubjectTitle = selectedApiSubject?.name ?? selectedMockSubject.title
   const displayModuleTitle = selectedApiModule?.title ?? selectedModule.title
-  const displayNoteTitle = selectedApiNote?.title ?? selectedNote.title
-  const displaySaveStatus = selectedApiNote ? 'Páginas/editor: local' : selectedNote.saveStatus
+  const displayNoteTitle = apiNoteTitle ?? selectedNote.title
+  const displaySaveStatus = getEditorSaveStatus(
+    Boolean(selectedApiNote),
+    activeNoteDetailsStatus,
+    hasApiPages,
+    selectedNote.saveStatus,
+  )
   const sidebarSubjects =
     subjectsStatus === 'success'
       ? apiSubjects.map((subject, index) =>
@@ -200,6 +310,82 @@ function App() {
   const selectedSidebarNoteId = selectedApiNote
     ? selectedApiNote.id
     : mockNotebook.selectedNoteId
+  const editorState = useMemo(() => {
+    if (!selectedApiNote) {
+      return {
+        activePage: selectedPage,
+        draftNoteId: MOCK_DRAFT_NOTE_ID,
+        pageSourceStatus: 'mock' as EditorPageSourceStatus,
+        pages: selectedNote.pages,
+      }
+    }
+
+    const noteId = selectedApiNote.id
+    const noteTitle = apiNoteTitle ?? 'Anotação'
+
+    if (activeNoteDetailsStatus === 'success' && activeApiNoteDetails?.pages.length) {
+      const apiPages = activeApiNoteDetails.pages
+        .slice()
+        .sort((firstPage, secondPage) => firstPage.orderIndex - secondPage.orderIndex)
+        .map((page) => mapApiPageToNotebookPage(noteTitle, page))
+
+      return {
+        activePage: apiPages[0],
+        draftNoteId: noteId,
+        pageSourceStatus: 'api' as EditorPageSourceStatus,
+        pages: apiPages,
+      }
+    }
+
+    if (activeNoteDetailsStatus === 'error') {
+      const fallbackPage = createFallbackEditorPage(
+        noteId,
+        noteTitle,
+        'error',
+        'Erro ao carregar páginas',
+        'Não foi possível carregar páginas reais agora. O editor continua disponível localmente.',
+      )
+
+      return {
+        activePage: fallbackPage,
+        draftNoteId: noteId,
+        pageSourceStatus: 'error' as EditorPageSourceStatus,
+        pages: [fallbackPage],
+      }
+    }
+
+    if (activeNoteDetailsStatus === 'success') {
+      const emptyPage = createFallbackEditorPage(
+        noteId,
+        noteTitle,
+        'empty',
+        'Sem páginas reais cadastradas',
+        'Esta anotação ainda não possui páginas reais na API. Use esta página local inicial para rascunho.',
+      )
+
+      return {
+        activePage: emptyPage,
+        draftNoteId: noteId,
+        pageSourceStatus: 'empty' as EditorPageSourceStatus,
+        pages: [emptyPage],
+      }
+    }
+
+    const loadingPage = createFallbackEditorPage(
+      noteId,
+      noteTitle,
+      'loading',
+      'Carregando páginas da API',
+      'Aguarde enquanto o frontend busca os detalhes desta anotação.',
+    )
+
+    return {
+      activePage: loadingPage,
+      draftNoteId: noteId,
+      pageSourceStatus: 'loading' as EditorPageSourceStatus,
+      pages: [loadingPage],
+    }
+  }, [activeApiNoteDetails, activeNoteDetailsStatus, apiNoteTitle, selectedApiNote, selectedNote.pages, selectedPage])
 
   useEffect(() => {
     if (subjectsStatus !== 'success') {
@@ -298,7 +484,7 @@ function App() {
         canSelectSubjects={hasApiSubjects}
         moduleApiError={modulesError}
         moduleApiStatus={getModulesApiStatus(modulesStatus, Boolean(selectedApiSubject))}
-        noteApiError={notesError}
+        noteApiError={notesError ?? noteDetailsError}
         noteApiStatus={getNotesApiStatus(notesStatus, Boolean(selectedApiModule))}
         onSelectModule={handleSelectModule}
         onSelectNote={handleSelectNote}
@@ -328,7 +514,7 @@ function App() {
               <h1>{displayNoteTitle}</h1>
               {selectedApiNote && (
                 <p className="local-pages-notice">
-                  Páginas ainda locais — integração de conteúdo será feita em etapa futura.
+                  Páginas/editor locais — alterações ainda não são salvas no backend.
                 </p>
               )}
               <TagList tags={selectedNote.tags} />
@@ -341,7 +527,12 @@ function App() {
             )}
           </header>
 
-          <A4EditorWorkspace pages={selectedNote.pages} activePage={selectedPage} />
+          <A4EditorWorkspace
+            activePage={editorState.activePage}
+            draftNoteId={editorState.draftNoteId}
+            pageSourceStatus={editorState.pageSourceStatus}
+            pages={editorState.pages}
+          />
         </main>
       </div>
     </div>

@@ -16,6 +16,7 @@ export function PageNavigator({
   onSelectPage,
 }: PageNavigatorProps) {
   const activePage = pages.find((page) => page.id === activePageId) ?? pages[0]
+  const addPageButtonLabel = isAddingPage ? 'Criando...' : 'Página'
 
   return (
     <aside className="page-navigator" aria-label="Navegação de páginas do editor">
@@ -72,7 +73,7 @@ export function PageNavigator({
         }}
       >
         <span aria-hidden="true">+</span>
-        {isAddingPage ? 'Criando...' : 'Página'}
+        {addPageButtonLabel}
       </button>
     </aside>
   )

@@ -41,6 +41,8 @@ export interface ApiNoteDetails {
   tags: ApiTag[]
 }
 
+const defaultPageContentHtml = `<h1>Nova página</h1><p>Comece suas anotações aqui.</p>`
+
 export async function getNotesByModule(
   moduleId: string,
   signal?: AbortSignal,
@@ -95,7 +97,7 @@ export async function getNoteById(
 
 export async function createNotePage(
   noteId: string,
-  content = '<h1>Nova página</h1><p>Comece suas anotações aqui.</p>',
+  content = defaultPageContentHtml,
   contentFormat = 'html',
   signal?: AbortSignal,
 ): Promise<ApiNotePage> {

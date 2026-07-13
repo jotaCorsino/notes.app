@@ -37,7 +37,7 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Etapa 19 — Integração com API para anotações — Aprovado — Commit bd741bd
 - Etapa 20 — Integração inicial de páginas reais da anotação — Aprovado — Commit c8ec94a
 - Etapa 21 — Salvamento de conteúdo de páginas existentes via API — Aprovado — Commit 9b098e9
-- Etapa 22 — Criação de página real no backend pelo frontend — Em validação
+- Etapa 22 — Criação de página real no backend pelo frontend — Aprovado — Commit 184fb14
 
 ## Decisões técnicas aprovadas
 
@@ -168,7 +168,7 @@ A próxima tarefa deve incluir:
 - Etapa 19 aprovada — Commit bd741bd.
 - Etapa 20 aprovada — Commit c8ec94a.
 - Etapa 21 aprovada — Commit 9b098e9.
-- Etapa 22 em validação: frontend passou a consumir `POST /api/notes/{noteId}/pages` para criar página real a partir do botão `+ Página`.
+- Etapa 22 aprovada — Commit 184fb14.
 
 ## Observações
 

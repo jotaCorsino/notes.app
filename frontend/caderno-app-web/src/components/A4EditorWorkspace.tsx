@@ -100,7 +100,7 @@ const backendSaveStatusDetail: Record<BackendSaveStatus, string> = {
   saving: 'Enviando PUT /api/notes/{noteId}/pages/{pageId}/content',
 }
 
-const blankPageHtml = '<h1>Nova página</h1><p>Comece suas anotações aqui.</p>'
+const blankPageHtml = `<h1>Nova página</h1><p>Comece suas anotações aqui.</p>`
 
 const escapeHtml = (value: string) =>
   value
@@ -295,7 +295,8 @@ export function A4EditorWorkspace({
   const activeLocalPage =
     localPages.find((page) => page.id === activePageId) ?? localPages[0] ?? createLocalPage(activePage)
   const canSaveActivePage = activeLocalPage.source === 'api' && backendSaveStatus !== 'saving'
-  const canCreateBackendPage = pageSourceStatus === 'api' ||
+  const canCreateBackendPage =
+    pageSourceStatus === 'api' ||
     pageSourceStatus === 'empty' ||
     pageSourceStatus === 'error'
   const isCreatingPage = status === 'creatingPage'

@@ -1,5 +1,5 @@
 import './App.css'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { A4EditorWorkspace, type EditorPageSourceStatus } from './components/A4EditorWorkspace'
 import {
   Sidebar,
@@ -14,13 +14,24 @@ import { useNoteDetails, type NoteDetailsStatus } from './hooks/useNoteDetails'
 import { useNotes, type NotesStatus } from './hooks/useNotes'
 import { useStudyModules, type StudyModulesStatus } from './hooks/useStudyModules'
 import { useSubjects, type SubjectsStatus } from './hooks/useSubjects'
-import type { ApiNotePage, ApiNoteSummary } from './services/notesApi'
+import {
+  addTagToNote,
+  markNoteAsFavorite,
+  removeTagFromNote,
+  unmarkNoteAsFavorite,
+  type ApiNotePage,
+  type ApiNoteSummary,
+} from './services/notesApi'
 import type { ApiStudyModule, ApiSubject } from './services/subjectsApi'
 import type { NotebookNote, NotebookPage, NotePageContent, StudyModule, Subject } from './types/notebook'
 import { MOCK_DRAFT_NOTE_ID } from './utils/localDraftStorage'
 
 type SubjectColor = Subject['color']
+type FavoriteUpdateStatus = 'idle' | 'saving' | 'saved' | 'removed' | 'error'
+type MetadataMode = 'api' | 'error' | 'loading' | 'mock'
+type TagUpdateStatus = 'idle' | 'adding' | 'added' | 'removing' | 'removed' | 'error'
 
+const defaultTagColor = '#EEF2FF'
 const subjectColors: SubjectColor[] = ['sage', 'coral', 'blue']
 
 const createShortLabel = (name: string) => {
@@ -45,6 +56,74 @@ const escapeHtml = (value: string) =>
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;')
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback
+
+const getFavoriteStatusMessage = (
+  status: FavoriteUpdateStatus,
+  mode: MetadataMode,
+  isFavorite: boolean,
+  error: string | null,
+) => {
+  if (error) {
+    return 'Erro ao atualizar favorito'
+  }
+
+  if (status === 'saving') {
+    return isFavorite ? 'Removendo favorito...' : 'Favoritando...'
+  }
+
+  if (status === 'saved') {
+    return 'Favorito salvo'
+  }
+
+  if (status === 'removed') {
+    return 'Favorito removido'
+  }
+
+  if (mode === 'api') {
+    return 'Favorito real carregado da API'
+  }
+
+  if (mode === 'loading') {
+    return 'Carregando favorito real...'
+  }
+
+  return 'Favorito mockado em fallback'
+}
+
+const getTagStatusMessage = (status: TagUpdateStatus, mode: MetadataMode, error: string | null) => {
+  if (error) {
+    return 'Erro ao atualizar tags'
+  }
+
+  if (status === 'adding') {
+    return 'Adicionando tag...'
+  }
+
+  if (status === 'added') {
+    return 'Tag adicionada'
+  }
+
+  if (status === 'removing') {
+    return 'Removendo tag...'
+  }
+
+  if (status === 'removed') {
+    return 'Tag removida'
+  }
+
+  if (mode === 'api') {
+    return 'Tags reais carregadas da API'
+  }
+
+  if (mode === 'loading') {
+    return 'Carregando tags reais...'
+  }
+
+  return 'Tags mockadas em fallback'
+}
 
 const createPageContent = (
   noteTitle: string,
@@ -112,8 +191,8 @@ const mapApiPageToNotebookPage = (noteTitle: string, page: ApiNotePage): Noteboo
 const mapApiNoteToSidebarNote = (note: ApiNoteSummary): NotebookNote => ({
   id: note.id,
   title: note.title,
-  tags: [],
-  isFavorite: false,
+  tags: note.tags,
+  isFavorite: note.isFavorite,
   saveStatus: 'Páginas/editor: local',
   activePageNumber: 1,
   pages: [],
@@ -215,6 +294,13 @@ function App() {
   const [selectedApiSubjectId, setSelectedApiSubjectId] = useState<string | null>(null)
   const [selectedApiModuleId, setSelectedApiModuleId] = useState<string | null>(null)
   const [selectedApiNoteId, setSelectedApiNoteId] = useState<string | null>(null)
+  const [favoriteUpdateStatus, setFavoriteUpdateStatus] = useState<FavoriteUpdateStatus>('idle')
+  const [favoriteUpdateError, setFavoriteUpdateError] = useState<string | null>(null)
+  const [newTagColor, setNewTagColor] = useState('')
+  const [newTagName, setNewTagName] = useState('')
+  const [removingTagName, setRemovingTagName] = useState<string | null>(null)
+  const [tagUpdateStatus, setTagUpdateStatus] = useState<TagUpdateStatus>('idle')
+  const [tagUpdateError, setTagUpdateError] = useState<string | null>(null)
   const {
     subjects: apiSubjects,
     status: subjectsStatus,
@@ -259,6 +345,7 @@ function App() {
     note: selectedApiNoteDetails,
     status: noteDetailsStatus,
     error: noteDetailsError,
+    updateNote,
   } = useNoteDetails(selectedApiNote?.id ?? null)
   const activeApiNoteDetails =
     selectedApiNoteDetails?.id === selectedApiNote?.id ? selectedApiNoteDetails : null
@@ -266,6 +353,7 @@ function App() {
     selectedApiNote && noteDetailsStatus === 'success' && !activeApiNoteDetails
       ? 'loading'
       : noteDetailsStatus
+  const activeApiNotePages = activeApiNoteDetails?.pages
   const selectedMockSubject = mockNotebook.subjects.find(
     (subject) => subject.id === mockNotebook.selectedSubjectId,
   ) ?? mockNotebook.subjects[0]
@@ -286,7 +374,7 @@ function App() {
     selectedNote.pages.find((page) => page.pageNumber === selectedNote.activePageNumber) ??
     selectedNote.pages[0]
   const apiNoteTitle = activeApiNoteDetails?.title ?? selectedApiNote?.title
-  const hasApiPages = Boolean(activeApiNoteDetails?.pages.length)
+  const hasApiPages = Boolean(activeApiNotePages?.length)
   const displaySubjectTitle = selectedApiSubject?.name ?? selectedMockSubject.title
   const displayModuleTitle = selectedApiModule?.title ?? selectedModule.title
   const displayNoteTitle = apiNoteTitle ?? selectedNote.title
@@ -296,6 +384,40 @@ function App() {
     hasApiPages,
     selectedNote.saveStatus,
   )
+  const metadataMode: MetadataMode = selectedApiNote
+    ? activeNoteDetailsStatus === 'success' && activeApiNoteDetails
+      ? 'api'
+      : activeNoteDetailsStatus === 'error'
+        ? 'error'
+        : 'loading'
+    : 'mock'
+  const canUseRealNoteMetadata = metadataMode === 'api' && Boolean(activeApiNoteDetails)
+  const displayIsFavorite = canUseRealNoteMetadata
+    ? Boolean(activeApiNoteDetails?.isFavorite)
+    : selectedNote.isFavorite
+  const displayTags = canUseRealNoteMetadata
+    ? activeApiNoteDetails?.tags.map((tag) => ({
+        color: tag.color,
+        name: tag.name,
+      })) ?? []
+    : selectedNote.tags.map((tag) => ({
+        color: null,
+        name: tag,
+      }))
+  const metadataHelperText = metadataMode === 'api'
+    ? 'Tags e favorito reais carregados da API.'
+    : metadataMode === 'loading'
+      ? 'Aguardando GET /api/notes/{id} para tags e favorito reais.'
+      : metadataMode === 'error'
+        ? 'Falha ao carregar metadados reais; tags e favorito ficam em fallback visual.'
+        : 'Tags e favorito reais disponíveis apenas para anotações da API.'
+  const favoriteStatusMessage = getFavoriteStatusMessage(
+    favoriteUpdateStatus,
+    metadataMode,
+    displayIsFavorite,
+    favoriteUpdateError,
+  )
+  const tagStatusMessage = getTagStatusMessage(tagUpdateStatus, metadataMode, tagUpdateError)
   const sidebarSubjects =
     subjectsStatus === 'success'
       ? apiSubjects.map((subject, index) =>
@@ -325,8 +447,8 @@ function App() {
     const noteId = selectedApiNote.id
     const noteTitle = apiNoteTitle ?? 'Anotação'
 
-    if (activeNoteDetailsStatus === 'success' && activeApiNoteDetails?.pages.length) {
-      const apiPages = activeApiNoteDetails.pages
+    if (activeNoteDetailsStatus === 'success' && activeApiNotePages?.length) {
+      const apiPages = activeApiNotePages
         .slice()
         .sort((firstPage, secondPage) => firstPage.orderIndex - secondPage.orderIndex)
         .map((page) => mapApiPageToNotebookPage(noteTitle, page))
@@ -387,7 +509,7 @@ function App() {
       pageSourceStatus: 'loading' as EditorPageSourceStatus,
       pages: [loadingPage],
     }
-  }, [activeApiNoteDetails, activeNoteDetailsStatus, apiNoteTitle, selectedApiNote, selectedNote.pages, selectedPage])
+  }, [activeApiNotePages, activeNoteDetailsStatus, apiNoteTitle, selectedApiNote, selectedNote.pages, selectedPage])
 
   useEffect(() => {
     if (subjectsStatus !== 'success') {
@@ -443,6 +565,16 @@ function App() {
     )
   }, [apiNotes, notesStatus])
 
+  useEffect(() => {
+    setFavoriteUpdateError(null)
+    setFavoriteUpdateStatus('idle')
+    setNewTagColor('')
+    setNewTagName('')
+    setRemovingTagName(null)
+    setTagUpdateError(null)
+    setTagUpdateStatus('idle')
+  }, [selectedApiNote?.id])
+
   const handleSelectSubject = (subjectId: string) => {
     if (!hasApiSubjects) {
       return
@@ -469,6 +601,118 @@ function App() {
 
     setSelectedApiNoteId(noteId)
   }
+
+  const handleToggleFavorite = useCallback(async () => {
+    if (!activeApiNoteDetails || metadataMode !== 'api') {
+      return
+    }
+
+    const shouldMarkAsFavorite = !activeApiNoteDetails.isFavorite
+
+    setFavoriteUpdateError(null)
+    setFavoriteUpdateStatus('saving')
+
+    try {
+      const updatedNote = shouldMarkAsFavorite
+        ? await markNoteAsFavorite(activeApiNoteDetails.id)
+        : await unmarkNoteAsFavorite(activeApiNoteDetails.id)
+
+      updateNote((currentNote) =>
+        currentNote.id === activeApiNoteDetails.id
+          ? {
+              ...currentNote,
+              isFavorite: updatedNote.isFavorite,
+              updatedAt: updatedNote.updatedAt,
+            }
+          : currentNote,
+      )
+      setFavoriteUpdateStatus(updatedNote.isFavorite ? 'saved' : 'removed')
+    } catch (favoriteError) {
+      setFavoriteUpdateError(
+        getErrorMessage(favoriteError, 'Não foi possível atualizar o favorito.'),
+      )
+      setFavoriteUpdateStatus('error')
+    }
+  }, [activeApiNoteDetails, metadataMode, updateNote])
+
+  const handleAddTag = useCallback(async () => {
+    if (!activeApiNoteDetails || metadataMode !== 'api') {
+      return
+    }
+
+    const trimmedName = newTagName.trim()
+
+    if (!trimmedName) {
+      setTagUpdateError('Informe o nome da tag.')
+      setTagUpdateStatus('error')
+      return
+    }
+
+    const trimmedColor = newTagColor.trim()
+
+    setTagUpdateError(null)
+    setTagUpdateStatus('adding')
+
+    try {
+      const createdTag = await addTagToNote(
+        activeApiNoteDetails.id,
+        trimmedName,
+        trimmedColor || defaultTagColor,
+      )
+
+      updateNote((currentNote) =>
+        currentNote.id === activeApiNoteDetails.id
+          ? {
+              ...currentNote,
+              tags: [
+                ...currentNote.tags.filter(
+                  (tag) => tag.name.toLowerCase() !== createdTag.name.toLowerCase(),
+                ),
+                createdTag,
+              ],
+              updatedAt: createdTag.updatedAt,
+            }
+          : currentNote,
+      )
+      setNewTagColor('')
+      setNewTagName('')
+      setTagUpdateStatus('added')
+    } catch (tagError) {
+      setTagUpdateError(getErrorMessage(tagError, 'Não foi possível adicionar a tag.'))
+      setTagUpdateStatus('error')
+    }
+  }, [activeApiNoteDetails, metadataMode, newTagColor, newTagName, updateNote])
+
+  const handleRemoveTag = useCallback(async (tagName: string) => {
+    if (!activeApiNoteDetails || metadataMode !== 'api') {
+      return
+    }
+
+    setRemovingTagName(tagName)
+    setTagUpdateError(null)
+    setTagUpdateStatus('removing')
+
+    try {
+      const updatedNote = await removeTagFromNote(activeApiNoteDetails.id, tagName)
+
+      updateNote((currentNote) =>
+        currentNote.id === activeApiNoteDetails.id
+          ? {
+              ...currentNote,
+              isFavorite: updatedNote.isFavorite,
+              tags: updatedNote.tags,
+              updatedAt: updatedNote.updatedAt,
+            }
+          : currentNote,
+      )
+      setTagUpdateStatus('removed')
+    } catch (tagError) {
+      setTagUpdateError(getErrorMessage(tagError, 'Não foi possível remover a tag.'))
+      setTagUpdateStatus('error')
+    } finally {
+      setRemovingTagName(null)
+    }
+  }, [activeApiNoteDetails, metadataMode, updateNote])
 
   return (
     <div className="app-layout">
@@ -519,14 +763,38 @@ function App() {
                   Páginas reais podem ser salvas manualmente; páginas locais seguem como rascunho.
                 </p>
               )}
-              <TagList tags={selectedNote.tags} />
+              <TagList
+                canEdit={canUseRealNoteMetadata}
+                colorValue={newTagColor}
+                errorMessage={tagUpdateError}
+                helperText={metadataHelperText}
+                isAdding={tagUpdateStatus === 'adding'}
+                nameValue={newTagName}
+                onAddTag={handleAddTag}
+                onColorChange={setNewTagColor}
+                onNameChange={setNewTagName}
+                onRemoveTag={handleRemoveTag}
+                removingTagName={removingTagName}
+                statusMessage={tagStatusMessage}
+                tags={displayTags}
+              />
             </div>
-            {!selectedApiNote && selectedNote.isFavorite && (
-              <span className="favorite-badge" aria-label="Anotação favorita">
-                <span aria-hidden="true">★</span>
-                Favorita
-              </span>
-            )}
+            <div
+              className={`favorite-card${displayIsFavorite ? ' favorite-card--active' : ''}`}
+              aria-live="polite"
+            >
+              <button
+                className="favorite-badge"
+                type="button"
+                disabled={!canUseRealNoteMetadata || favoriteUpdateStatus === 'saving'}
+                onClick={handleToggleFavorite}
+              >
+                <span aria-hidden="true">{displayIsFavorite ? '★' : '☆'}</span>
+                {displayIsFavorite ? 'Favorita' : 'Favoritar'}
+              </button>
+              <span>{favoriteStatusMessage}</span>
+              {favoriteUpdateError && <strong>{favoriteUpdateError}</strong>}
+            </div>
           </header>
 
           <A4EditorWorkspace

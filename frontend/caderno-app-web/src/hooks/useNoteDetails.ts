@@ -9,6 +9,7 @@ interface UseNoteDetailsResult {
   error: string | null
   isLoading: boolean
   refetch: () => void
+  updateNote: (updater: (note: ApiNoteDetails) => ApiNoteDetails) => void
 }
 
 const getErrorMessage = (error: unknown) =>
@@ -68,11 +69,16 @@ export function useNoteDetails(noteId: string | null): UseNoteDetailsResult {
     void loadNote()
   }, [loadNote])
 
+  const updateNote = useCallback((updater: (note: ApiNoteDetails) => ApiNoteDetails) => {
+    setNote((currentNote) => currentNote ? updater(currentNote) : currentNote)
+  }, [])
+
   return {
     note,
     status,
     error,
     isLoading: status === 'loading',
     refetch,
+    updateNote,
   }
 }

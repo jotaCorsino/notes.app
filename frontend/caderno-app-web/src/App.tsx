@@ -79,6 +79,7 @@ const createFallbackEditorPage = (
   contentFormat: 'html',
   content: createPageContent(noteTitle, 1, title, introduction),
   contentHtml: `<h1>${escapeHtml(title)}</h1><p>${escapeHtml(introduction)}</p>`,
+  source: 'local',
 })
 
 const mapApiPageToNotebookPage = (noteTitle: string, page: ApiNotePage): NotebookPage => {
@@ -104,6 +105,7 @@ const mapApiPageToNotebookPage = (noteTitle: string, page: ApiNotePage): Noteboo
       'Página carregada da API para edição local no editor A4.',
     ),
     contentHtml,
+    source: 'api',
   }
 }
 
@@ -514,7 +516,7 @@ function App() {
               <h1>{displayNoteTitle}</h1>
               {selectedApiNote && (
                 <p className="local-pages-notice">
-                  Páginas/editor locais — alterações ainda não são salvas no backend.
+                  Páginas reais podem ser salvas manualmente; páginas locais seguem como rascunho.
                 </p>
               )}
               <TagList tags={selectedNote.tags} />

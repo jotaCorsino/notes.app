@@ -16,6 +16,8 @@ export interface NotePageContent {
   nextStudy: string
 }
 
+export type NotebookPageSource = 'api' | 'local'
+
 export interface NotebookPage {
   id: string
   pageNumber: number
@@ -24,6 +26,7 @@ export interface NotebookPage {
   contentFormat: 'html'
   content: NotePageContent
   contentHtml?: string
+  source?: NotebookPageSource
 }
 
 export interface NotebookNote {

@@ -818,6 +818,7 @@
   min-height: 2.45rem;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 1rem;
   padding: 0.4rem clamp(1rem, 2.5vw, 2rem);
   color: #685a45;
@@ -853,6 +854,44 @@
   font-weight: 650;
 }
 
+.prototype-banner__actions {
+  flex: none;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.backend-save-status {
+  display: grid !important;
+  gap: 0.1rem !important;
+  min-width: 10.5rem;
+  color: #6b6456;
+  font-size: 0.58rem;
+  line-height: 1.25;
+}
+
+.backend-save-status strong {
+  color: #4f5b53;
+  font-size: 0.6rem;
+}
+
+.backend-save-status span {
+  color: #817565;
+}
+
+.backend-save-status--saved strong {
+  color: #386f52;
+}
+
+.backend-save-status--saving strong {
+  color: #765c2e;
+}
+
+.backend-save-status--error strong,
+.backend-save-status--localOnly strong {
+  color: #8b4f3d;
+}
+
+.save-page-button,
 .clear-local-draft-button {
   flex: none;
   min-height: 1.85rem;
@@ -863,6 +902,27 @@
   background: #fff9ec;
   font-size: 0.6rem;
   font-weight: 800;
+}
+
+.save-page-button {
+  border-color: #9eb8ad;
+  color: #f8fbf8;
+  background: #345f53;
+}
+
+.save-page-button:disabled {
+  border-color: #d4c8b6;
+  color: #827765;
+  background: #eee4d1;
+}
+
+.save-page-button:not(:disabled) {
+  cursor: pointer;
+}
+
+.save-page-button:not(:disabled):hover {
+  border-color: #789a8b;
+  background: #284f44;
 }
 
 .clear-local-draft-button:not(:disabled) {
@@ -1634,6 +1694,16 @@
 
   .prototype-banner__details {
     display: none;
+  }
+
+  .prototype-banner__actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .backend-save-status {
+    min-width: min(100%, 11rem);
   }
 
   .favorite-badge {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Editor } from '@tiptap/react'
+import { updateNotePageContent, type ApiNotePage } from '../services/notesApi'
 import type { NotebookPage, NotePageContent } from '../types/notebook'
 import {
   clearLocalDraft,
@@ -30,6 +31,8 @@ type DraftStatus =
   | 'mock'
   | 'saved'
   | 'unavailable'
+
+type BackendSaveStatus = 'error' | 'localChanges' | 'localOnly' | 'saved' | 'saving'
 
 interface DraftEditorState {
   activePageId: string
@@ -69,6 +72,22 @@ const draftStatusDetail: Record<DraftStatus, string> = {
   unavailable: 'Usando memória da sessão',
 }
 
+const backendSaveStatusLabel: Record<BackendSaveStatus, string> = {
+  error: 'Erro ao salvar',
+  localChanges: 'Alterações locais',
+  localOnly: 'Página local — não salva no backend',
+  saved: 'Salvo no backend',
+  saving: 'Salvando no backend...',
+}
+
+const backendSaveStatusDetail: Record<BackendSaveStatus, string> = {
+  error: 'Conteúdo local preservado',
+  localChanges: 'Use o botão para salvar esta página real',
+  localOnly: 'Criação no backend será feita em etapa futura',
+  saved: 'A página real foi atualizada pela API',
+  saving: 'Enviando PUT /api/notes/{noteId}/pages/{pageId}/content',
+}
+
 const escapeHtml = (value: string) =>
   value
     .replaceAll('&', '&amp;')
@@ -105,6 +124,7 @@ const createEditorHtml = (content: NotePageContent) => {
 const createLocalPage = (page: NotebookPage): LocalDraftPage => ({
   ...page,
   contentHtml: page.contentHtml ?? createEditorHtml(page.content),
+  source: page.source ?? 'local',
 })
 
 const createBlankPageContent = (pageNumber: number): NotePageContent => ({
@@ -132,8 +152,40 @@ const createBlankLocalPage = (pageNumber: number): LocalDraftPage => {
     contentFormat: 'html',
     content,
     contentHtml: '<h1>Nova página</h1><p>Comece suas anotações aqui.</p>',
+    source: 'local',
   }
 }
+
+const getApiPageContentHtml = (page: ApiNotePage) => {
+  const content = page.content.trim()
+
+  if (!content) {
+    return '<p></p>'
+  }
+
+  return page.contentFormat.toLowerCase() === 'html'
+    ? content
+    : `<p>${escapeHtml(content)}</p>`
+}
+
+const hydrateDraftPagesWithSources = (
+  draftPages: LocalDraftPage[],
+  sourcePages: NotebookPage[],
+): LocalDraftPage[] =>
+  draftPages.map((draftPage) => {
+    const sourcePage = sourcePages.find((page) => page.id === draftPage.id)
+
+    return {
+      ...draftPage,
+      source: sourcePage?.source ?? draftPage.source ?? 'local',
+    }
+  })
+
+const getActivePageFromState = (state: DraftEditorState) =>
+  state.localPages.find((page) => page.id === state.activePageId) ?? state.localPages[0]
+
+const getBackendSaveStatusForPage = (page: LocalDraftPage | undefined): BackendSaveStatus =>
+  page?.source === 'api' ? 'localChanges' : 'localOnly'
 
 const createInitialDraftState = (
   draftNoteId: string,
@@ -144,13 +196,14 @@ const createInitialDraftState = (
   const localDraft = loadLocalDraft(draftNoteId)
 
   if (localDraft) {
-    const activeDraftPage = localDraft.pages.some((page) => page.id === localDraft.activePageId)
+    const hydratedPages = hydrateDraftPagesWithSources(localDraft.pages, pages)
+    const activeDraftPage = hydratedPages.some((page) => page.id === localDraft.activePageId)
       ? localDraft.activePageId
-      : localDraft.pages[0].id
+      : hydratedPages[0].id
 
     return {
       activePageId: activeDraftPage,
-      localPages: localDraft.pages,
+      localPages: hydratedPages,
       status: 'loaded',
     }
   }
@@ -177,6 +230,7 @@ const createPagesSignature = (pages: NotebookPage[]) =>
       page.heightMm,
       page.contentFormat,
       page.contentHtml ?? '',
+      page.source ?? 'local',
       page.content.title,
     ].join(':'))
     .join('|')
@@ -191,13 +245,20 @@ export function A4EditorWorkspace({
   const [draftState, setDraftState] = useState<DraftEditorState>(() =>
     createInitialDraftState(draftNoteId, pages, activePage, pageSourceStatus),
   )
+  const [backendSaveStatus, setBackendSaveStatus] = useState<BackendSaveStatus>('localOnly')
+  const [backendSaveError, setBackendSaveError] = useState<string | null>(null)
   const pagesSignature = useMemo(() => createPagesSignature(pages), [pages])
   const { activePageId, localPages, status } = draftState
   const activeLocalPage =
     localPages.find((page) => page.id === activePageId) ?? localPages[0] ?? createLocalPage(activePage)
+  const canSaveActivePage = activeLocalPage.source === 'api' && backendSaveStatus !== 'saving'
 
   useEffect(() => {
-    setDraftState(createInitialDraftState(draftNoteId, pages, activePage, pageSourceStatus))
+    const nextState = createInitialDraftState(draftNoteId, pages, activePage, pageSourceStatus)
+
+    setDraftState(nextState)
+    setBackendSaveStatus(getBackendSaveStatusForPage(getActivePageFromState(nextState)))
+    setBackendSaveError(null)
   }, [activePage, draftNoteId, pageSourceStatus, pages, pagesSignature])
 
   const handleContentChange = useCallback((pageId: string, contentHtml: string) => {
@@ -217,7 +278,11 @@ export function A4EditorWorkspace({
         status: persistDraft(draftNoteId, nextPages, currentState.activePageId),
       }
     })
-  }, [draftNoteId])
+    setBackendSaveStatus((currentStatus) =>
+      currentStatus === 'saving' ? currentStatus : getBackendSaveStatusForPage(activeLocalPage),
+    )
+    setBackendSaveError(null)
+  }, [activeLocalPage, draftNoteId])
 
   const handleAddPage = useCallback(() => {
     setDraftState((currentState) => {
@@ -231,15 +296,21 @@ export function A4EditorWorkspace({
         status: persistDraft(draftNoteId, nextPages, nextPage.id),
       }
     })
+    setBackendSaveStatus('localOnly')
+    setBackendSaveError(null)
   }, [draftNoteId])
 
   const handleSelectPage = useCallback((pageId: string) => {
+    const selectedPage = localPages.find((page) => page.id === pageId)
+
+    setBackendSaveStatus(getBackendSaveStatusForPage(selectedPage))
+    setBackendSaveError(null)
     setDraftState((currentState) => ({
       ...currentState,
       activePageId: pageId,
       status: persistDraft(draftNoteId, currentState.localPages, pageId),
     }))
-  }, [draftNoteId])
+  }, [draftNoteId, localPages])
 
   const handleClearDraft = useCallback(() => {
     const cleared = clearLocalDraft(draftNoteId)
@@ -251,7 +322,62 @@ export function A4EditorWorkspace({
       localPages: resetPages,
       status: cleared ? 'cleared' : sourceStatusToDraftStatus[pageSourceStatus],
     })
+    setBackendSaveStatus(getBackendSaveStatusForPage(resetPages[0]))
+    setBackendSaveError(null)
   }, [activePage.id, draftNoteId, pageSourceStatus, pages])
+
+  const handleSaveActivePage = useCallback(async () => {
+    const pageToSave = activeLocalPage
+
+    if (pageToSave.source !== 'api') {
+      setBackendSaveStatus('localOnly')
+      setBackendSaveError(null)
+      return
+    }
+
+    setBackendSaveStatus('saving')
+    setBackendSaveError(null)
+
+    try {
+      const updatedPage = await updateNotePageContent(
+        draftNoteId,
+        pageToSave.id,
+        pageToSave.contentHtml,
+        pageToSave.contentFormat,
+      )
+      const updatedContentHtml = getApiPageContentHtml(updatedPage)
+
+      setDraftState((currentState) => {
+        const nextPages = currentState.localPages.map((page) =>
+          page.id === updatedPage.id
+            ? {
+                ...page,
+                contentFormat: 'html' as const,
+                contentHtml: updatedContentHtml,
+                heightMm: Number(updatedPage.heightMm) || page.heightMm,
+                pageNumber: Number(updatedPage.pageNumber) || page.pageNumber,
+                source: 'api' as const,
+                widthMm: Number(updatedPage.widthMm) || page.widthMm,
+              }
+            : page,
+        )
+        const persisted = saveLocalDraft(draftNoteId, nextPages, currentState.activePageId)
+
+        return {
+          ...currentState,
+          localPages: nextPages,
+          status: persisted ? 'saved' : 'unavailable',
+        }
+      })
+      setBackendSaveStatus('saved')
+    } catch (saveError) {
+      setBackendSaveError(saveError instanceof Error ? saveError.message : 'Falha ao salvar página')
+      setBackendSaveStatus('error')
+    }
+  }, [activeLocalPage, draftNoteId])
+
+  const backendSaveDescription = backendSaveError ?? backendSaveStatusDetail[backendSaveStatus]
+  const saveButtonLabel = backendSaveStatus === 'saving' ? 'Salvando...' : 'Salvar página'
 
   return (
     <section className="editor-workspace" aria-label="Editor A4 local">
@@ -269,9 +395,26 @@ export function A4EditorWorkspace({
             <span aria-hidden="true">·</span>
             <span>{activeLocalPage.contentFormat.toUpperCase()} controlado</span>
           </div>
-          <button className="clear-local-draft-button" type="button" onClick={handleClearDraft}>
-            Limpar rascunho local
-          </button>
+          <div className="prototype-banner__actions">
+            <div
+              className={`backend-save-status backend-save-status--${backendSaveStatus}`}
+              role="status"
+            >
+              <strong>{backendSaveStatusLabel[backendSaveStatus]}</strong>
+              <span>{backendSaveDescription}</span>
+            </div>
+            <button
+              className="save-page-button"
+              type="button"
+              disabled={!canSaveActivePage}
+              onClick={handleSaveActivePage}
+            >
+              {saveButtonLabel}
+            </button>
+            <button className="clear-local-draft-button" type="button" onClick={handleClearDraft}>
+              Limpar rascunho local
+            </button>
+          </div>
         </div>
       </div>
 
@@ -287,7 +430,11 @@ export function A4EditorWorkspace({
             <span>
               Página {activeLocalPage.pageNumber} de {localPages.length}
             </span>
-            <span>Edição local · sem POST/PUT nesta etapa</span>
+            <span>
+              {activeLocalPage.source === 'api'
+                ? 'Página real · salvar no backend por botão'
+                : 'Página local · criação no backend futura'}
+            </span>
           </div>
           <A4EditorPage
             contentHtml={activeLocalPage.contentHtml}

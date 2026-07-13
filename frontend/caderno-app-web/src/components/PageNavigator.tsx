@@ -3,11 +3,18 @@ import type { NotebookPage } from '../types/notebook'
 interface PageNavigatorProps {
   pages: NotebookPage[]
   activePageId: string
-  onAddPage: () => void
+  isAddingPage?: boolean
+  onAddPage: () => void | Promise<void>
   onSelectPage: (pageId: string) => void
 }
 
-export function PageNavigator({ pages, activePageId, onAddPage, onSelectPage }: PageNavigatorProps) {
+export function PageNavigator({
+  pages,
+  activePageId,
+  isAddingPage = false,
+  onAddPage,
+  onSelectPage,
+}: PageNavigatorProps) {
   const activePage = pages.find((page) => page.id === activePageId) ?? pages[0]
 
   return (
@@ -56,9 +63,16 @@ export function PageNavigator({ pages, activePageId, onAddPage, onSelectPage }: 
         })}
       </ol>
 
-      <button className="add-page-button" type="button" onClick={onAddPage}>
+      <button
+        className="add-page-button"
+        type="button"
+        disabled={isAddingPage}
+        onClick={() => {
+          void onAddPage()
+        }}
+      >
         <span aria-hidden="true">+</span>
-        Página
+        {isAddingPage ? 'Criando...' : 'Página'}
       </button>
     </aside>
   )

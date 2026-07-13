@@ -93,6 +93,43 @@ export async function getNoteById(
   return note as ApiNoteDetails
 }
 
+export async function createNotePage(
+  noteId: string,
+  content = '<h1>Nova página</h1><p>Comece suas anotações aqui.</p>',
+  contentFormat = 'html',
+  signal?: AbortSignal,
+): Promise<ApiNotePage> {
+  const response = await fetch(`/api/notes/${encodeURIComponent(noteId)}/pages`, {
+    body: JSON.stringify({
+      content,
+      contentFormat,
+    }),
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    method: 'POST',
+    signal,
+  })
+
+  if (!response.ok) {
+    throw new Error(`POST /api/notes/${noteId}/pages failed with status ${response.status}`)
+  }
+
+  const page = (await response.json()) as Partial<ApiNotePage>
+
+  if (
+    typeof page.id !== 'string' ||
+    typeof page.noteId !== 'string' ||
+    typeof page.content !== 'string' ||
+    typeof page.contentFormat !== 'string'
+  ) {
+    throw new Error('POST /api/notes/{noteId}/pages returned an unexpected payload')
+  }
+
+  return page as ApiNotePage
+}
+
 export async function updateNotePageContent(
   noteId: string,
   pageId: string,

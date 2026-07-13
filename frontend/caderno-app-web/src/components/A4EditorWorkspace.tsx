@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Editor } from '@tiptap/react'
-import { updateNotePageContent, type ApiNotePage } from '../services/notesApi'
+import { createNotePage, updateNotePageContent, type ApiNotePage } from '../services/notesApi'
 import type { NotebookPage, NotePageContent } from '../types/notebook'
 import {
   clearLocalDraft,
@@ -23,12 +23,16 @@ interface A4EditorWorkspaceProps {
 
 type DraftStatus =
   | 'api'
+  | 'backendPageCreated'
   | 'cleared'
+  | 'creatingPage'
   | 'empty'
   | 'error'
   | 'loaded'
   | 'loading'
+  | 'localPageCreated'
   | 'mock'
+  | 'pageCreateError'
   | 'saved'
   | 'unavailable'
 
@@ -50,24 +54,32 @@ const sourceStatusToDraftStatus: Record<EditorPageSourceStatus, DraftStatus> = {
 
 const draftStatusLabel: Record<DraftStatus, string> = {
   api: 'Páginas carregadas da API',
+  backendPageCreated: 'Página criada no backend',
   cleared: 'Rascunho limpo',
+  creatingPage: 'Criando página...',
   empty: 'Sem páginas reais',
   error: 'Erro ao carregar páginas',
   loaded: 'Rascunho local carregado',
   loading: 'Carregando páginas',
+  localPageCreated: 'Página local criada',
   mock: 'Páginas mockadas',
+  pageCreateError: 'Erro ao criar página',
   saved: 'Salvo localmente',
   unavailable: 'LocalStorage indisponível',
 }
 
 const draftStatusDetail: Record<DraftStatus, string> = {
   api: 'Base carregada de GET /api/notes/{id}',
+  backendPageCreated: 'A nova página real foi adicionada ao editor',
   cleared: 'Rascunho da anotação ativa foi removido',
+  creatingPage: 'Enviando POST /api/notes/{noteId}/pages',
   empty: 'Usando página local inicial',
   error: 'Usando fallback local para manter o editor disponível',
   loaded: 'Rascunho local desta anotação foi encontrado',
   loading: 'Aguardando detalhes da anotação',
+  localPageCreated: 'Sem chamada de API para mock ou fallback',
   mock: 'Usando dados mockados do protótipo',
+  pageCreateError: 'Fallback local criado; conteúdo atual preservado',
   saved: 'Rascunho salvo neste navegador para esta anotação',
   unavailable: 'Usando memória da sessão',
 }
@@ -84,9 +96,11 @@ const backendSaveStatusDetail: Record<BackendSaveStatus, string> = {
   error: 'Conteúdo local preservado',
   localChanges: 'Use o botão para salvar esta página real',
   localOnly: 'Criação no backend será feita em etapa futura',
-  saved: 'A página real foi atualizada pela API',
+  saved: 'A página real foi criada ou atualizada pela API',
   saving: 'Enviando PUT /api/notes/{noteId}/pages/{pageId}/content',
 }
+
+const blankPageHtml = '<h1>Nova página</h1><p>Comece suas anotações aqui.</p>'
 
 const escapeHtml = (value: string) =>
   value
@@ -141,6 +155,20 @@ const createBlankPageContent = (pageNumber: number): NotePageContent => ({
   nextStudy: 'Próximo passo: organizar esta página antes da integração com o backend.',
 })
 
+const createApiPageContent = (pageNumber: number): NotePageContent => ({
+  eyebrow: 'Página real',
+  title: `Página ${pageNumber}`,
+  subtitle: 'Página A4 criada no backend',
+  introduction: 'Esta página já possui identificador real e pode ser salva no backend.',
+  highlight: 'Edite localmente e use o botão Salvar página para persistir alterações.',
+  sectionTitle: 'Conteúdo',
+  sectionBody: 'Use o editor para organizar esta página.',
+  layers: [],
+  takeawayTitle: 'Persistência',
+  takeawayBody: 'A criação já ocorreu no backend; as edições continuam manuais.',
+  nextStudy: 'Próximo passo: salvar alterações pelo botão da página.',
+})
+
 const createBlankLocalPage = (pageNumber: number): LocalDraftPage => {
   const content = createBlankPageContent(pageNumber)
 
@@ -151,7 +179,7 @@ const createBlankLocalPage = (pageNumber: number): LocalDraftPage => {
     heightMm: 297,
     contentFormat: 'html',
     content,
-    contentHtml: '<h1>Nova página</h1><p>Comece suas anotações aqui.</p>',
+    contentHtml: blankPageHtml,
     source: 'local',
   }
 }
@@ -166,6 +194,21 @@ const getApiPageContentHtml = (page: ApiNotePage) => {
   return page.contentFormat.toLowerCase() === 'html'
     ? content
     : `<p>${escapeHtml(content)}</p>`
+}
+
+const createApiLocalPage = (page: ApiNotePage): LocalDraftPage => {
+  const pageNumber = Number(page.pageNumber) || 1
+
+  return {
+    id: page.id,
+    pageNumber,
+    widthMm: Number(page.widthMm) || 210,
+    heightMm: Number(page.heightMm) || 297,
+    contentFormat: 'html',
+    content: createApiPageContent(pageNumber),
+    contentHtml: getApiPageContentHtml(page),
+    source: 'api',
+  }
 }
 
 const hydrateDraftPagesWithSources = (
@@ -252,6 +295,10 @@ export function A4EditorWorkspace({
   const activeLocalPage =
     localPages.find((page) => page.id === activePageId) ?? localPages[0] ?? createLocalPage(activePage)
   const canSaveActivePage = activeLocalPage.source === 'api' && backendSaveStatus !== 'saving'
+  const canCreateBackendPage = pageSourceStatus === 'api' ||
+    pageSourceStatus === 'empty' ||
+    pageSourceStatus === 'error'
+  const isCreatingPage = status === 'creatingPage'
 
   useEffect(() => {
     const nextState = createInitialDraftState(draftNoteId, pages, activePage, pageSourceStatus)
@@ -284,7 +331,55 @@ export function A4EditorWorkspace({
     setBackendSaveError(null)
   }, [activeLocalPage, draftNoteId])
 
-  const handleAddPage = useCallback(() => {
+  const handleAddPage = useCallback(async () => {
+    if (canCreateBackendPage) {
+      setDraftState((currentState) => ({
+        ...currentState,
+        status: 'creatingPage',
+      }))
+      setBackendSaveError(null)
+
+      try {
+        const createdPage = await createNotePage(draftNoteId, blankPageHtml, 'html')
+        const nextPage = createApiLocalPage(createdPage)
+
+        setDraftState((currentState) => {
+          const hasCreatedPage = currentState.localPages.some((page) => page.id === nextPage.id)
+          const nextPages = hasCreatedPage
+            ? currentState.localPages.map((page) => (page.id === nextPage.id ? nextPage : page))
+            : [...currentState.localPages, nextPage]
+          const persisted = saveLocalDraft(draftNoteId, nextPages, nextPage.id)
+
+          return {
+            activePageId: nextPage.id,
+            localPages: nextPages,
+            status: persisted ? 'backendPageCreated' : 'unavailable',
+          }
+        })
+        setBackendSaveStatus('saved')
+        return
+      } catch (createError) {
+        setBackendSaveError(
+          createError instanceof Error ? createError.message : 'Falha ao criar página',
+        )
+        setBackendSaveStatus('localOnly')
+        setDraftState((currentState) => {
+          const nextPageNumber =
+            Math.max(...currentState.localPages.map((page) => page.pageNumber), 0) + 1
+          const nextPage = createBlankLocalPage(nextPageNumber)
+          const nextPages = [...currentState.localPages, nextPage]
+          const persisted = saveLocalDraft(draftNoteId, nextPages, nextPage.id)
+
+          return {
+            activePageId: nextPage.id,
+            localPages: nextPages,
+            status: persisted ? 'pageCreateError' : 'unavailable',
+          }
+        })
+        return
+      }
+    }
+
     setDraftState((currentState) => {
       const nextPageNumber = Math.max(...currentState.localPages.map((page) => page.pageNumber), 0) + 1
       const nextPage = createBlankLocalPage(nextPageNumber)
@@ -293,12 +388,14 @@ export function A4EditorWorkspace({
       return {
         activePageId: nextPage.id,
         localPages: nextPages,
-        status: persistDraft(draftNoteId, nextPages, nextPage.id),
+        status: persistDraft(draftNoteId, nextPages, nextPage.id) === 'saved'
+          ? 'localPageCreated'
+          : 'unavailable',
       }
     })
     setBackendSaveStatus('localOnly')
     setBackendSaveError(null)
-  }, [draftNoteId])
+  }, [canCreateBackendPage, draftNoteId])
 
   const handleSelectPage = useCallback((pageId: string) => {
     const selectedPage = localPages.find((page) => page.id === pageId)
@@ -422,6 +519,7 @@ export function A4EditorWorkspace({
         <PageNavigator
           pages={localPages}
           activePageId={activeLocalPage.id}
+          isAddingPage={isCreatingPage}
           onAddPage={handleAddPage}
           onSelectPage={handleSelectPage}
         />

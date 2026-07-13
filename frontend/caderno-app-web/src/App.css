@@ -1036,7 +1036,8 @@
   min-width: 0;
 }
 
-.backend-save-status {
+.backend-save-status,
+.local-page-sync-status {
   display: grid !important;
   gap: 0.1rem !important;
   min-width: 10.5rem;
@@ -1045,12 +1046,14 @@
   line-height: 1.25;
 }
 
-.backend-save-status strong {
+.backend-save-status strong,
+.local-page-sync-status strong {
   color: #4f5b53;
   font-size: 0.6rem;
 }
 
-.backend-save-status span {
+.backend-save-status span,
+.local-page-sync-status span {
   color: #817565;
 }
 
@@ -1071,7 +1074,21 @@
   color: #8b4f3d;
 }
 
+.local-page-sync-status--synced strong {
+  color: #386f52;
+}
+
+.local-page-sync-status--syncing strong {
+  color: #765c2e;
+}
+
+.local-page-sync-status--error strong,
+.local-page-sync-status--unavailable strong {
+  color: #8b4f3d;
+}
+
 .save-page-button,
+.sync-local-pages-button,
 .reload-api-button,
 .clear-local-draft-button {
   flex: none;
@@ -1097,19 +1114,32 @@
   background: #fffaf0;
 }
 
-.save-page-button:disabled {
+.sync-local-pages-button {
+  border-color: #afc2bd;
+  color: #33584f;
+  background: #eef6f2;
+}
+
+.save-page-button:disabled,
+.sync-local-pages-button:disabled {
   border-color: #d4c8b6;
   color: #827765;
   background: #eee4d1;
 }
 
-.save-page-button:not(:disabled) {
+.save-page-button:not(:disabled),
+.sync-local-pages-button:not(:disabled) {
   cursor: pointer;
 }
 
 .save-page-button:not(:disabled):hover {
   border-color: #789a8b;
   background: #284f44;
+}
+
+.sync-local-pages-button:not(:disabled):hover {
+  border-color: #789a8b;
+  background: #dfeee8;
 }
 
 .reload-api-button:not(:disabled) {
@@ -1970,7 +2000,8 @@
     flex-wrap: wrap;
   }
 
-  .backend-save-status {
+  .backend-save-status,
+  .local-page-sync-status {
     min-width: min(100%, 11rem);
   }
 

@@ -43,6 +43,7 @@ type DraftStatus =
   | 'unavailable'
 
 type BackendSaveStatus = 'error' | 'localChanges' | 'localOnly' | 'saved' | 'saving'
+type LocalPageSyncStatus = 'error' | 'idle' | 'synced' | 'syncing' | 'unavailable'
 
 interface DraftEditorState {
   activePageId: string
@@ -120,6 +121,14 @@ const activePageSyncLabel: Record<PageNavigatorPageStatus, string> = {
   local: 'Página local — ainda não existe no backend',
   saved: 'Página salva no backend',
   unsaved: 'Alterações locais não salvas',
+}
+
+const localPageSyncStatusLabel: Record<LocalPageSyncStatus, string> = {
+  error: 'Erro ao sincronizar páginas locais',
+  idle: 'Sincronização manual',
+  synced: 'Páginas locais enviadas ao backend',
+  syncing: 'Sincronizando páginas locais...',
+  unavailable: 'Rascunho local não atualizado',
 }
 
 const blankPageHtml = `<h1>Nova página</h1><p>Comece suas anotações aqui.</p>`
@@ -240,6 +249,30 @@ const createApiLocalPage = (page: ApiNotePage): LocalDraftPage => {
     heightMm: Number(page.heightMm) || 297,
     contentFormat: 'html',
     content: createApiPageContent(pageNumber),
+    contentHtml,
+    hasUnsavedChanges: false,
+    lastSavedContentHtml: contentHtml,
+    source: 'api',
+  }
+}
+
+const createSyncedApiPage = (
+  localPage: LocalDraftPage,
+  page: ApiNotePage,
+): LocalDraftPage => {
+  const returnedContentHtml = getApiPageContentHtml(page)
+  const contentHtml = page.content.trim()
+    ? returnedContentHtml
+    : localPage.contentHtml
+
+  return {
+    ...localPage,
+    apiUpdatedAt: page.updatedAt,
+    id: page.id,
+    pageNumber: Number(page.pageNumber) || localPage.pageNumber,
+    widthMm: Number(page.widthMm) || localPage.widthMm,
+    heightMm: Number(page.heightMm) || localPage.heightMm,
+    contentFormat: 'html',
     contentHtml,
     hasUnsavedChanges: false,
     lastSavedContentHtml: contentHtml,
@@ -404,6 +437,8 @@ export function A4EditorWorkspace({
   )
   const [backendSaveStatus, setBackendSaveStatus] = useState<BackendSaveStatus>('localOnly')
   const [backendSaveError, setBackendSaveError] = useState<string | null>(null)
+  const [localPageSyncError, setLocalPageSyncError] = useState<string | null>(null)
+  const [localPageSyncStatus, setLocalPageSyncStatus] = useState<LocalPageSyncStatus>('idle')
   const pagesSignature = useMemo(() => createPagesSignature(pages), [pages])
   const { activePageId, localPages, status } = draftState
   const activeLocalPage =
@@ -424,6 +459,14 @@ export function A4EditorWorkspace({
   const isCreatingPage = status === 'creatingPage'
   const localOnlyPageCount = localPages.filter((page) => page.source !== 'api').length
   const hasLocalOnlyPages = localOnlyPageCount > 0
+  const isRealNoteContext =
+    pageSourceStatus === 'api' ||
+    pageSourceStatus === 'empty' ||
+    pageSourceStatus === 'error'
+  const canSyncLocalPages =
+    isRealNoteContext &&
+    hasLocalOnlyPages &&
+    localPageSyncStatus !== 'syncing'
   const canReloadFromApi =
     draftState.isLocalDraftActive &&
     pageSourceStatus !== 'loading' &&
@@ -435,6 +478,8 @@ export function A4EditorWorkspace({
     setDraftState(nextState)
     setBackendSaveStatus(getBackendSaveStatusForPage(getActivePageFromState(nextState)))
     setBackendSaveError(null)
+    setLocalPageSyncError(null)
+    setLocalPageSyncStatus('idle')
   }, [activePage, draftNoteId, pageSourceStatus, pages, pagesSignature])
 
   const handleContentChange = useCallback((pageId: string, contentHtml: string) => {
@@ -619,6 +664,89 @@ export function A4EditorWorkspace({
     setBackendSaveError(null)
   }, [activePage.id, draftNoteId, pageSourceStatus, pages])
 
+  const handleSyncLocalPages = useCallback(async () => {
+    if (!isRealNoteContext) {
+      setLocalPageSyncError('Disponível apenas para anotação real da API.')
+      setLocalPageSyncStatus('error')
+      return
+    }
+
+    const pendingLocalPages = localPages.filter((page) => page.source !== 'api')
+
+    if (pendingLocalPages.length === 0) {
+      setLocalPageSyncError(null)
+      setLocalPageSyncStatus('idle')
+      return
+    }
+
+    setLocalPageSyncError(null)
+    setLocalPageSyncStatus('syncing')
+
+    let nextPages = localPages
+    let nextActivePageId = activePageId
+    let syncError: string | null = null
+
+    for (const localPage of pendingLocalPages) {
+      try {
+        const createdPage = await createNotePage(
+          draftNoteId,
+          localPage.contentHtml,
+          localPage.contentFormat || 'html',
+        )
+        const syncedPage = createSyncedApiPage(localPage, createdPage)
+
+        nextPages = nextPages.map((page) => (page.id === localPage.id ? syncedPage : page))
+
+        if (nextActivePageId === localPage.id) {
+          nextActivePageId = syncedPage.id
+        }
+      } catch (createError) {
+        syncError = createError instanceof Error
+          ? createError.message
+          : 'Falha ao sincronizar página local'
+        break
+      }
+    }
+
+    const persisted = saveLocalDraft(draftNoteId, nextPages, nextActivePageId, {
+      apiUpdatedAt: getLatestPageApiUpdatedAt(nextPages),
+      baseSource: getDraftBaseSource(pageSourceStatus, nextPages),
+    })
+
+    setDraftState((currentState) => ({
+      ...currentState,
+      activePageId: nextActivePageId,
+      draftMetadata: null,
+      isLocalDraftActive: true,
+      localPages: nextPages,
+      status: persisted
+        ? syncError
+          ? 'pageCreateError'
+          : 'backendPageCreated'
+        : 'unavailable',
+    }))
+    setBackendSaveStatus(
+      getBackendSaveStatusForPage(
+        nextPages.find((page) => page.id === nextActivePageId) ?? nextPages[0],
+      ),
+    )
+
+    if (!persisted) {
+      setLocalPageSyncError('As páginas foram processadas, mas o rascunho local não foi atualizado.')
+      setLocalPageSyncStatus('unavailable')
+      return
+    }
+
+    if (syncError) {
+      setLocalPageSyncError(syncError)
+      setLocalPageSyncStatus('error')
+      return
+    }
+
+    setLocalPageSyncError(null)
+    setLocalPageSyncStatus('synced')
+  }, [activePageId, draftNoteId, isRealNoteContext, localPages, pageSourceStatus])
+
   const handleSaveActivePage = useCallback(async () => {
     const pageToSave = activeLocalPage
 
@@ -685,6 +813,19 @@ export function A4EditorWorkspace({
   const draftMetadataSummary = draftState.draftMetadata
     ? `Rascunho salvo em ${new Date(draftState.draftMetadata.savedAt).toLocaleString()}`
     : 'Rascunho monitorado por anotação'
+  const localPageSyncDescription = localPageSyncError
+    ?? (!isRealNoteContext
+      ? 'Disponível apenas para anotação real'
+      : localPageSyncStatus === 'syncing'
+        ? 'Enviando páginas locais via POST'
+        : localPageSyncStatus === 'synced'
+          ? 'Rascunho atualizado com ids reais'
+          : hasLocalOnlyPages
+            ? `${localOnlyPageCount} página${localOnlyPageCount === 1 ? '' : 's'} pronta${localOnlyPageCount === 1 ? '' : 's'} para envio`
+            : 'Nenhuma página local pendente')
+  const syncLocalPagesButtonLabel = localPageSyncStatus === 'syncing'
+    ? 'Sincronizando...'
+    : 'Sincronizar páginas locais'
 
   return (
     <section className="editor-workspace" aria-label="Editor A4 local">
@@ -716,6 +857,23 @@ export function A4EditorWorkspace({
               <strong>{backendSaveStatusLabel[backendSaveStatus]}</strong>
               <span>{backendSaveDescription}</span>
             </div>
+            <div
+              className={`local-page-sync-status local-page-sync-status--${localPageSyncStatus}`}
+              role="status"
+            >
+              <strong>{localPageSyncStatusLabel[localPageSyncStatus]}</strong>
+              <span>{localPageSyncDescription}</span>
+            </div>
+            <button
+              className="sync-local-pages-button"
+              type="button"
+              disabled={!canSyncLocalPages}
+              onClick={() => {
+                void handleSyncLocalPages()
+              }}
+            >
+              {syncLocalPagesButtonLabel}
+            </button>
             <button
               className="save-page-button"
               type="button"

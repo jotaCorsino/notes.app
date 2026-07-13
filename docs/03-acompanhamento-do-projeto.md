@@ -42,7 +42,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Etapa 23 — Refinamento da sincronização localStorage/backend — Aprovado — Commit aa78bb6
 - M5 — Ignorar arquivos SQLite locais — Aprovado — Commit 4e917b1
 - Etapa 24 — Indicador de alterações não salvas por página — Aprovado — Commit fc6fd2c
-- Etapa 25 — Integração de tags e favoritos reais no frontend — Aprovado — Commit a preencher após este commit
+- Etapa 25 — Integração de tags e favoritos reais no frontend — Aprovado — Commit fe44af9
+- Etapa 26 — Sincronização de páginas locais pendentes com backend — Aprovado — Commit desta etapa
 
 ## Decisões técnicas aprovadas
 
@@ -52,50 +53,49 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Banco local SQLite com Entity Framework Core.
 - Minimal APIs para camada HTTP.
 - Organização do app como fichário digital: Matéria > Módulo > Anotação > Página A4.
-- Módulos, tags e favoritos desde o MVP.
-- Página A4 como entidade real.
-- Conteúdo salvo por página.
-- `ContentFormat` padrão `"html"`.
-- HTML controlado como formato inicial de conteúdo.
-- Frontend responsável pela paginação visual no MVP.
+- Módulos, tags e favoritos existem desde o MVP.
+- Página A4 é entidade real.
+- Conteúdo é salvo por página.
+- `ContentFormat` padrão é `"html"`.
+- HTML controlado é o formato inicial de conteúdo.
+- Sanitização real de HTML ainda é pendente.
+- Frontend é responsável pela paginação visual no MVP.
 - Backend não fará quebra visual automática de página no MVP.
-- Endpoint `GET /api/notes/{id}/printable` como base para exportação futura.
-- PDF real ainda não implementado.
-- Frontend planejado com React, TypeScript e Vite.
-- Editor rich text recomendado: Tiptap.
-- Estrutura inicial do frontend criada em `frontend/caderno-app-web`.
+- Endpoint `GET /api/notes/{id}/printable` é base para exportação futura.
+- PDF real ainda não foi implementado.
+- Frontend foi planejado com React, TypeScript e Vite.
+- Editor rich text recomendado e adotado inicialmente: Tiptap.
+- Estrutura do frontend fica em `frontend/caderno-app-web`.
 - CI separado em dois jobs: backend e frontend.
-- Layout visual base criado com sidebar, topbar, área central e página A4 simulada.
-- Editor A4 inicial integrado com Tiptap para edição rich text local.
-- PageNavigator permite selecionar páginas da anotação ativa localmente.
+- Layout visual base usa sidebar, topbar, área central e página A4 simulada.
+- Editor A4 inicial usa Tiptap para edição rich text local.
+- PageNavigator permite selecionar páginas da anotação ativa.
 - Conteúdo editado com Tiptap é mantido separadamente por página.
-- Botão `+ Página` cria página local mockada com tamanho A4 e conteúdo HTML inicial simples.
+- Botão `+ Página` cria página local mockada quando não há anotação real da API.
 - Frontend consome `GET /api/subjects` para listar matérias reais na sidebar.
 - Vite usa proxy de desenvolvimento de `/api` para `http://localhost:5037`.
-- Frontend consome `GET /api/subjects/{subjectId}/modules` para listar módulos da matéria real selecionada.
-- Frontend consome `GET /api/modules/{moduleId}/notes` para listar anotações do módulo real selecionado.
+- Frontend consome `GET /api/subjects/{subjectId}/modules` para listar módulos da matéria selecionada.
+- Frontend consome `GET /api/modules/{moduleId}/notes` para listar anotações do módulo selecionado.
 - Frontend consome `GET /api/notes/{id}` para carregar detalhes da anotação selecionada.
-- Páginas reais retornadas em `GET /api/notes/{id}` são carregadas no editor A4 quando existem.
+- Páginas reais retornadas por `GET /api/notes/{id}` são carregadas no editor A4.
 - Frontend consome `PUT /api/notes/{noteId}/pages/{pageId}/content` para salvar conteúdo de página real existente.
-- Frontend consome `POST /api/notes/{noteId}/pages` para criar página real quando a anotação veio da API.
-- Apenas páginas vindas da API podem ser salvas no backend nesta etapa.
+- Frontend consome `POST /api/notes/{noteId}/pages` para criar página real em anotação vinda da API.
+- Apenas páginas com `source: "api"` podem usar o salvamento manual por PUT.
 - O botão `+ Página` cria página real no backend para anotação real e página local para mock/fallback.
 - A página criada no backend entra no editor com `source: "api"` e pode ser editada localmente.
 - A página criada no backend pode ser salva depois pelo PUT de conteúdo já integrado.
-- Páginas locais e fallback não são criadas no backend.
+- Páginas locais e fallback não são enviadas automaticamente ao backend.
 - Se a anotação real não tem páginas, o editor usa uma página local inicial.
 - Se o carregamento de detalhes falhar, o editor usa fallback local.
 - A edição de conteúdo continua local com Tiptap.
-- Nova página criada no editor continua apenas local.
-- `localStorage` passou a ser separado por anotação com chaves no formato `caderno-app:note-draft:{noteId}`.
-- O rascunho local armazena metadados simples: `schemaVersion`, `noteId`, `baseSource`, `savedAt`, `updatedAt` e referência de atualização da API quando disponível.
-- Para o fluxo mockado/fallback, o rascunho usa a chave `caderno-app:note-draft:mock-active-note`.
-- Ao abrir uma anotação, a prioridade é: rascunho local da anotação, páginas da API, fallback local.
+- `localStorage` é separado por anotação com chaves no formato `caderno-app:note-draft:{noteId}`.
+- O rascunho local armazena metadados simples: `schemaVersion`, `noteId`, `baseSource`, `savedAt`, `updatedAt` e referência de atualização da API.
+- Para fluxo mockado/fallback, o rascunho usa a chave `caderno-app:note-draft:mock-active-note`.
+- Ao abrir uma anotação, a prioridade é: rascunho local, páginas da API, fallback local.
 - O botão de limpar rascunho remove apenas o rascunho da anotação ativa.
 - A UI indica quando o editor usa API, rascunho local, fallback ou página local pendente.
-- Há opção explícita para descartar rascunho local e recarregar a base da API ou fallback disponível.
+- Há ação explícita para descartar rascunho local e recarregar a base da API ou fallback disponível.
 - O rascunho local continua como camada de segurança por navegador após salvamento manual.
-- Sincronização completa entre rascunho local e backend ainda não foi integrada no frontend.
 - Backend de desenvolvimento cria o schema SQLite com `EnsureCreated` em ambiente Development, sem migrations e sem seed obrigatório.
 - Arquivos SQLite locais gerados em Development são ignorados pelo Git.
 - PageNavigator mostra status por página: salva, alterada ou local.
@@ -107,21 +107,36 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Favorito real usa `PUT /api/notes/{noteId}/favorite` e `DELETE /api/notes/{noteId}/favorite`.
 - Tags reais usam `POST /api/notes/{noteId}/tags` e `DELETE /api/notes/{noteId}/tags/{tagName}`.
 - Fallback/mock não chama endpoints reais de tags ou favorito.
+- Páginas com `source: "local"` podem ser enviadas manualmente para o backend quando a anotação ativa é real.
+- A sincronização manual usa `POST /api/notes/{noteId}/pages`.
+- Páginas locais sincronizadas passam para `source: "api"` após retorno bem-sucedido da API.
+- Páginas sincronizadas recebem o id real retornado pelo backend.
+- A seleção da página ativa é preservada quando uma página local vira página real.
+- A ordem visual atual é mantida no frontend durante a substituição das páginas sincronizadas.
+- Se o backend retornar `pageNumber` ou dimensões A4, esses dados passam a ser refletidos no objeto local.
+- Após sincronização total ou parcial, o rascunho em `localStorage` é atualizado.
+- Falhas parciais preservam páginas ainda locais, conteúdo local e rascunho no navegador.
+- A Etapa 26 não implementa autosave.
+- A Etapa 26 não implementa merge automático.
+- A Etapa 26 não implementa resolução de conflitos.
+- A Etapa 26 não implementa reordenação complexa de páginas.
+- A Etapa 26 não altera autenticação.
+- A Etapa 26 não implementa PDF.
 
 ## Pendências atuais
 
 - P-009 — Implementar sanitização real do HTML — Pendente.
 - P-010 — Implementar exportação PDF A4 real — Pendente.
-- P-017 — Integrar frontend com API — Parcialmente concluída: matérias, módulos, anotações, tags, favoritos, leitura, criação e salvamento de páginas foram integrados; sincronização completa de páginas locais segue pendente.
-- P-018 — Conectar o layout aos dados reais da API — Parcialmente concluída: sidebar usa matérias, módulos e anotações reais; editor lê, cria e salva conteúdo de páginas reais; tags/favorito da anotação ativa usam dados reais.
-- P-020 — Implementar salvamento real de páginas — Parcialmente concluída: página real pode ser criada via POST e conteúdo de páginas existentes pode ser salvo via PUT; sincronização completa segue pendente.
+- P-017 — Integrar frontend com API — Parcialmente concluída: matérias, módulos, anotações, tags, favoritos, leitura, criação, salvamento e sincronização manual de páginas foram integrados; criação de matérias/módulos e fluxos avançados seguem pendentes.
+- P-018 — Conectar o layout aos dados reais da API — Parcialmente concluída: sidebar usa dados reais e editor lê, cria, salva e sincroniza páginas; ainda faltam fluxos completos de criação e busca.
+- P-020 — Implementar salvamento real de páginas — Parcialmente concluída: páginas reais usam PUT e páginas locais podem virar páginas reais por POST manual; autosave e merge continuam fora do escopo.
 - P-022 — Implementar controle funcional de fonte e tamanho — Pendente.
-- P-024 — Definir estratégia de sincronização entre localStorage e backend — Concluída inicial: rascunho tem metadados, status visual e opção de recarregar da API; merge automático segue fora do escopo.
 - P-027 — Criar fluxo de criação de matéria/módulo pelo frontend — Pendente.
-- P-028 — Integrar páginas reais da anotação com API — Parcialmente concluída: leitura por GET, criação por POST e salvamento de conteúdo por PUT implementados; refinamento de sincronização pendente.
-- P-035 — Implementar sincronização completa de páginas locais pendentes com backend — Pendente.
+- P-028 — Integrar páginas reais da anotação com API — Parcialmente concluída: leitura, criação, salvamento e sincronização manual foram integrados; conflitos e reordenação complexa seguem pendentes.
 - P-036 — Melhorar UX do formulário de tags — Pendente.
 - P-037 — Implementar busca/filtro por tags no futuro — Pendente.
+- P-038 — Melhorar ordenação/reordenação de páginas — Pendente.
+- P-039 — Revisar fluxo de conflitos entre API e rascunho local — Pendente.
 
 ## Pendências resolvidas
 
@@ -136,29 +151,29 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - P-019 — Instalar e integrar Tiptap — Concluído: editor A4 usa Tiptap com edição local rich text.
 - P-021 — Implementar troca funcional entre páginas do editor — Concluído: seleção, edição por página e criação local de página foram implementadas.
 - P-023 — Persistir estado local em armazenamento temporário ou backend, conforme estratégia futura — Concluído: rascunho local temporário implementado com `localStorage`.
+- P-024 — Definir estratégia de sincronização entre localStorage e backend — Concluída inicial: rascunho tem metadados, status visual e opção de recarregar da API; merge automático segue fora do escopo.
 - P-025 — Integrar módulos com API — Concluído: sidebar consome `GET /api/subjects/{subjectId}/modules` para a matéria real selecionada.
 - P-026 — Integrar anotações com API — Concluído: sidebar consome `GET /api/modules/{moduleId}/notes` para o módulo real selecionado.
+- P-029 — Integrar tags/favoritos reais no frontend — Concluído: anotação ativa usa tags e favorito reais da API com ações de adicionar/remover/favoritar.
 - P-030 — Implementar salvamento real do conteúdo da página via API — Concluído: frontend consome `PUT /api/notes/{noteId}/pages/{pageId}/content` para páginas reais existentes.
 - P-031 — Criar página real no backend pelo frontend — Concluído: botão `+ Página` consome `POST /api/notes/{noteId}/pages` quando a anotação ativa veio da API.
 - P-032 — Implementar indicador completo de alterações não salvas por página — Concluído: PageNavigator e workspace mostram status por página.
 - P-033 — Refinar estratégia de rascunho local versus dados da API — Concluído inicialmente: rascunho local ganhou metadados, status visual e ação de recarregar da API.
 - P-034 — Implementar detecção mais precisa de alterações não salvas por página — Concluído: páginas reais comparam conteúdo atual com a última versão salva.
-- P-029 — Integrar tags/favoritos reais no frontend — Concluído: anotação ativa usa tags e favorito reais da API com ações de adicionar/remover/favoritar.
+- P-035 — Implementar sincronização manual de páginas locais pendentes com backend — Concluído: páginas locais podem ser enviadas via POST e passam para `source: "api"` após sucesso.
 
 ## Próxima tarefa
 
-Implementar sincronização completa de páginas locais pendentes com backend.
+Implementar controle funcional de fonte e tamanho do editor.
 
 A próxima tarefa deve incluir:
 
-- Enviar páginas locais pendentes para o backend quando a anotação ativa for real.
-- Atualizar páginas locais para `source: "api"` após criação bem-sucedida.
-- Preservar conteúdo local em caso de erro.
-- Manter indicadores de alterações não salvas coerentes após sincronizar.
-- Preservar fallback local quando o backend estiver desligado.
-- Manter busca global por tags fora do escopo.
-- Manter autenticação fora do escopo.
-- Manter exportação PDF fora do escopo.
+- Definir controles visuais para família de fonte e tamanho.
+- Integrar os controles ao Tiptap sem trocar a estratégia de armazenamento.
+- Manter o conteúdo salvo como HTML controlado.
+- Preservar o fluxo de páginas reais, páginas locais e localStorage.
+- Manter tags e favoritos fora do escopo da alteração.
+- Manter autosave, merge automático, resolução de conflitos e PDF fora do escopo.
 
 ## Histórico de validações
 
@@ -196,28 +211,55 @@ A próxima tarefa deve incluir:
 - Etapa 23 aprovada — Commit aa78bb6.
 - M5 aprovada — Commit 4e917b1.
 - Etapa 24 aprovada — Commit fc6fd2c.
-- Etapa 25 aprovada — Commit a preencher após este commit.
+- Etapa 25 aprovada — Commit fe44af9.
+- Etapa 26 aprovada — sincronização manual de páginas locais pendentes com backend.
+
+## Registro da Etapa 26
+
+### Objetivo realizado
+
+Permitir que páginas locais pendentes de uma anotação real sejam enviadas manualmente para o backend.
+
+### Arquivos alterados
+
+- `frontend/caderno-app-web/src/components/A4EditorWorkspace.tsx`.
+- `frontend/caderno-app-web/src/App.css`.
+- `docs/03-acompanhamento-do-projeto.md`.
+
+### Comportamento implementado
+
+- O workspace detecta páginas locais por `source` diferente de `"api"`, com foco no contrato atual `source: "local"`.
+- O botão `Sincronizar páginas locais` fica disponível apenas para contexto de anotação real e quando há páginas locais pendentes.
+- O clique no botão percorre páginas locais na ordem visual atual.
+- Cada página local é enviada com `POST /api/notes/{noteId}/pages`.
+- O conteúdo enviado é o HTML atual da página local.
+- O `contentFormat` enviado usa o valor da página ou `"html"` como padrão.
+- O retorno da API substitui a página local pelo id real.
+- A página sincronizada passa para `source: "api"`.
+- O estado `hasUnsavedChanges` passa para `false` na página sincronizada.
+- `lastSavedContentHtml` passa a refletir o conteúdo retornado pela API ou o conteúdo local enviado.
+- A página ativa continua selecionada quando possível.
+- O rascunho local é atualizado depois da sincronização total ou parcial.
+- Falha parcial preserva páginas ainda locais e conteúdo local.
+- Erros são exibidos de forma discreta no workspace.
+
+### Limitações mantidas
+
+- Sem autosave.
+- Sem merge automático.
+- Sem resolução de conflitos.
+- Sem reordenação complexa.
+- Sem autenticação.
+- Sem PDF.
+- Sem alteração no fluxo de tags e favoritos.
 
 ## Observações
 
-- Este documento substitui o acompanhamento anterior por uma versão limpa e objetiva.
+- Este documento permanece como acompanhamento executivo do projeto.
 - O documento `docs/04-especificacao-editor-a4-e-pdf.md` permanece como fonte da especificação do editor A4 e da estratégia futura de PDF.
 - O documento `docs/05-planejamento-frontend-editor-a4.md` registra o planejamento do frontend/editor A4.
-- O CI do frontend foi introduzido no commit 716e248; a manutenção M3 foi aprovada no commit 6b817b4.
-- O layout visual base da Etapa 12 foi aprovado no commit de7dba3.
-- A Etapa 17 integrou apenas a listagem de matérias.
-- A Etapa 18 integrou apenas a listagem de módulos por matéria.
-- A Etapa 19 integrou apenas a listagem e seleção básica de anotações por módulo.
-- A Etapa 20 integrou leitura de páginas reais, mas não implementou escrita.
-- A Etapa 21 integra escrita manual de conteúdo apenas para páginas reais já existentes.
-- A Etapa 22 integra criação manual de página real para anotações vindas da API.
-- A M4 normalizou line endings dos arquivos de frontend e acompanhamento.
-- A Etapa 23 refina a experiência de rascunho local, mas não implementa merge automático.
-- A M5 ignora arquivos SQLite locais de desenvolvimento sem apagar os arquivos existentes.
-- A Etapa 24 adiciona indicador visual de alterações por página, sem autosave, merge automático ou resolução de conflitos.
-- A Etapa 25 integra tags e favorito reais da anotação ativa, sem busca global por tags ou tela global de gerenciamento.
 - O proxy do Vite vale apenas para desenvolvimento local.
 - A criação automática do schema SQLite ocorre apenas em `Development` e não cria dados falsos.
-- O editor A4 continua local para edição e salva no backend somente por ação explícita em página real.
-- O rascunho em `localStorage` é temporário, por navegador, separado por anotação e mantido como segurança após criação ou salvamento manual.
-- Ainda não há autosave no backend, merge automático, resolução de conflito, sincronização completa de páginas locais pendentes, busca global por tags, tela global de tags, autenticação, paginação automática, exportação PDF ou frontend em produção.
+- O editor A4 continua local para edição e salva no backend somente por ação explícita.
+- O rascunho em `localStorage` é temporário, por navegador, separado por anotação e mantido como segurança após criação, salvamento ou sincronização manual.
+- Ainda não há sanitização real de HTML, autosave no backend, merge automático, resolução de conflito, busca global por tags, tela global de tags, autenticação, paginação automática, exportação PDF ou frontend em produção.

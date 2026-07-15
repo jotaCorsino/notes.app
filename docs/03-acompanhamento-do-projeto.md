@@ -44,7 +44,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Etapa 24 — Indicador de alterações não salvas por página — Aprovado — Commit fc6fd2c
 - Etapa 25 — Integração de tags e favoritos reais no frontend — Aprovado — Commit fe44af9
 - Etapa 26 — Sincronização de páginas locais pendentes com backend — Aprovado — Commit be65a8b
-- Etapa 27 — Criação rápida de matéria, módulo e anotação pelo frontend — Aprovado — Commit deste registro
+- Etapa 27 — Criação rápida de matéria, módulo e anotação pelo frontend — Aprovado — Commit 8ecbf8b
+- Etapa 28 — Polimento final do MVP e instruções de uso — Aprovado — Commit deste registro
 
 ## Decisões técnicas aprovadas
 
@@ -132,6 +133,12 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - A Etapa 27 não implementa edição, renomeação ou exclusão da estrutura do fichário.
 - A Etapa 27 não altera editor, páginas, tags ou favoritos.
 - A Etapa 27 não implementa autosave, autenticação ou PDF.
+- Estados vazios orientam a criação sequencial de matéria, módulo, anotação e página.
+- A sidebar apresenta o fluxo resumido: criar matéria, módulo, anotação e página, depois escrever e salvar.
+- Quando a API está indisponível, o frontend informa que está em modo demonstração e mantém o fallback mockado.
+- O workspace orienta a criação da primeira página real quando a anotação ainda não possui páginas da API.
+- O `README.md` registra pré-requisitos, execução local, URLs esperadas, roteiro de teste e limitações do MVP.
+- A Etapa 28 não adiciona regras de domínio nem altera contratos da API.
 
 ## Pendências atuais
 
@@ -176,15 +183,15 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 
 ## Próxima tarefa
 
-Realizar o polimento final do MVP e criar instruções para os estados vazios.
+Realizar uma revisão final de build e execução local do MVP.
 
 A próxima tarefa deve incluir:
 
-- Revisar os estados vazios de matéria, módulo, anotação e página.
-- Mostrar instruções curtas que conduzam a criação inicial do fichário.
-- Refinar feedbacks de carregamento, indisponibilidade e sucesso sem criar novos fluxos de domínio.
-- Preservar a integração atual com API, páginas, localStorage, tags e favoritos.
-- Manter edição, exclusão, autosave, autenticação e PDF fora do escopo até etapas próprias.
+- Executar backend e frontend juntos seguindo o `README.md`.
+- Repetir o fluxo principal em um banco SQLite vazio.
+- Conferir criação, edição, salvamento, tags e favorito de ponta a ponta.
+- Registrar qualquer bloqueio real encontrado antes de ampliar o escopo.
+- Se a revisão final estiver estável e houver tempo, planejar edição e exclusão básicas com confirmação.
 
 ## Histórico de validações
 
@@ -225,6 +232,7 @@ A próxima tarefa deve incluir:
 - Etapa 25 aprovada — Commit fe44af9.
 - Etapa 26 aprovada — sincronização manual de páginas locais pendentes com backend.
 - Etapa 27 aprovada — criação rápida de matéria, módulo e anotação reais pela sidebar.
+- Etapa 28 aprovada — estados vazios guiados, modo demonstração claro e instruções locais no README.
 
 ## Registro da Etapa 26
 
@@ -308,11 +316,50 @@ Permitir que uma instalação com banco vazio crie a estrutura inicial Matéria 
 - Sem PDF.
 - Sem alteração no editor, no fluxo de páginas, nas tags ou nos favoritos.
 
+## Registro da Etapa 28
+
+### Objetivo realizado
+
+Polir a experiência inicial do MVP com orientação curta para banco vazio, feedback claro de API indisponível e instruções objetivas de execução local.
+
+### Arquivos criados
+
+- `README.md`.
+
+### Arquivos alterados
+
+- `frontend/caderno-app-web/src/App.tsx`.
+- `frontend/caderno-app-web/src/App.css`.
+- `frontend/caderno-app-web/src/components/Sidebar.tsx`.
+- `frontend/caderno-app-web/src/components/A4EditorWorkspace.tsx`.
+- `docs/03-acompanhamento-do-projeto.md`.
+
+### Comportamento apresentado
+
+- Banco sem matérias orienta: criar a primeira matéria.
+- Matéria sem módulos orienta: criar um módulo.
+- Módulo sem anotações orienta: criar uma anotação.
+- Anotação sem páginas reais orienta: criar uma página para começar a escrever.
+- A sidebar apresenta os cinco passos principais do MVP enquanto ainda falta matéria, módulo ou anotação.
+- API indisponível mantém dados mockados e informa que o app está rodando em modo demonstração.
+- Formulários indisponíveis informam que a criação real exige o backend ligado.
+- O `README.md` documenta backend em `http://localhost:5037`, frontend na URL exibida pelo Vite e o fluxo de teste manual.
+
+### Limitações mantidas
+
+- Sem novas regras de domínio.
+- Sem alterações no backend ou nos contratos da API.
+- Sem edição ou exclusão de matéria, módulo e anotação.
+- Sem autosave.
+- Sem autenticação.
+- Sem PDF.
+
 ## Observações
 
 - Este documento permanece como acompanhamento executivo do projeto.
 - O documento `docs/04-especificacao-editor-a4-e-pdf.md` permanece como fonte da especificação do editor A4 e da estratégia futura de PDF.
 - O documento `docs/05-planejamento-frontend-editor-a4.md` registra o planejamento do frontend/editor A4.
+- O `README.md` é a referência curta para executar e conferir o MVP localmente.
 - O proxy do Vite vale apenas para desenvolvimento local.
 - A criação automática do schema SQLite ocorre apenas em `Development` e não cria dados falsos.
 - O editor A4 continua local para edição e salva no backend somente por ação explícita.

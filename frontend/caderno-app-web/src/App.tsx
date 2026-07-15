@@ -6,6 +6,7 @@ import {
   type SidebarApiStatus,
   type SidebarModuleApiStatus,
   type SidebarNoteApiStatus,
+  type SidebarOnboardingStep,
 } from './components/Sidebar'
 import { TagList } from './components/TagList'
 import { Topbar } from './components/Topbar'
@@ -41,6 +42,31 @@ const emptyApiSidebarSubject: Subject = {
   shortLabel: '--',
   color: 'sage',
   modules: [],
+}
+const workspaceOnboardingCopy: Record<
+  SidebarOnboardingStep,
+  { detail: string; eyebrow: string; title: string }
+> = {
+  demo: {
+    eyebrow: 'Modo demonstração',
+    title: 'API indisponível — rodando em modo demonstração',
+    detail: 'Ligue o backend para criar e salvar dados reais.',
+  },
+  module: {
+    eyebrow: 'Fluxo inicial',
+    title: 'Agora crie um módulo',
+    detail: 'Use a sidebar para continuar. O conteúdo abaixo permanece como demonstração.',
+  },
+  note: {
+    eyebrow: 'Fluxo inicial',
+    title: 'Agora crie uma anotação',
+    detail: 'Use a sidebar para continuar. O conteúdo abaixo permanece como demonstração.',
+  },
+  subject: {
+    eyebrow: 'Fluxo inicial',
+    title: 'Crie sua primeira matéria',
+    detail: 'Use a sidebar para começar. O conteúdo abaixo permanece como demonstração.',
+  },
 }
 
 const createShortLabel = (name: string) => {
@@ -450,6 +476,19 @@ function App() {
     subjectsStatus === 'success'
       ? selectedApiNote?.id ?? ''
       : mockNotebook.selectedNoteId
+  const sidebarOnboardingStep: SidebarOnboardingStep | null =
+    subjectsStatus === 'error'
+      ? 'demo'
+      : subjectsStatus === 'success' && apiSubjects.length === 0
+        ? 'subject'
+        : modulesStatus === 'success' && apiModules.length === 0
+          ? 'module'
+          : notesStatus === 'success' && apiNotes.length === 0
+            ? 'note'
+            : null
+  const activeWorkspaceOnboarding = sidebarOnboardingStep
+    ? workspaceOnboardingCopy[sidebarOnboardingStep]
+    : null
   const editorState = useMemo(() => {
     if (!selectedApiNote) {
       return {
@@ -803,6 +842,7 @@ function App() {
         moduleApiStatus={getModulesApiStatus(modulesStatus, Boolean(selectedApiSubject))}
         noteApiError={notesError ?? noteDetailsError}
         noteApiStatus={getNotesApiStatus(notesStatus, Boolean(selectedApiModule))}
+        onboardingStep={sidebarOnboardingStep}
         onCreateModule={handleCreateModule}
         onCreateNote={handleCreateNote}
         onCreateSubject={handleCreateSubject}
@@ -824,6 +864,18 @@ function App() {
         />
 
         <main className="note-workspace" id="note-content">
+          {activeWorkspaceOnboarding && (
+            <section
+              className={`workspace-onboarding${sidebarOnboardingStep === 'demo' ? ' workspace-onboarding--demo' : ''}`}
+              aria-label="Orientação do fluxo inicial"
+            >
+              <span>{activeWorkspaceOnboarding.eyebrow}</span>
+              <div>
+                <strong>{activeWorkspaceOnboarding.title}</strong>
+                <p>{activeWorkspaceOnboarding.detail}</p>
+              </div>
+            </section>
+          )}
           <header className="note-heading">
             <div>
               <p className="note-path">

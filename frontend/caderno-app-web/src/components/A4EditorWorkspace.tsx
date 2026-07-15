@@ -808,7 +808,7 @@ export function A4EditorWorkspace({
   const backendSaveDescription = backendSaveError ?? backendSaveStatusDetail[backendSaveStatus]
   const saveButtonLabel = backendSaveStatus === 'saving' ? 'Salvando...' : 'Salvar página'
   const localPageSummary = hasLocalOnlyPages
-    ? `${localOnlyPageCount} página${localOnlyPageCount === 1 ? '' : 's'} local${localOnlyPageCount === 1 ? '' : 'is'} pendente${localOnlyPageCount === 1 ? '' : 's'}`
+    ? `${localOnlyPageCount} página${localOnlyPageCount === 1 ? '' : 's'} ${localOnlyPageCount === 1 ? 'local' : 'locais'} pendente${localOnlyPageCount === 1 ? '' : 's'}`
     : 'Sem páginas locais pendentes'
   const draftMetadataSummary = draftState.draftMetadata
     ? `Rascunho salvo em ${new Date(draftState.draftMetadata.savedAt).toLocaleString()}`
@@ -826,6 +826,8 @@ export function A4EditorWorkspace({
   const syncLocalPagesButtonLabel = localPageSyncStatus === 'syncing'
     ? 'Sincronizando...'
     : 'Sincronizar páginas locais'
+  const shouldShowEmptyPageGuidance =
+    pageSourceStatus === 'empty' && !localPages.some((page) => page.source === 'api')
 
   return (
     <section className="editor-workspace" aria-label="Editor A4 local">
@@ -908,6 +910,15 @@ export function A4EditorWorkspace({
           onSelectPage={handleSelectPage}
         />
         <div className="editor-page-area">
+          {shouldShowEmptyPageGuidance && (
+            <div className="editor-empty-guidance" role="note">
+              <span>Próximo passo</span>
+              <div>
+                <strong>Agora crie uma página para começar a escrever</strong>
+                <p>Use + Página na navegação e depois escreva no editor A4.</p>
+              </div>
+            </div>
+          )}
           <div className="editor-page-area__status">
             <span>
               Página {activeLocalPage.pageNumber} de {localPages.length}

@@ -4,6 +4,7 @@ import type { Subject } from '../types/notebook'
 export type SidebarApiStatus = 'loading' | 'connected' | 'unavailable'
 export type SidebarModuleApiStatus = SidebarApiStatus | 'idle'
 export type SidebarNoteApiStatus = SidebarApiStatus | 'idle'
+export type SidebarOnboardingStep = 'demo' | 'module' | 'note' | 'subject'
 type SidebarCreateStatus = 'idle' | 'creating' | 'created' | 'error'
 
 interface SidebarProps {
@@ -16,6 +17,7 @@ interface SidebarProps {
   moduleApiStatus: SidebarModuleApiStatus
   noteApiError: string | null
   noteApiStatus: SidebarNoteApiStatus
+  onboardingStep: SidebarOnboardingStep | null
   canSelectModules: boolean
   canSelectNotes: boolean
   canSelectSubjects: boolean
@@ -35,9 +37,9 @@ interface SidebarProps {
 }
 
 const apiStatusLabel: Record<SidebarApiStatus, string> = {
-  connected: 'Matérias: API conectada',
-  loading: 'Matérias: carregando',
-  unavailable: 'Matérias: API indisponível',
+  connected: 'API ligada · dados reais',
+  loading: 'Conectando à API',
+  unavailable: 'API desligada · demonstração',
 }
 
 const moduleApiStatusLabel: Record<SidebarModuleApiStatus, string> = {
@@ -52,6 +54,32 @@ const noteApiStatusLabel: Record<SidebarNoteApiStatus, string> = {
   idle: 'Anotações: aguardando módulo',
   loading: 'Anotações: carregando',
   unavailable: 'Anotações: API indisponível',
+}
+
+const onboardingSteps = [
+  { key: 'subject', label: 'Crie uma matéria' },
+  { key: 'module', label: 'Crie um módulo' },
+  { key: 'note', label: 'Crie uma anotação' },
+  { key: 'page', label: 'Crie uma página' },
+  { key: 'write', label: 'Escreva e salve' },
+] as const
+
+const onboardingStepCopy: Record<
+  Exclude<SidebarOnboardingStep, 'demo'>,
+  { detail: string; title: string }
+> = {
+  module: {
+    title: 'Agora crie um módulo',
+    detail: 'Organize a matéria selecionada pelo campo de novo módulo.',
+  },
+  note: {
+    title: 'Agora crie uma anotação',
+    detail: 'Use o módulo selecionado para abrir sua primeira anotação.',
+  },
+  subject: {
+    title: 'Crie sua primeira matéria',
+    detail: 'Comece o fichário pelo campo de nova matéria.',
+  },
 }
 
 interface QuickCreateFormProps {
@@ -139,6 +167,7 @@ export function Sidebar({
   moduleApiStatus,
   noteApiError,
   noteApiStatus,
+  onboardingStep,
   canSelectModules,
   canSelectNotes,
   canSelectSubjects,
@@ -178,22 +207,30 @@ export function Sidebar({
   const areNotesConnected = noteApiStatus === 'connected'
   const hasSubjects = subjects.length > 0
   const hasModules = selectedSubject.modules.length > 0
+  const activeOnboardingCopy =
+    onboardingStep && onboardingStep !== 'demo'
+      ? onboardingStepCopy[onboardingStep]
+      : null
+  const onboardingStepIndex =
+    onboardingStep && onboardingStep !== 'demo'
+      ? onboardingSteps.findIndex((step) => step.key === onboardingStep)
+      : -1
   const subjectUnavailableMessage =
     apiStatus === 'loading'
       ? 'Aguardando a API para criar matéria.'
-      : 'Criação real exige API ligada.'
+      : 'Criação real exige backend ligado.'
   const moduleUnavailableMessage =
     moduleApiStatus === 'loading'
       ? 'Aguardando os módulos da API.'
       : moduleApiStatus === 'idle'
         ? 'Crie ou selecione uma matéria real primeiro.'
-        : 'Criação real exige API ligada.'
+        : 'Criação real exige backend ligado.'
   const noteUnavailableMessage =
     noteApiStatus === 'loading'
       ? 'Aguardando as anotações da API.'
       : noteApiStatus === 'idle'
         ? 'Crie ou selecione um módulo real primeiro.'
-        : 'Criação real exige API ligada.'
+        : 'Criação real exige backend ligado.'
 
   useEffect(() => {
     setNewModuleTitle('')
@@ -303,6 +340,44 @@ export function Sidebar({
       </nav>
 
       <div className="sidebar__library">
+        {onboardingStep && (
+          <section
+            className={`sidebar-onboarding${onboardingStep === 'demo' ? ' sidebar-onboarding--demo' : ''}`}
+            aria-labelledby="onboarding-title"
+          >
+            <span className="sidebar-onboarding__eyebrow">Primeiros passos</span>
+            <strong id="onboarding-title">
+              {onboardingStep === 'demo' ? 'Explore o modo demonstração' : activeOnboardingCopy?.title}
+            </strong>
+            <p>
+              {onboardingStep === 'demo'
+                ? 'Ligue o backend para criar e salvar dados reais.'
+                : activeOnboardingCopy?.detail}
+            </p>
+            <ol>
+              {onboardingSteps.map((step, index) => {
+                const isActive = step.key === onboardingStep
+                const isComplete = onboardingStep !== 'demo' && index < onboardingStepIndex
+
+                return (
+                  <li
+                    className={
+                      isActive
+                        ? 'sidebar-onboarding__step sidebar-onboarding__step--active'
+                        : isComplete
+                          ? 'sidebar-onboarding__step sidebar-onboarding__step--complete'
+                          : 'sidebar-onboarding__step'
+                    }
+                    key={step.key}
+                  >
+                    <span aria-hidden="true">{index + 1}</span>
+                    {step.label}
+                  </li>
+                )
+              })}
+            </ol>
+          </section>
+        )}
         <section className="sidebar__section" aria-labelledby="subjects-title">
           <div className="section-heading">
             <h2 id="subjects-title">Matérias</h2>
@@ -313,9 +388,14 @@ export function Sidebar({
             <span>{apiStatusLabel[apiStatus]}</span>
           </div>
           {isApiUnavailable && (
-            <p className="sidebar-api-message" title={apiError ?? undefined}>
-              API indisponível — exibindo dados mockados
-            </p>
+            <div
+              className="sidebar-api-message sidebar-api-message--demo"
+              role="status"
+              title={apiError ?? undefined}
+            >
+              <strong>API indisponível — rodando em modo demonstração</strong>
+              <span>Criação real exige backend ligado.</span>
+            </div>
           )}
           <QuickCreateForm
             canCreate={canCreateSubject}
@@ -355,7 +435,10 @@ export function Sidebar({
               ))
             ) : (
               isApiConnected && (
-                <li className="subject-list__empty">Nenhuma matéria cadastrada ainda</li>
+                <li className="sidebar-empty-state">
+                  <strong>Crie sua primeira matéria</strong>
+                  <span>Use o campo acima para começar seu fichário.</span>
+                </li>
               )
             )}
           </ul>
@@ -459,13 +542,14 @@ export function Sidebar({
                       </ul>
                     )}
                     {shouldShowEmptyNotes && (
-                      <p className="module-notes-placeholder">
-                        Nenhuma anotação cadastrada ainda
+                      <p className="module-notes-placeholder module-notes-placeholder--empty">
+                        <strong>Agora crie uma anotação</strong>
+                        <span>Use o campo acima dentro deste módulo.</span>
                       </p>
                     )}
                     {showPagesLocalNotice && isSelectedModule && (
                       <p className="module-notes-placeholder">
-                        Páginas/editor: local — conteúdo real fica para etapa futura.
+                        Páginas reais: crie, escreva e salve pelo editor.
                       </p>
                     )}
                   </li>
@@ -473,7 +557,10 @@ export function Sidebar({
               })
             ) : (
               areModulesConnected && (
-                <li className="subject-list__empty">Nenhum módulo cadastrado ainda</li>
+                <li className="sidebar-empty-state">
+                  <strong>Agora crie um módulo</strong>
+                  <span>Use o campo acima na matéria selecionada.</span>
+                </li>
               )
             )}
           </ul>

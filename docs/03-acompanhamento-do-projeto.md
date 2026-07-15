@@ -45,7 +45,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Etapa 25 — Integração de tags e favoritos reais no frontend — Aprovado — Commit fe44af9
 - Etapa 26 — Sincronização de páginas locais pendentes com backend — Aprovado — Commit be65a8b
 - Etapa 27 — Criação rápida de matéria, módulo e anotação pelo frontend — Aprovado — Commit 8ecbf8b
-- Etapa 28 — Polimento final do MVP e instruções de uso — Aprovado — Commit deste registro
+- Etapa 28 — Polimento final do MVP e instruções de uso — Aprovado — Commit a2c2584
+- Etapa 29 — Revisão final de entrega do MVP — Aprovado — Commit deste registro
 
 ## Decisões técnicas aprovadas
 
@@ -139,6 +140,7 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - O workspace orienta a criação da primeira página real quando a anotação ainda não possui páginas da API.
 - O `README.md` registra pré-requisitos, execução local, URLs esperadas, roteiro de teste e limitações do MVP.
 - A Etapa 28 não adiciona regras de domínio nem altera contratos da API.
+- O `POST /api/modules/{moduleId}/notes` retorna `ApiNoteSummary`; o frontend valida esse resumo antes de selecionar a anotação criada.
 
 ## Pendências atuais
 
@@ -183,15 +185,15 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 
 ## Próxima tarefa
 
-Realizar uma revisão final de build e execução local do MVP.
+Preparar uma release local do MVP.
 
 A próxima tarefa deve incluir:
 
-- Executar backend e frontend juntos seguindo o `README.md`.
-- Repetir o fluxo principal em um banco SQLite vazio.
-- Conferir criação, edição, salvamento, tags e favorito de ponta a ponta.
-- Registrar qualquer bloqueio real encontrado antes de ampliar o escopo.
-- Se a revisão final estiver estável e houver tempo, planejar edição e exclusão básicas com confirmação.
+- Definir uma versão candidata e um checklist curto de release local.
+- Executar novamente build, testes e lint a partir de uma instalação limpa.
+- Confirmar as instruções do `README.md` na versão candidata.
+- Registrar os artefatos e limitações conhecidos sem configurar deploy.
+- Planejar edição e exclusão básicas somente em uma etapa posterior.
 
 ## Histórico de validações
 
@@ -232,7 +234,8 @@ A próxima tarefa deve incluir:
 - Etapa 25 aprovada — Commit fe44af9.
 - Etapa 26 aprovada — sincronização manual de páginas locais pendentes com backend.
 - Etapa 27 aprovada — criação rápida de matéria, módulo e anotação reais pela sidebar.
-- Etapa 28 aprovada — estados vazios guiados, modo demonstração claro e instruções locais no README.
+- Etapa 28 aprovada — Commit a2c2584 — estados vazios guiados, modo demonstração claro e instruções locais no README.
+- Etapa 29 aprovada — fluxo local revisado, contrato de criação de anotação corrigido e validações concluídas.
 
 ## Registro da Etapa 26
 
@@ -353,6 +356,68 @@ Polir a experiência inicial do MVP com orientação curta para banco vazio, fee
 - Sem autosave.
 - Sem autenticação.
 - Sem PDF.
+
+## Registro da Etapa 29
+
+### Objetivo realizado
+
+Revisar a entrega local do MVP seguindo o `README.md`, percorrer o fluxo principal com o banco inicialmente vazio e validar o modo demonstração sem ampliar o escopo funcional.
+
+### Arquivos alterados
+
+- `frontend/caderno-app-web/src/services/notesApi.ts`.
+- `docs/03-acompanhamento-do-projeto.md`.
+
+O `README.md` foi conferido e não precisou de alteração.
+
+### Execução pelo README
+
+- O backend iniciou com `dotnet run --project src/CadernoApp.Api --launch-profile http` e respondeu em `http://localhost:5037`.
+- O frontend iniciou com `npm run dev -- --host 127.0.0.1` e respondeu em `http://127.0.0.1:5173`.
+- O proxy do Vite encaminhou `/api/subjects` para a API e retornou HTTP 200.
+
+### Fluxo principal validado
+
+- O banco começou sem matérias.
+- Matéria e módulo foram criados e selecionados pela sidebar.
+- A criação da anotação revelou uma incompatibilidade de validação no frontend; após a correção, uma nova anotação foi criada e selecionada automaticamente.
+- Uma página real foi criada, editada e salva no backend.
+- Após recarregar a aplicação, matéria, módulo, anotação, página e conteúdo continuaram disponíveis.
+- Uma tag real foi adicionada e removida.
+- A anotação foi favoritada e desfavoritada.
+
+### Correção realizada
+
+- `createNote` agora interpreta e valida o `ApiNoteSummary` realmente retornado pelo endpoint de criação.
+- O endpoint, o payload enviado e o backend não foram alterados.
+- Nenhuma feature nova foi adicionada.
+
+### Modo demonstração validado
+
+- O frontend continuou funcionando com o backend desligado.
+- O aviso `API indisponível — rodando em modo demonstração` foi exibido.
+- O fallback mockado permaneceu disponível.
+- Os controles de criação real ficaram desabilitados.
+- A interface permaneceu estável e sem overflow horizontal.
+
+### Validações automatizadas
+
+- `npm ci` concluído sem vulnerabilidades.
+- `npm run build` concluído com sucesso.
+- `npm run lint` concluído sem ocorrências.
+- `dotnet restore` concluído com sucesso.
+- `dotnet build` concluído com zero erros e zero avisos.
+- `dotnet test` concluído com 87 testes aprovados.
+- `dotnet format --no-restore` concluído sem alterações adicionais.
+
+### Limitações finais
+
+- Sem login.
+- Sem PDF.
+- Sem autosave no backend.
+- Sem edição ou exclusão de matéria, módulo e anotação.
+- SQLite local de desenvolvimento.
+- Sem deploy configurado.
 
 ## Observações
 

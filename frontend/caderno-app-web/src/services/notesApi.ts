@@ -96,7 +96,7 @@ export async function createNote(
   moduleId: string,
   input: CreateNoteInput,
   signal?: AbortSignal,
-): Promise<ApiNoteDetails> {
+): Promise<ApiNoteSummary> {
   const response = await fetch(`/api/modules/${encodeURIComponent(moduleId)}/notes`, {
     method: 'POST',
     headers: {
@@ -111,9 +111,9 @@ export async function createNote(
     throw new Error(`POST /api/modules/${moduleId}/notes failed with status ${response.status}`)
   }
 
-  const note = (await response.json()) as Partial<ApiNoteDetails>
+  const note = (await response.json()) as Partial<ApiNoteSummary>
 
-  if (!isApiNoteDetails(note)) {
+  if (!isApiNoteSummary(note)) {
     throw new Error('POST /api/modules/{moduleId}/notes returned an unexpected payload')
   }
 

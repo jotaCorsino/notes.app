@@ -46,7 +46,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - Etapa 26 — Sincronização de páginas locais pendentes com backend — Aprovado — Commit be65a8b
 - Etapa 27 — Criação rápida de matéria, módulo e anotação pelo frontend — Aprovado — Commit 8ecbf8b
 - Etapa 28 — Polimento final do MVP e instruções de uso — Aprovado — Commit a2c2584
-- Etapa 29 — Revisão final de entrega do MVP — Aprovado — Commit deste registro
+- Etapa 29 — Revisão final de entrega do MVP — Aprovado — Commit 8fe83a1
+- Etapa 30 — Release local do MVP — Aprovado — Commit deste registro
 
 ## Decisões técnicas aprovadas
 
@@ -141,6 +142,10 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - O `README.md` registra pré-requisitos, execução local, URLs esperadas, roteiro de teste e limitações do MVP.
 - A Etapa 28 não adiciona regras de domínio nem altera contratos da API.
 - O `POST /api/modules/{moduleId}/notes` retorna `ApiNoteSummary`; o frontend valida esse resumo antes de selecionar a anotação criada.
+- A release local candidata do MVP foi registrada como `v0.1.0-local`.
+- A release local usa o commit base `8fe83a1` como referência da revisão final do MVP.
+- Scripts PowerShell simples foram adicionados apenas para executar backend, frontend e validação local com os comandos já documentados.
+- A Etapa 30 não cria feature nova, não altera backend, não altera frontend funcional, não altera API e não configura deploy.
 
 ## Pendências atuais
 
@@ -185,15 +190,14 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 
 ## Próxima tarefa
 
-Preparar uma release local do MVP.
+Definir a próxima prioridade pós-MVP.
 
 A próxima tarefa deve incluir:
 
-- Definir uma versão candidata e um checklist curto de release local.
-- Executar novamente build, testes e lint a partir de uma instalação limpa.
-- Confirmar as instruções do `README.md` na versão candidata.
-- Registrar os artefatos e limitações conhecidos sem configurar deploy.
-- Planejar edição e exclusão básicas somente em uma etapa posterior.
+- Escolher entre edição/exclusão básica de matéria, módulo e anotação.
+- Planejar geração ou exportação PDF A4 real.
+- Avaliar deploy apenas se a prioridade mudar para distribuição fora do ambiente local.
+- Manter login, autosave e PDF fora de escopos que não os tratem diretamente.
 
 ## Histórico de validações
 
@@ -235,7 +239,8 @@ A próxima tarefa deve incluir:
 - Etapa 26 aprovada — sincronização manual de páginas locais pendentes com backend.
 - Etapa 27 aprovada — criação rápida de matéria, módulo e anotação reais pela sidebar.
 - Etapa 28 aprovada — Commit a2c2584 — estados vazios guiados, modo demonstração claro e instruções locais no README.
-- Etapa 29 aprovada — fluxo local revisado, contrato de criação de anotação corrigido e validações concluídas.
+- Etapa 29 aprovada — Commit 8fe83a1 — fluxo local revisado, contrato de criação de anotação corrigido e validações concluídas.
+- Etapa 30 aprovada — release local `v0.1.0-local` registrada com notas, checklist e scripts simples de execução/validação.
 
 ## Registro da Etapa 26
 
@@ -418,6 +423,61 @@ O `README.md` foi conferido e não precisou de alteração.
 - Sem edição ou exclusão de matéria, módulo e anotação.
 - SQLite local de desenvolvimento.
 - Sem deploy configurado.
+
+## Registro da Etapa 30
+
+### Objetivo realizado
+
+Preparar um marco de release local do MVP sem criar funcionalidade nova.
+
+### Versão candidata local
+
+- Versão: `v0.1.0-local`.
+- Data da release local: 2026-07-15.
+- Commit base da revisão final: `8fe83a1`.
+
+### Arquivos criados
+
+- `RELEASE_NOTES.md`.
+- `scripts/dev-backend.ps1`.
+- `scripts/dev-frontend.ps1`.
+- `scripts/validate.ps1`.
+
+### Arquivos alterados
+
+- `README.md`.
+- `docs/03-acompanhamento-do-projeto.md`.
+
+### Conteúdo de release registrado
+
+- Funcionalidades incluídas no MVP local.
+- Limitações conhecidas.
+- Checklist rápido de validação.
+- Scripts opcionais para rodar backend, frontend e validação local.
+
+### Limitações finais mantidas
+
+- Sem login.
+- Sem PDF.
+- Sem autosave.
+- Sem edição ou exclusão de matéria, módulo e anotação.
+- Sem deploy.
+- SQLite local de desenvolvimento.
+
+### Observação técnica
+
+Os scripts apenas executam comandos já documentados e não apagam arquivos, não instalam pacotes novos e não alteram comportamento da aplicação.
+
+### Validações executadas
+
+- `dotnet restore` concluído com sucesso.
+- `dotnet build` concluído com zero erros e zero avisos.
+- `dotnet test` concluído com 87 testes aprovados.
+- `npm ci` concluído sem vulnerabilidades.
+- `npm run build` concluído com sucesso.
+- `npm run lint` concluído sem ocorrências.
+- `dotnet format --no-restore` concluído sem alterações adicionais.
+- `scripts/validate.ps1` concluído com sucesso.
 
 ## Observações
 

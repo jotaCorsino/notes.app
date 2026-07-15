@@ -12,6 +12,12 @@ O MVP permite criar essa estrutura, escrever em um editor rich text, salvar pág
 
 As versões de Node.js e npm acima correspondem ao ambiente usado na validação atual do projeto.
 
+## Release local
+
+- Versão: `v0.1.0-local`.
+- Notas de release: [RELEASE_NOTES.md](RELEASE_NOTES.md).
+- Commit base da revisão final: `8fe83a1`.
+
 ## Executar o backend
 
 Na raiz do repositório:
@@ -19,6 +25,12 @@ Na raiz do repositório:
 ```powershell
 dotnet restore
 dotnet run --project src/CadernoApp.Api --launch-profile http
+```
+
+Também é possível usar:
+
+```powershell
+.\scripts\dev-backend.ps1
 ```
 
 O backend deve ficar disponível em:
@@ -39,6 +51,12 @@ npm ci
 npm run dev -- --host 127.0.0.1
 ```
 
+Também é possível usar, a partir da raiz:
+
+```powershell
+.\scripts\dev-frontend.ps1
+```
+
 Abra a URL exibida pelo Vite, normalmente:
 
 ```text
@@ -46,6 +64,14 @@ http://127.0.0.1:5173
 ```
 
 O proxy de desenvolvimento encaminha as chamadas de `/api` para `http://localhost:5037`.
+
+## Validação local
+
+Na raiz do repositório:
+
+```powershell
+.\scripts\validate.ps1
+```
 
 ## Fluxo de teste do MVP
 

@@ -14,15 +14,17 @@ import { useNoteDetails, type NoteDetailsStatus } from './hooks/useNoteDetails'
 import { useNotes, type NotesStatus } from './hooks/useNotes'
 import { useStudyModules, type StudyModulesStatus } from './hooks/useStudyModules'
 import { useSubjects, type SubjectsStatus } from './hooks/useSubjects'
+import { createStudyModule } from './services/modulesApi'
 import {
   addTagToNote,
+  createNote,
   markNoteAsFavorite,
   removeTagFromNote,
   unmarkNoteAsFavorite,
   type ApiNotePage,
   type ApiNoteSummary,
 } from './services/notesApi'
-import type { ApiStudyModule, ApiSubject } from './services/subjectsApi'
+import { createSubject, type ApiStudyModule, type ApiSubject } from './services/subjectsApi'
 import type { NotebookNote, NotebookPage, NotePageContent, StudyModule, Subject } from './types/notebook'
 import { MOCK_DRAFT_NOTE_ID } from './utils/localDraftStorage'
 
@@ -33,6 +35,13 @@ type TagUpdateStatus = 'idle' | 'adding' | 'added' | 'removing' | 'removed' | 'e
 
 const defaultTagColor = '#EEF2FF'
 const subjectColors: SubjectColor[] = ['sage', 'coral', 'blue']
+const emptyApiSidebarSubject: Subject = {
+  id: '',
+  title: 'Nenhuma matéria selecionada',
+  shortLabel: '--',
+  color: 'sage',
+  modules: [],
+}
 
 const createShortLabel = (name: string) => {
   const words = name.trim().split(/\s+/).filter(Boolean)
@@ -305,6 +314,7 @@ function App() {
     subjects: apiSubjects,
     status: subjectsStatus,
     error: subjectsError,
+    refetch: refetchSubjects,
   } = useSubjects()
   const hasApiSubjects = subjectsStatus === 'success' && apiSubjects.length > 0
   const selectedApiSubject = hasApiSubjects
@@ -314,6 +324,7 @@ function App() {
     modules: apiModules,
     status: modulesStatus,
     error: modulesError,
+    refetch: refetchModules,
   } = useStudyModules(selectedApiSubject?.id ?? null)
   const hasApiModules = modulesStatus === 'success' && apiModules.length > 0
   const selectedApiModule = hasApiModules
@@ -323,6 +334,7 @@ function App() {
     notes: apiNotes,
     status: notesStatus,
     error: notesError,
+    refetch: refetchNotes,
   } = useNotes(selectedApiModule?.id ?? null)
   const sidebarNotes =
     notesStatus === 'success'
@@ -363,7 +375,9 @@ function App() {
         apiSubjects.findIndex((subject) => subject.id === selectedApiSubject.id),
         sidebarModules,
       )
-    : selectedMockSubject
+    : subjectsStatus === 'success'
+      ? emptyApiSidebarSubject
+      : selectedMockSubject
   const selectedModule = selectedMockSubject.modules.find(
     (module) => module.id === mockNotebook.selectedModuleId,
   ) ?? selectedMockSubject.modules[0]
@@ -428,12 +442,14 @@ function App() {
           ),
         )
       : mockNotebook.subjects
-  const selectedSidebarModuleId = selectedApiSubject
-    ? selectedApiModule?.id ?? ''
-    : mockNotebook.selectedModuleId
-  const selectedSidebarNoteId = selectedApiNote
-    ? selectedApiNote.id
-    : mockNotebook.selectedNoteId
+  const selectedSidebarModuleId =
+    subjectsStatus === 'success'
+      ? selectedApiModule?.id ?? ''
+      : mockNotebook.selectedModuleId
+  const selectedSidebarNoteId =
+    subjectsStatus === 'success'
+      ? selectedApiNote?.id ?? ''
+      : mockNotebook.selectedNoteId
   const editorState = useMemo(() => {
     if (!selectedApiNote) {
       return {
@@ -602,6 +618,58 @@ function App() {
     setSelectedApiNoteId(noteId)
   }
 
+  const handleCreateSubject = useCallback(
+    async (name: string) => {
+      if (subjectsStatus !== 'success') {
+        throw new Error('A criação de matéria exige conexão com a API.')
+      }
+
+      const createdSubject = await createSubject({ name: name.trim() })
+
+      setSelectedApiSubjectId(createdSubject.id)
+      setSelectedApiModuleId(null)
+      setSelectedApiNoteId(null)
+      refetchSubjects()
+    },
+    [refetchSubjects, subjectsStatus],
+  )
+
+  const handleCreateModule = useCallback(
+    async (title: string) => {
+      if (!selectedApiSubject || modulesStatus !== 'success') {
+        throw new Error('Selecione uma matéria real antes de criar o módulo.')
+      }
+
+      const nextOrderIndex = apiModules.reduce(
+        (highestOrderIndex, module) => Math.max(highestOrderIndex, module.orderIndex),
+        -1,
+      ) + 1
+      const createdModule = await createStudyModule(selectedApiSubject.id, {
+        title: title.trim(),
+        orderIndex: nextOrderIndex,
+      })
+
+      setSelectedApiModuleId(createdModule.id)
+      setSelectedApiNoteId(null)
+      refetchModules()
+    },
+    [apiModules, modulesStatus, refetchModules, selectedApiSubject],
+  )
+
+  const handleCreateNote = useCallback(
+    async (title: string) => {
+      if (!selectedApiModule || notesStatus !== 'success') {
+        throw new Error('Selecione um módulo real antes de criar a anotação.')
+      }
+
+      const createdNote = await createNote(selectedApiModule.id, { title: title.trim() })
+
+      setSelectedApiNoteId(createdNote.id)
+      refetchNotes()
+    },
+    [notesStatus, refetchNotes, selectedApiModule],
+  )
+
   const handleToggleFavorite = useCallback(async () => {
     if (!activeApiNoteDetails || metadataMode !== 'api') {
       return
@@ -725,6 +793,9 @@ function App() {
         workspaceName={mockNotebook.workspaceName}
         apiError={subjectsError}
         apiStatus={getSidebarApiStatus(subjectsStatus)}
+        canCreateModule={Boolean(selectedApiSubject) && modulesStatus === 'success'}
+        canCreateNote={Boolean(selectedApiModule) && notesStatus === 'success'}
+        canCreateSubject={subjectsStatus === 'success'}
         canSelectModules={Boolean(selectedApiSubject)}
         canSelectNotes={Boolean(selectedApiModule)}
         canSelectSubjects={hasApiSubjects}
@@ -732,6 +803,9 @@ function App() {
         moduleApiStatus={getModulesApiStatus(modulesStatus, Boolean(selectedApiSubject))}
         noteApiError={notesError ?? noteDetailsError}
         noteApiStatus={getNotesApiStatus(notesStatus, Boolean(selectedApiModule))}
+        onCreateModule={handleCreateModule}
+        onCreateNote={handleCreateNote}
+        onCreateSubject={handleCreateSubject}
         onSelectModule={handleSelectModule}
         onSelectNote={handleSelectNote}
         onSelectSubject={handleSelectSubject}

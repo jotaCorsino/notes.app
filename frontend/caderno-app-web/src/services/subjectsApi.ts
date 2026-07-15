@@ -18,6 +18,17 @@ export interface ApiSubject {
   modules: ApiStudyModule[]
 }
 
+export interface CreateSubjectInput {
+  name: string
+  description?: string
+  color?: string
+}
+
+const isApiSubject = (subject: Partial<ApiSubject>): subject is ApiSubject =>
+  typeof subject.id === 'string' &&
+  typeof subject.name === 'string' &&
+  Array.isArray(subject.modules)
+
 export async function getSubjects(signal?: AbortSignal): Promise<ApiSubject[]> {
   const response = await fetch('/api/subjects', {
     headers: {
@@ -37,4 +48,31 @@ export async function getSubjects(signal?: AbortSignal): Promise<ApiSubject[]> {
   }
 
   return subjects as ApiSubject[]
+}
+
+export async function createSubject(
+  input: CreateSubjectInput,
+  signal?: AbortSignal,
+): Promise<ApiSubject> {
+  const response = await fetch('/api/subjects', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+    signal,
+  })
+
+  if (!response.ok) {
+    throw new Error(`POST /api/subjects failed with status ${response.status}`)
+  }
+
+  const subject = (await response.json()) as Partial<ApiSubject>
+
+  if (!isApiSubject(subject)) {
+    throw new Error('POST /api/subjects returned an unexpected payload')
+  }
+
+  return subject
 }

@@ -223,6 +223,87 @@
   color: #91aa9f;
 }
 
+.sidebar-create-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.4rem;
+  margin: 0.35rem 0.55rem 0.75rem;
+}
+
+.sidebar-create-form + .sidebar-create-form {
+  margin-top: -0.35rem;
+}
+
+.sidebar-create-form input,
+.sidebar-create-form button {
+  min-height: 2rem;
+  border: 1px solid rgba(215, 231, 222, 0.16);
+  border-radius: 0.4rem;
+  font: inherit;
+}
+
+.sidebar-create-form input {
+  min-width: 0;
+  padding: 0.35rem 0.55rem;
+  color: #eef5f1;
+  background: rgba(5, 21, 17, 0.18);
+  font-size: 0.7rem;
+}
+
+.sidebar-create-form input::placeholder {
+  color: #78968a;
+}
+
+.sidebar-create-form button {
+  min-width: 3.5rem;
+  padding: 0.3rem 0.55rem;
+  color: #17342d;
+  background: #dfe8d7;
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+.sidebar-create-form input:focus-visible,
+.sidebar-create-form button:focus-visible {
+  outline: 2px solid #e7b372;
+  outline-offset: 2px;
+}
+
+.sidebar-create-form button:not(:disabled) {
+  cursor: pointer;
+}
+
+.sidebar-create-form button:not(:disabled):hover {
+  background: #eef3e9;
+}
+
+.sidebar-create-form input:disabled,
+.sidebar-create-form button:disabled {
+  cursor: default;
+  opacity: 0.48;
+}
+
+.sidebar-create-status {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #a8baaf;
+  font-size: 0.64rem;
+  line-height: 1.4;
+}
+
+.sidebar-create-status--creating {
+  color: #dbc184;
+}
+
+.sidebar-create-status--created {
+  color: #9ed0aa;
+}
+
+.sidebar-create-status--error,
+.sidebar-create-status--unavailable {
+  color: #dca38f;
+}
+
 .subject-list,
 .module-list,
 .note-list,

@@ -41,6 +41,10 @@ export interface ApiNoteDetails {
   tags: ApiTag[]
 }
 
+export interface CreateNoteInput {
+  title: string
+}
+
 const defaultPageContentHtml = `<h1>Nova página</h1><p>Comece suas anotações aqui.</p>`
 
 const isApiNoteSummary = (note: Partial<ApiNoteSummary>): note is ApiNoteSummary =>
@@ -86,6 +90,34 @@ export async function getNotesByModule(
   }
 
   return notes as ApiNoteSummary[]
+}
+
+export async function createNote(
+  moduleId: string,
+  input: CreateNoteInput,
+  signal?: AbortSignal,
+): Promise<ApiNoteDetails> {
+  const response = await fetch(`/api/modules/${encodeURIComponent(moduleId)}/notes`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+    signal,
+  })
+
+  if (!response.ok) {
+    throw new Error(`POST /api/modules/${moduleId}/notes failed with status ${response.status}`)
+  }
+
+  const note = (await response.json()) as Partial<ApiNoteDetails>
+
+  if (!isApiNoteDetails(note)) {
+    throw new Error('POST /api/modules/{moduleId}/notes returned an unexpected payload')
+  }
+
+  return note
 }
 
 export async function getNoteById(

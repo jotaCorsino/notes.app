@@ -43,7 +43,8 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - M5 — Ignorar arquivos SQLite locais — Aprovado — Commit 4e917b1
 - Etapa 24 — Indicador de alterações não salvas por página — Aprovado — Commit fc6fd2c
 - Etapa 25 — Integração de tags e favoritos reais no frontend — Aprovado — Commit fe44af9
-- Etapa 26 — Sincronização de páginas locais pendentes com backend — Aprovado — Commit desta etapa
+- Etapa 26 — Sincronização de páginas locais pendentes com backend — Aprovado — Commit be65a8b
+- Etapa 27 — Criação rápida de matéria, módulo e anotação pelo frontend — Aprovado — Commit deste registro
 
 ## Decisões técnicas aprovadas
 
@@ -122,21 +123,31 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - A Etapa 26 não implementa reordenação complexa de páginas.
 - A Etapa 26 não altera autenticação.
 - A Etapa 26 não implementa PDF.
+- O frontend consome `POST /api/subjects` para criar matérias reais pela sidebar.
+- O frontend consome `POST /api/subjects/{subjectId}/modules` para criar módulos na matéria real selecionada.
+- O frontend consome `POST /api/modules/{moduleId}/notes` para criar anotações no módulo real selecionado.
+- Cada criação bem-sucedida refaz a listagem correspondente e preserva o id criado como seleção desejada.
+- Uma instalação com banco vazio pode criar a sequência Matéria > Módulo > Anotação pela sidebar.
+- Formulários de criação ficam indisponíveis em mock/fallback e informam que a API precisa estar ligada.
+- A Etapa 27 não implementa edição, renomeação ou exclusão da estrutura do fichário.
+- A Etapa 27 não altera editor, páginas, tags ou favoritos.
+- A Etapa 27 não implementa autosave, autenticação ou PDF.
 
 ## Pendências atuais
 
 - P-009 — Implementar sanitização real do HTML — Pendente.
 - P-010 — Implementar exportação PDF A4 real — Pendente.
-- P-017 — Integrar frontend com API — Parcialmente concluída: matérias, módulos, anotações, tags, favoritos, leitura, criação, salvamento e sincronização manual de páginas foram integrados; criação de matérias/módulos e fluxos avançados seguem pendentes.
-- P-018 — Conectar o layout aos dados reais da API — Parcialmente concluída: sidebar usa dados reais e editor lê, cria, salva e sincroniza páginas; ainda faltam fluxos completos de criação e busca.
+- P-017 — Integrar frontend com API — Parcialmente concluída: matérias, módulos, anotações, tags, favoritos, leitura, criação inicial da estrutura, salvamento e sincronização manual de páginas foram integrados; busca e fluxos avançados seguem pendentes.
+- P-018 — Conectar o layout aos dados reais da API — Parcialmente concluída: sidebar lista e cria a estrutura real, e o editor lê, cria, salva e sincroniza páginas; ainda faltam busca e operações completas de manutenção.
 - P-020 — Implementar salvamento real de páginas — Parcialmente concluída: páginas reais usam PUT e páginas locais podem virar páginas reais por POST manual; autosave e merge continuam fora do escopo.
 - P-022 — Implementar controle funcional de fonte e tamanho — Pendente.
-- P-027 — Criar fluxo de criação de matéria/módulo pelo frontend — Pendente.
 - P-028 — Integrar páginas reais da anotação com API — Parcialmente concluída: leitura, criação, salvamento e sincronização manual foram integrados; conflitos e reordenação complexa seguem pendentes.
 - P-036 — Melhorar UX do formulário de tags — Pendente.
 - P-037 — Implementar busca/filtro por tags no futuro — Pendente.
 - P-038 — Melhorar ordenação/reordenação de páginas — Pendente.
 - P-039 — Revisar fluxo de conflitos entre API e rascunho local — Pendente.
+- P-040 — Editar ou renomear matéria, módulo e anotação — Pendente.
+- P-041 — Excluir matéria, módulo e anotação com confirmação — Pendente.
 
 ## Pendências resolvidas
 
@@ -161,19 +172,19 @@ Ele compara planejamento, execução, validação e próxima tarefa, mantendo um
 - P-033 — Refinar estratégia de rascunho local versus dados da API — Concluído inicialmente: rascunho local ganhou metadados, status visual e ação de recarregar da API.
 - P-034 — Implementar detecção mais precisa de alterações não salvas por página — Concluído: páginas reais comparam conteúdo atual com a última versão salva.
 - P-035 — Implementar sincronização manual de páginas locais pendentes com backend — Concluído: páginas locais podem ser enviadas via POST e passam para `source: "api"` após sucesso.
+- P-027 — Criar fluxo de criação de matéria/módulo pelo frontend — Concluído e ampliado: a sidebar cria matéria, módulo e anotação reais.
 
 ## Próxima tarefa
 
-Implementar controle funcional de fonte e tamanho do editor.
+Realizar o polimento final do MVP e criar instruções para os estados vazios.
 
 A próxima tarefa deve incluir:
 
-- Definir controles visuais para família de fonte e tamanho.
-- Integrar os controles ao Tiptap sem trocar a estratégia de armazenamento.
-- Manter o conteúdo salvo como HTML controlado.
-- Preservar o fluxo de páginas reais, páginas locais e localStorage.
-- Manter tags e favoritos fora do escopo da alteração.
-- Manter autosave, merge automático, resolução de conflitos e PDF fora do escopo.
+- Revisar os estados vazios de matéria, módulo, anotação e página.
+- Mostrar instruções curtas que conduzam a criação inicial do fichário.
+- Refinar feedbacks de carregamento, indisponibilidade e sucesso sem criar novos fluxos de domínio.
+- Preservar a integração atual com API, páginas, localStorage, tags e favoritos.
+- Manter edição, exclusão, autosave, autenticação e PDF fora do escopo até etapas próprias.
 
 ## Histórico de validações
 
@@ -213,6 +224,7 @@ A próxima tarefa deve incluir:
 - Etapa 24 aprovada — Commit fc6fd2c.
 - Etapa 25 aprovada — Commit fe44af9.
 - Etapa 26 aprovada — sincronização manual de páginas locais pendentes com backend.
+- Etapa 27 aprovada — criação rápida de matéria, módulo e anotação reais pela sidebar.
 
 ## Registro da Etapa 26
 
@@ -252,6 +264,49 @@ Permitir que páginas locais pendentes de uma anotação real sejam enviadas man
 - Sem autenticação.
 - Sem PDF.
 - Sem alteração no fluxo de tags e favoritos.
+
+## Registro da Etapa 27
+
+### Objetivo realizado
+
+Permitir que uma instalação com banco vazio crie a estrutura inicial Matéria > Módulo > Anotação diretamente pela sidebar.
+
+### Arquivos alterados
+
+- `frontend/caderno-app-web/src/App.tsx`.
+- `frontend/caderno-app-web/src/App.css`.
+- `frontend/caderno-app-web/src/components/Sidebar.tsx`.
+- `frontend/caderno-app-web/src/services/subjectsApi.ts`.
+- `frontend/caderno-app-web/src/services/modulesApi.ts`.
+- `frontend/caderno-app-web/src/services/notesApi.ts`.
+- `docs/03-acompanhamento-do-projeto.md`.
+
+### Endpoints usados
+
+- `POST /api/subjects`.
+- `POST /api/subjects/{subjectId}/modules`.
+- `POST /api/modules/{moduleId}/notes`.
+- Os endpoints GET já integrados são refeitos após a criação correspondente.
+
+### Comportamento implementado
+
+- A sidebar oferece campos compactos para nova matéria, novo módulo e nova anotação.
+- A criação de matéria fica disponível quando a listagem de matérias está conectada à API, inclusive quando o banco está vazio.
+- A criação de módulo exige uma matéria real selecionada e listagem de módulos disponível.
+- A criação de anotação exige um módulo real selecionado e listagem de anotações disponível.
+- Após cada POST, o frontend guarda o id retornado, refaz o GET correspondente e seleciona o novo item quando ele aparece na listagem.
+- Campos são limpos após sucesso.
+- A interface informa estados de criação, sucesso, erro e indisponibilidade.
+- Em mock/fallback, nenhuma criação real é chamada e a sidebar informa que a API precisa estar ligada.
+
+### Limitações mantidas
+
+- Sem editar ou renomear matéria, módulo ou anotação.
+- Sem excluir matéria, módulo ou anotação.
+- Sem autosave.
+- Sem autenticação.
+- Sem PDF.
+- Sem alteração no editor, no fluxo de páginas, nas tags ou nos favoritos.
 
 ## Observações
 
